@@ -1,4 +1,4 @@
-namespace Api;
+namespace ShSemijoias.Domain.Entities;
 
 public class WeatherForecast
 {
