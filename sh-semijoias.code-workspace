@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "backend",
+      "path": "src/backend"
+    },
+    {
+      "name": "frontend",
+      "path": "src/frontend"
+    }
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "Full Stack: Backend + Frontend",
+        "configurations": [
+          { "name": "Backend: dotnet run", "folder": "backend" },
+          { "name": "ng serve", "folder": "frontend" }
+        ],
+        "stopAll": true
+      }
+    ]
+  },
+}
