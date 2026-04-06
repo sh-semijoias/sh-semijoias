@@ -4,5 +4,4 @@ namespace ShSemijoias.Domain.Entities;
 
 public class Perfil : IdentityRole<Guid>
 {
-    public string? Descricao { get; set; }
 }

@@ -14,12 +14,12 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Perfil, Guid>
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<Usuario>().ToTable("Usuarios");
-        builder.Entity<Perfil>().ToTable("Perfis");
-        builder.Entity<IdentityUserRole<Guid>>().ToTable("UsuarioPerfis");
-        builder.Entity<IdentityUserClaim<Guid>>().ToTable("UsuarioClaims");
-        builder.Entity<IdentityUserLogin<Guid>>().ToTable("UsuarioLogins");
-        builder.Entity<IdentityRoleClaim<Guid>>().ToTable("PerfilClaims");
-        builder.Entity<IdentityUserToken<Guid>>().ToTable("UsuarioTokens");
+        builder.Entity<Usuario>().ToTable("Usuario");
+        builder.Entity<Perfil>().ToTable("Perfil");
+        builder.Entity<IdentityUserRole<Guid>>().ToTable("UsuarioPerfil");
+        builder.Entity<IdentityUserClaim<Guid>>().ToTable("UsuarioClaim");
+        builder.Entity<IdentityUserLogin<Guid>>().ToTable("UsuarioLogin");
+        builder.Entity<IdentityRoleClaim<Guid>>().ToTable("PerfilClaim");
+        builder.Entity<IdentityUserToken<Guid>>().ToTable("UsuarioToken");
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ShSemijoias.Domain.Entities;
 using ShSemijoias.Infrastructure.Persistence;
-using ShSemijoias.Infrastructure.Seed;
+using ShSemijoias.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +41,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+await app.MigrateAsync();
 await app.SeedAdminAsync();
 
 app.Run();
