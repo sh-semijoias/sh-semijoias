@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    // C# / .NET
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+
+    // Angular
+    "angular.ng-template",
+
+    // Docker
+    "ms-azuretools.vscode-docker",
+
+    // Qualidade de código
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig"
+  ]
+}
