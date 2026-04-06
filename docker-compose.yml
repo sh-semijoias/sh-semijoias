@@ -3,8 +3,8 @@ services:
     image: postgres:17-alpine
     container_name: sh-semijoias-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: sh_semijoias_dev
     ports:
       - "5432:5432"
