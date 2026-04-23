@@ -4,13 +4,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
+import { MatMenuModule } from '@angular/material/menu';
 import { DecimalPipe, PercentPipe } from '@angular/common';
 import { UsuarioDto, UsuarioService } from '../../../core/services/usuario.service';
 
 @Component({
   selector: 'app-lista-usuarios',
   standalone: true,
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, DecimalPipe],
+  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, MatMenuModule, DecimalPipe],
   templateUrl: './lista-usuarios.html'
 })
 export class ListaUsuariosComponent implements OnInit {

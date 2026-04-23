@@ -66,4 +66,18 @@ body {
   margin: 0;
   height: 100%;
 }
+mat-card {
+  @include mat.card-overrides((
+    elevated-container-color: light-dark(var(--mat-sys-surface), var(--mat-sys-surface-container)),
+  ));
+}
+
+mat-card .mat-mdc-table {
+  background-color: transparent;
+}
+
+mat-card .mat-mdc-table .mat-column-acoes {
+  background-color: var(--mat-card-elevated-container-color);
+}
+
 /* You can add global styles to this file, and also import other style files */

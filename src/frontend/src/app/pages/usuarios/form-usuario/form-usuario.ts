@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { PerfilDto, PerfilService } from '../../../core/services/perfil.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
@@ -17,7 +18,7 @@ import { Perfil } from '../../../core/enums/perfil.enum';
   imports: [
     ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule
   ],
   templateUrl: './form-usuario.html'
 })
