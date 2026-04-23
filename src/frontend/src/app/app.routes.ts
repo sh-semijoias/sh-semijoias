@@ -3,7 +3,8 @@ import { ListaUsuariosComponent } from './pages/usuarios/lista-usuarios/lista-us
 import { FormUsuarioComponent } from './pages/usuarios/form-usuario/form-usuario';
 
 export const routes: Routes = [
-  { path: '', component: ListaUsuariosComponent },
+  { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
+  { path: 'usuarios', component: ListaUsuariosComponent },
   { path: 'usuarios/novo', component: FormUsuarioComponent },
   { path: 'usuarios/:id/editar', component: FormUsuarioComponent },
 ];

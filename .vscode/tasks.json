@@ -83,6 +83,7 @@
       "problemMatcher": []
     },
     {
+      "label": "ng: test",
       "type": "npm",
       "script": "test",
       "isBackground": true,

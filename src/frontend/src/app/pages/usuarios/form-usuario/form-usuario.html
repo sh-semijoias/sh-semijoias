@@ -1,6 +1,6 @@
 <div class="p-6 max-w-lg">
   <div class="flex items-center gap-2 mb-6">
-    <a mat-icon-button routerLink="/"><mat-icon>arrow_back</mat-icon></a>
+    <a mat-icon-button routerLink="/usuarios"><mat-icon>arrow_back</mat-icon></a>
     <h2 class="text-xl font-semibold">{{ modoEdicao() ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
   </div>
 
@@ -57,7 +57,7 @@
         <button mat-raised-button color="primary" type="submit" [disabled]="salvando()">
           @if (salvando()) { <mat-spinner diameter="20" /> } @else { Salvar }
         </button>
-        <a mat-button routerLink="/">Cancelar</a>
+        <a mat-button routerLink="/usuarios">Cancelar</a>
       </div>
     </form>
   }

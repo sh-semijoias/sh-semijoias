@@ -89,12 +89,12 @@ export class FormUsuarioComponent implements OnInit {
 
     if (this.modoEdicao() && this.usuarioId) {
       this.service.editar(this.usuarioId, { nome: nome!, perfil: perfil!, percentualComissao }).subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.router.navigate(['/usuarios']),
         error: (e) => { this.erro.set(e?.error?.Erro ?? 'Erro ao salvar.'); this.salvando.set(false); }
       });
     } else {
       this.service.criar({ nome: nome!, email: email!, perfil: perfil!, percentualComissao }).subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.router.navigate(['/usuarios']),
         error: (e) => { this.erro.set(e?.error?.Erro ?? 'Erro ao salvar.'); this.salvando.set(false); }
       });
     }
