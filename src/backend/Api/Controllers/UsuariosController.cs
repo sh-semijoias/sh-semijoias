@@ -10,8 +10,12 @@ namespace ShSemijoias.Api.Controllers;
 public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Listar() =>
-        Ok(await usuarioService.ListarAsync());
+    public async Task<IActionResult> Listar([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10)
+    {
+        var result = await usuarioService.ListarAsync(pagina, tamanhoPagina);
+        if (!result.Sucesso) return result.ToActionResult(this);
+        return Ok(result.Valor);
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> ObterPorId(Guid id)

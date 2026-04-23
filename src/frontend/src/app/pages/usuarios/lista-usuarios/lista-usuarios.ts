@@ -6,13 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
-import { DecimalPipe, PercentPipe } from '@angular/common';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { DecimalPipe } from '@angular/common';
 import { UsuarioDto, UsuarioService } from '../../../core/services/usuario.service';
 
 @Component({
   selector: 'app-lista-usuarios',
   standalone: true,
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, MatMenuModule, DecimalPipe],
+  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, MatMenuModule, MatPaginatorModule, DecimalPipe],
   templateUrl: './lista-usuarios.html'
 })
 export class ListaUsuariosComponent implements OnInit {
@@ -22,6 +23,9 @@ export class ListaUsuariosComponent implements OnInit {
   readonly usuarios = signal<UsuarioDto[]>([]);
   readonly carregando = signal(true);
   readonly erroCarregamento = signal(false);
+  readonly total = signal(0);
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(10);
 
   ngOnInit(): void {
     this.carregar();
@@ -30,9 +34,19 @@ export class ListaUsuariosComponent implements OnInit {
   carregar(): void {
     this.carregando.set(true);
     this.erroCarregamento.set(false);
-    this.service.listar().subscribe({
-      next: (lista) => { this.usuarios.set(lista); this.carregando.set(false); },
+    this.service.listar(this.pagina(), this.tamanhoPagina()).subscribe({
+      next: (resultado) => {
+        this.usuarios.set(resultado.items);
+        this.total.set(resultado.total);
+        this.carregando.set(false);
+      },
       error: () => { this.erroCarregamento.set(true); this.carregando.set(false); }
     });
+  }
+
+  onPaginaChange(event: PageEvent): void {
+    this.pagina.set(event.pageIndex + 1);
+    this.tamanhoPagina.set(event.pageSize);
+    this.carregar();
   }
 }

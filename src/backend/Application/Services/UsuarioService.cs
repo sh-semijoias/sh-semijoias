@@ -1,4 +1,5 @@
 using ShSemijoias.Application.Common;
+using ShSemijoias.Application.DTOs;
 using ShSemijoias.Application.DTOs.Usuarios;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
@@ -11,9 +12,9 @@ public class UsuarioService(
     IPerfilRepository perfilRepository,
     IEmailService emailService) : IUsuarioService
 {
-    public async Task<IList<UsuarioDto>> ListarAsync()
+    public async Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina)
     {
-        var usuarios = await usuarioRepository.ListarAsync();
+        var (usuarios, total) = await usuarioRepository.ListarAsync(pagina, tamanhoPagina);
         var dtos = new List<UsuarioDto>();
 
         foreach (var u in usuarios)
@@ -22,7 +23,7 @@ public class UsuarioService(
             dtos.Add(new UsuarioDto(u.Id, u.Nome, u.Email!, roles.FirstOrDefault() ?? string.Empty, u.PercentualComissao));
         }
 
-        return dtos;
+        return Result<ListaPaginada<UsuarioDto>>.Ok(new ListaPaginada<UsuarioDto>(dtos, total, pagina, tamanhoPagina));
     }
 
     public async Task<UsuarioDto?> ObterPorIdAsync(Guid id)

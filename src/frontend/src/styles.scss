@@ -72,12 +72,33 @@ mat-card {
   ));
 }
 
-mat-card .mat-mdc-table {
-  background-color: transparent;
-}
+mat-card {
+  .mat-mdc-table {
+    background-color: transparent;
+  }
 
-mat-card .mat-mdc-table .mat-column-acoes {
-  background-color: var(--mat-card-elevated-container-color);
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    background-color: transparent;
+  }
+
+  .mat-mdc-header-cell {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .mat-mdc-row {
+    transition: background-color 150ms ease;
+  }
+
+  .mat-mdc-paginator {
+    background-color: transparent;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--mat-sys-outline);
+  }
 }
 
 /* You can add global styles to this file, and also import other style files */

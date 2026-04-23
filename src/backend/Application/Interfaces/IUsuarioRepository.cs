@@ -4,7 +4,7 @@ namespace ShSemijoias.Application.Interfaces;
 
 public interface IUsuarioRepository
 {
-    Task<IList<Usuario>> ListarAsync();
+    Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina);
     Task<Usuario?> ObterPorIdAsync(Guid id);
     Task<Usuario?> ObterPorEmailAsync(string email);
     Task<IList<string>> ObterPerfisAsync(Usuario usuario);

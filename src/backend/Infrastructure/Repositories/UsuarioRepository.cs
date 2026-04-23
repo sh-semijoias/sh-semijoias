@@ -6,8 +6,13 @@ namespace ShSemijoias.Infrastructure.Repositories;
 
 public class UsuarioRepository(UserManager<Usuario> userManager) : IUsuarioRepository
 {
-    public Task<IList<Usuario>> ListarAsync() =>
-        Task.FromResult<IList<Usuario>>(userManager.Users.ToList());
+    public Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina)
+    {
+        var query = userManager.Users.OrderBy(u => u.Nome);
+        var total = query.Count();
+        var items = query.Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
+        return Task.FromResult<(IList<Usuario>, int)>((items, total));
+    }
 
     public Task<Usuario?> ObterPorIdAsync(Guid id) =>
         userManager.FindByIdAsync(id.ToString());
