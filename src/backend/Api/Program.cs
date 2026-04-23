@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using ShSemijoias.Application.Interfaces;
+using ShSemijoias.Application.Services;
 using ShSemijoias.Domain.Entities;
+using ShSemijoias.Infrastructure.Email;
 using ShSemijoias.Infrastructure.Persistence;
+using ShSemijoias.Infrastructure.Repositories;
 using ShSemijoias.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +31,12 @@ builder.Services.AddIdentity<Usuario, Perfil>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IPerfilRepository, PerfilRepository>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IPerfilService, PerfilService>();
+builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
 
 var app = builder.Build();
 

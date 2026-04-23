@@ -1,0 +1,64 @@
+<div class="p-6 max-w-lg">
+  <div class="flex items-center gap-2 mb-6">
+    <a mat-icon-button routerLink="/"><mat-icon>arrow_back</mat-icon></a>
+    <h2 class="text-xl font-semibold">{{ modoEdicao() ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
+  </div>
+
+  @if (carregando()) {
+    <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4">
+      <mat-form-field>
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="nome" />
+        @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+          <mat-error>Nome é obrigatório</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>E-mail</mat-label>
+        <input matInput formControlName="email" type="email" />
+        @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+          <mat-error>E-mail é obrigatório</mat-error>
+        }
+        @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+          <mat-error>E-mail inválido</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Perfil</mat-label>
+        <mat-select formControlName="perfil">
+          @for (p of perfis(); track p.id) {
+            <mat-option [value]="p.nome">{{ p.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.get('perfil')?.invalid && form.get('perfil')?.touched) {
+          <mat-error>Perfil é obrigatório</mat-error>
+        }
+      </mat-form-field>
+
+      @if (mostrarComissao()) {
+        <mat-form-field>
+          <mat-label>Percentual de Comissão (%)</mat-label>
+          <input matInput formControlName="percentualComissao" type="number" min="0" max="100" step="0.01" />
+          @if (form.get('percentualComissao')?.invalid && form.get('percentualComissao')?.touched) {
+            <mat-error>Percentual de comissão é obrigatório para Revendedor</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      @if (erro()) {
+        <p class="text-red-600 text-sm">{{ erro() }}</p>
+      }
+
+      <div class="flex gap-3 mt-2">
+        <button mat-raised-button color="primary" type="submit" [disabled]="salvando()">
+          @if (salvando()) { <mat-spinner diameter="20" /> } @else { Salvar }
+        </button>
+        <a mat-button routerLink="/">Cancelar</a>
+      </div>
+    </form>
+  }
+</div>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ShSemijoias.Domain.Entities;
+using ShSemijoias.Domain.Enums;
 
 namespace ShSemijoias.Infrastructure.Seed;
 
@@ -15,12 +16,12 @@ public static class AdminSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger(nameof(AdminSeeder));
 
-        const string perfilAdmin = "Administrador";
         const string emailAdmin = "admin@shsemijoias.com.br";
         const string senhaAdmin = "Admin@12345";
 
-        if (!await roleManager.RoleExistsAsync(perfilAdmin))
-            await roleManager.CreateAsync(new Perfil { Name = perfilAdmin });
+        foreach (var perfil in new[] { Perfis.Administrador, Perfis.Revendedor })
+            if (!await roleManager.RoleExistsAsync(perfil))
+                await roleManager.CreateAsync(new Perfil { Name = perfil });
 
         if (await userManager.FindByEmailAsync(emailAdmin) is null)
         {
@@ -28,11 +29,12 @@ public static class AdminSeeder
             {
                 UserName = "admin",
                 Email = emailAdmin,
+                Nome = "Administrador",
                 EmailConfirmed = true
             };
             var resultado = await userManager.CreateAsync(admin, senhaAdmin);
             if (resultado.Succeeded)
-                await userManager.AddToRoleAsync(admin, perfilAdmin);
+                await userManager.AddToRoleAsync(admin, Perfis.Administrador);
             else
                 logger.LogError("Falha ao criar admin: {Erros}",
                     string.Join(", ", resultado.Errors.Select(e => e.Description)));

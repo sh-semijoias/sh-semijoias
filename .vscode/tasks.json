@@ -46,6 +46,16 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "backend: wait",
+      "type": "shell",
+      "command": "until curl -sf http://localhost:5224/scalar/v1 > /dev/null; do sleep 1; done",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ng: serve",
       "type": "npm",
       "script": "start",
       "isBackground": true,
@@ -65,6 +75,12 @@
           }
         }
       }
+    },
+    {
+      "label": "npm: start",
+      "dependsOn": ["backend: wait", "ng: serve"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     },
     {
       "type": "npm",

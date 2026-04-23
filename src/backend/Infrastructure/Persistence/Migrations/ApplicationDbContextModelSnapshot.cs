@@ -178,6 +178,10 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -188,6 +192,9 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("PercentualComissao")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
