@@ -1,59 +1,53 @@
-# Frontend
+# Frontend — SH Semijoias
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.6.
+> Parte do projeto [SH Semijoias](../../README.md).
 
-## Development server
+SPA construída com Angular 21 usando standalone components.
 
-To start a local development server, run:
+## Tecnologias
 
-```bash
-ng serve
-```
+- **Angular 21** — framework principal (standalone components, sem NgModule)
+- **Angular Material 21** — biblioteca de componentes UI
+- **Tailwind CSS 4** — utilitários de estilo
+- **Vitest** — testes unitários
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Pré-requisito
 
-## Code scaffolding
+- [Node.js 22+](https://nodejs.org/)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Rodando
 
 ```bash
-ng generate --help
+npm install
+npm start       # dev server em http://localhost:4200
 ```
 
-## Building
+## Comandos
 
-To build the project run:
+| Comando | Descrição |
+|---|---|
+| `npm start` | Inicia o servidor de desenvolvimento |
+| `npm test` | Executa os testes com Vitest |
+| `npm run build` | Gera o build de produção em `dist/` |
+| `npm run watch` | Build incremental em modo desenvolvimento |
 
-```bash
-ng build
+## Estrutura
+
+```
+src/app/
+├── core/       → Serviços singleton, guards e interceptors
+├── pages/      → Componentes de página
+└── shared/     → Componentes, pipes e diretivas reutilizáveis
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Estilo e tema
 
-## Running unit tests
+O app suporta tema **claro e escuro**, controlado pelo `AppComponent` e persistido em `localStorage`. O estilo é composto por:
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+- Angular Material para componentes
+- Tailwind CSS para utilitários via `src/tailwind.css`
+- SCSS por componente para personalizações específicas
 
-```bash
-ng test
-```
+## Responsividade
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Breakpoint mobile em **600px**, gerenciado pelo `MediaMatcher` do Angular CDK no `AppComponent`.

@@ -2,6 +2,39 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "docker: up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ng: stop",
+      "type": "shell",
+      "command": "pkill -f 'ng serve' || true",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "dotnet: build",
       "type": "process",
       "command": "dotnet",
@@ -13,6 +46,16 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "backend: wait",
+      "type": "shell",
+      "command": "until curl -sf http://localhost:5224/scalar/v1 > /dev/null; do sleep 1; done",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ng: serve",
       "type": "npm",
       "script": "start",
       "isBackground": true,
@@ -34,6 +77,13 @@
       }
     },
     {
+      "label": "npm: start",
+      "dependsOn": ["backend: wait", "ng: serve"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "ng: test",
       "type": "npm",
       "script": "test",
       "isBackground": true,

@@ -1,0 +1,13 @@
+using ShSemijoias.Application.Common;
+using ShSemijoias.Application.DTOs;
+using ShSemijoias.Application.DTOs.Usuarios;
+
+namespace ShSemijoias.Application.Interfaces;
+
+public interface IUsuarioService
+{
+    Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina);
+    Task<UsuarioDto?> ObterPorIdAsync(Guid id);
+    Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl);
+    Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto);
+}
