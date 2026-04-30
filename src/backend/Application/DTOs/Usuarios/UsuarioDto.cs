@@ -4,6 +4,5 @@ public record UsuarioDto(
     Guid Id,
     string Nome,
     string Email,
-    string Perfil,
-    decimal? PercentualComissao
+    string Perfil
 );

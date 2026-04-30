@@ -30,7 +30,9 @@ public static class AdminSeeder
                 UserName = "admin",
                 Email = emailAdmin,
                 Nome = "Administrador",
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                DataCadastro = DateTime.UtcNow,
+                DataAtualizacao = DateTime.UtcNow
             };
             var resultado = await userManager.CreateAsync(admin, senhaAdmin);
             if (resultado.Succeeded)
