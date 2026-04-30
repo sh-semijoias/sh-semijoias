@@ -12,6 +12,7 @@
 
     // Qualidade de código
     "esbenp.prettier-vscode",
-    "editorconfig.editorconfig"
+    "editorconfig.editorconfig",
+    "ckolkman.vscode-postgres"
   ]
 }

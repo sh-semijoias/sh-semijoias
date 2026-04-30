@@ -3,7 +3,6 @@ using ShSemijoias.Application.DTOs;
 using ShSemijoias.Application.DTOs.Usuarios;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
-using ShSemijoias.Domain.Enums;
 
 namespace ShSemijoias.Application.Services;
 
@@ -20,7 +19,7 @@ public class UsuarioService(
         foreach (var u in usuarios)
         {
             var roles = await usuarioRepository.ObterPerfisAsync(u);
-            dtos.Add(new UsuarioDto(u.Id, u.Nome, u.Email!, roles.FirstOrDefault() ?? string.Empty, u.PercentualComissao));
+            dtos.Add(new UsuarioDto(u.Id, u.Nome, u.Email!, roles.FirstOrDefault() ?? string.Empty));
         }
 
         return Result<ListaPaginada<UsuarioDto>>.Ok(new ListaPaginada<UsuarioDto>(dtos, total, pagina, tamanhoPagina));
@@ -32,21 +31,13 @@ public class UsuarioService(
         if (usuario is null) return null;
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email!, roles.FirstOrDefault() ?? string.Empty, usuario.PercentualComissao);
+        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty);
     }
 
     public async Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl)
     {
-        var erros = new List<string>();
-
         if (!await perfilRepository.ExisteAsync(dto.Perfil))
-            erros.Add($"Perfil '{dto.Perfil}' não existe.");
-
-        if (dto.Perfil == Perfis.Revendedor && dto.PercentualComissao is null)
-            erros.Add("O percentual de comissão é obrigatório para o perfil Revendedor.");
-
-        if (erros.Count > 0)
-            return Result<UsuarioDto>.Falha(erros);
+            return Result<UsuarioDto>.Falha($"Perfil '{dto.Perfil}' não existe.");
 
         if (await usuarioRepository.ObterPorEmailAsync(dto.Email) is not null)
             return Result<UsuarioDto>.Falha("Já existe um usuário cadastrado com este e-mail.", TipoErro.Conflito);
@@ -56,7 +47,8 @@ public class UsuarioService(
             UserName = dto.Email,
             Email = dto.Email,
             Nome = dto.Nome,
-            PercentualComissao = dto.Perfil == Perfis.Revendedor ? dto.PercentualComissao : null
+            DataCadastro = DateTime.UtcNow,
+            DataAtualizacao = DateTime.UtcNow
         };
 
         await usuarioRepository.CriarAsync(usuario);
@@ -67,28 +59,20 @@ public class UsuarioService(
         await emailService.EnviarConviteAsync(dto.Email, link);
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email!, roles.FirstOrDefault() ?? string.Empty, usuario.PercentualComissao));
+        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty));
     }
 
     public async Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto)
     {
-        var erros = new List<string>();
-
         if (!await perfilRepository.ExisteAsync(dto.Perfil))
-            erros.Add($"Perfil '{dto.Perfil}' não existe.");
-
-        if (dto.Perfil == Perfis.Revendedor && dto.PercentualComissao is null)
-            erros.Add("O percentual de comissão é obrigatório para o perfil Revendedor.");
-
-        if (erros.Count > 0)
-            return Result<UsuarioDto>.Falha(erros);
+            return Result<UsuarioDto>.Falha($"Perfil '{dto.Perfil}' não existe.");
 
         var usuario = await usuarioRepository.ObterPorIdAsync(id);
         if (usuario is null)
             return Result<UsuarioDto>.Falha("Usuário não encontrado.", TipoErro.NaoEncontrado);
 
         usuario.Nome = dto.Nome;
-        usuario.PercentualComissao = dto.Perfil == Perfis.Revendedor ? dto.PercentualComissao : null;
+        usuario.DataAtualizacao = DateTime.UtcNow;
 
         var rolesAtuais = await usuarioRepository.ObterPerfisAsync(usuario);
         var perfilAtual = rolesAtuais.FirstOrDefault();
@@ -103,6 +87,6 @@ public class UsuarioService(
         await usuarioRepository.AtualizarAsync(usuario);
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email!, roles.FirstOrDefault() ?? string.Empty, usuario.PercentualComissao));
+        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty));
     }
 }

@@ -5,5 +5,6 @@ namespace ShSemijoias.Domain.Entities;
 public class Usuario : IdentityUser<Guid>
 {
     public string Nome { get; set; } = string.Empty;
-    public decimal? PercentualComissao { get; set; }
+    public DateTime DataCadastro { get; set; }
+    public DateTime DataAtualizacao { get; set; }
 }
