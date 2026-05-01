@@ -7,19 +7,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { DecimalPipe } from '@angular/common';
 import { UsuarioDto, UsuarioService } from '../../../core/services/usuario.service';
 
 @Component({
   selector: 'app-lista-usuarios',
   standalone: true,
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, MatMenuModule, MatPaginatorModule, DecimalPipe],
+  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule, MatMenuModule, MatPaginatorModule],
   templateUrl: './lista-usuarios.html'
 })
 export class ListaUsuariosComponent implements OnInit {
   private readonly service = inject(UsuarioService);
 
-  readonly colunas = ['nome', 'email', 'perfil', 'comissao', 'acoes'];
+  readonly colunas = ['nome', 'email', 'perfil', 'telefone', 'acoes'];
   readonly usuarios = signal<UsuarioDto[]>([]);
   readonly carregando = signal(true);
   readonly erroCarregamento = signal(false);

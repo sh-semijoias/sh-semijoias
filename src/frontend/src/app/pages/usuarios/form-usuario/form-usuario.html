@@ -41,19 +41,20 @@
             }
           </mat-form-field>
 
-          @if (mostrarComissao()) {
-            <mat-form-field appearance="outline">
-              <mat-label>Percentual de Comissão (%)</mat-label>
-              <input matInput formControlName="percentualComissao" type="number" min="0" max="100" step="0.01" />
-              @if (form.get('percentualComissao')?.invalid && form.get('percentualComissao')?.touched) {
-                <mat-error>Percentual de comissão é obrigatório para Revendedor</mat-error>
-              }
-            </mat-form-field>
-          }
-
-          @if (erro()) {
-            <p class="text-red-600 text-sm">{{ erro() }}</p>
-          }
+          <mat-form-field appearance="outline">
+            <mat-label>Telefone</mat-label>
+            <input matInput formControlName="telefone"
+                   [mask]="'(00) 00000-0000||(00) 0000-0000'"
+                   [dropSpecialCharacters]="false"
+                   [validation]="true"
+                   placeholder="(XX) XXXXX-XXXX" />
+            @if (form.get('telefone')?.hasError('required') && form.get('telefone')?.touched) {
+              <mat-error>Telefone é obrigatório</mat-error>
+            }
+            @if (form.get('telefone')?.hasError('mask') && form.get('telefone')?.touched) {
+              <mat-error>Telefone inválido</mat-error>
+            }
+          </mat-form-field>
 
           <div class="flex gap-3 mt-2">
             <button mat-flat-button type="submit" [disabled]="salvando()">

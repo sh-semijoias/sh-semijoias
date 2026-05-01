@@ -2,6 +2,8 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { MatPaginatorIntl } from '@angular/material/paginator';
+import { provideNgxMask } from 'ngx-mask';
+import { errorInterceptor } from './core/interceptors/error.interceptor';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/services/auth.interceptor';
@@ -25,8 +27,9 @@ function paginatorIntlPtBr(): MatPaginatorIntl {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideRouter(routes),
+    provideNgxMask(),
     { provide: MatPaginatorIntl, useFactory: paginatorIntlPtBr }
   ]
 };
