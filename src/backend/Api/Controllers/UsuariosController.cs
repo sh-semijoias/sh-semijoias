@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Usuarios;
@@ -7,6 +8,7 @@ namespace ShSemijoias.Api.Controllers;
 
 [ApiController]
 [Route("api/usuarios")]
+[Authorize]
 public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
 {
     [HttpGet]
