@@ -5,7 +5,8 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
-import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -19,9 +20,13 @@ export class App implements OnDestroy {
   protected readonly isMobile = signal(true);
   protected readonly snavOpen = signal(false);
   protected readonly darkMode = signal(false);
+  protected readonly isLogin = signal(false);
 
   private readonly _mobileQuery: MediaQueryList;
   private readonly _mobileQueryListener: () => void;
+
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   constructor() {
     const media = inject(MediaMatcher);
@@ -36,6 +41,13 @@ export class App implements OnDestroy {
     this.darkMode.set(prefersDark);
     document.documentElement.classList.toggle('dark-mode', prefersDark);
     document.documentElement.classList.toggle('light-mode', !prefersDark);
+
+    this.isLogin.set(this.router.url.startsWith('/login'));
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.isLogin.set(event.urlAfterRedirects.startsWith('/login'));
+      }
+    });
   }
 
   protected toggleDarkMode(): void {
@@ -44,6 +56,17 @@ export class App implements OnDestroy {
     localStorage.setItem('darkMode', String(isDark));
     document.documentElement.classList.toggle('dark-mode', isDark);
     document.documentElement.classList.toggle('light-mode', !isDark);
+  }
+
+  protected isLoginRoute(): boolean {
+    return this.isLogin();
+  }
+
+  protected sair(): void {
+    this.authService.logout().subscribe({
+      next: () => this.router.navigateByUrl('/login'),
+      error: () => this.router.navigateByUrl('/login')
+    });
   }
 
   ngOnDestroy(): void {
