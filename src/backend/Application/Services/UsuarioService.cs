@@ -1,4 +1,5 @@
 using ShSemijoias.Application.Common;
+using ShSemijoias.Application.Common.Validators;
 using ShSemijoias.Application.DTOs;
 using ShSemijoias.Application.DTOs.Usuarios;
 using ShSemijoias.Application.Interfaces;
@@ -19,7 +20,7 @@ public class UsuarioService(
         foreach (var u in usuarios)
         {
             var roles = await usuarioRepository.ObterPerfisAsync(u);
-            dtos.Add(new UsuarioDto(u.Id, u.Nome, u.Email!, roles.FirstOrDefault() ?? string.Empty));
+            dtos.Add(new UsuarioDto(u.Id, u.Nome, u.Email!, roles.FirstOrDefault() ?? string.Empty, u.PhoneNumber));
         }
 
         return Result<ListaPaginada<UsuarioDto>>.Ok(new ListaPaginada<UsuarioDto>(dtos, total, pagina, tamanhoPagina));
@@ -31,22 +32,40 @@ public class UsuarioService(
         if (usuario is null) return null;
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty);
+        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber);
     }
 
     public async Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl)
     {
+        var erros = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(dto.Nome)) erros.Add("Nome é obrigatório.");
+        if (string.IsNullOrWhiteSpace(dto.Telefone)) erros.Add("Telefone é obrigatório.");
+
+        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros);
+
+        dto = dto with { Nome = dto.Nome.Trim(), Email = dto.Email.Trim(), Telefone = dto.Telefone.Trim() };
+
+        var telefoneValido = TelefoneValidator.IsValid(dto.Telefone);
+        if (!telefoneValido) erros.Add("Telefone inválido. Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX.");
+
         if (!await perfilRepository.ExisteAsync(dto.Perfil))
-            return Result<UsuarioDto>.Falha($"Perfil '{dto.Perfil}' não existe.");
+            erros.Add($"Perfil '{dto.Perfil}' não existe.");
 
         if (await usuarioRepository.ObterPorEmailAsync(dto.Email) is not null)
-            return Result<UsuarioDto>.Falha("Já existe um usuário cadastrado com este e-mail.", TipoErro.Conflito);
+            erros.Add("Já existe um usuário cadastrado com este e-mail.");
+
+        if (telefoneValido && await usuarioRepository.ObterPorTelefoneAsync(dto.Telefone) is not null)
+            erros.Add("Já existe um usuário cadastrado com este telefone.");
+
+        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros, TipoErro.Conflito);
 
         var usuario = new Usuario
         {
             UserName = dto.Email,
             Email = dto.Email,
             Nome = dto.Nome,
+            PhoneNumber = dto.Telefone,
             DataCadastro = DateTime.UtcNow,
             DataAtualizacao = DateTime.UtcNow
         };
@@ -59,19 +78,37 @@ public class UsuarioService(
         await emailService.EnviarConviteAsync(dto.Email, link);
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty));
+        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber));
     }
 
     public async Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto)
     {
+        var erros = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(dto.Nome)) erros.Add("Nome é obrigatório.");
+        if (string.IsNullOrWhiteSpace(dto.Telefone)) erros.Add("Telefone é obrigatório.");
+
+        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros);
+
+        dto = dto with { Nome = dto.Nome.Trim(), Telefone = dto.Telefone.Trim() };
+
+        var telefoneValido = TelefoneValidator.IsValid(dto.Telefone);
+        if (!telefoneValido) erros.Add("Telefone inválido. Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX.");
+
         if (!await perfilRepository.ExisteAsync(dto.Perfil))
-            return Result<UsuarioDto>.Falha($"Perfil '{dto.Perfil}' não existe.");
+            erros.Add($"Perfil '{dto.Perfil}' não existe.");
 
         var usuario = await usuarioRepository.ObterPorIdAsync(id);
         if (usuario is null)
             return Result<UsuarioDto>.Falha("Usuário não encontrado.", TipoErro.NaoEncontrado);
 
+        if (telefoneValido && await usuarioRepository.ObterPorTelefoneAsync(dto.Telefone) is { } existente && existente.Id != id)
+            erros.Add("Já existe um usuário cadastrado com este telefone.");
+
+        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros, TipoErro.Conflito);
+
         usuario.Nome = dto.Nome;
+        usuario.PhoneNumber = dto.Telefone;
         usuario.DataAtualizacao = DateTime.UtcNow;
 
         var rolesAtuais = await usuarioRepository.ObterPerfisAsync(usuario);
@@ -87,6 +124,6 @@ public class UsuarioService(
         await usuarioRepository.AtualizarAsync(usuario);
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty));
+        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber));
     }
 }

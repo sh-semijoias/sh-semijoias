@@ -14,20 +14,20 @@ export interface UsuarioDto {
   nome: string;
   email: string;
   perfil: string;
-  percentualComissao: number | null;
+  telefone: string | null;
 }
 
 export interface CriarUsuarioDto {
   nome: string;
   email: string;
   perfil: string;
-  percentualComissao: number | null;
+  telefone: string;
 }
 
 export interface EditarUsuarioDto {
   nome: string;
   perfil: string;
-  percentualComissao: number | null;
+  telefone: string;
 }
 
 @Injectable({ providedIn: 'root' })

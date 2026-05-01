@@ -8,9 +8,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { NgxMaskDirective } from 'ngx-mask';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { PerfilDto, PerfilService } from '../../../core/services/perfil.service';
-import { Perfil } from '../../../core/enums/perfil.enum';
 
 @Component({
   selector: 'app-form-usuario',
@@ -18,7 +19,8 @@ import { Perfil } from '../../../core/enums/perfil.enum';
   imports: [
     ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule,
+    NgxMaskDirective
   ],
   templateUrl: './form-usuario.html'
 })
@@ -28,13 +30,12 @@ export class FormUsuarioComponent implements OnInit {
   private readonly perfilService = inject(PerfilService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly perfis = signal<PerfilDto[]>([]);
   readonly modoEdicao = signal(false);
   readonly carregando = signal(false);
   readonly salvando = signal(false);
-  readonly mostrarComissao = signal(false);
-  readonly erro = signal('');
 
   private usuarioId: string | null = null;
 
@@ -42,7 +43,7 @@ export class FormUsuarioComponent implements OnInit {
     nome: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     perfil: ['', Validators.required],
-    percentualComissao: [null as number | null]
+    telefone: [null as string | null, Validators.required]
   });
 
   ngOnInit(): void {
@@ -55,28 +56,12 @@ export class FormUsuarioComponent implements OnInit {
       this.carregando.set(true);
       this.service.obterPorId(this.usuarioId).subscribe({
         next: (u) => {
-          this.form.patchValue({ nome: u.nome, email: u.email, perfil: u.perfil, percentualComissao: u.percentualComissao });
-          this.atualizarComissao(u.perfil);
+          this.form.patchValue({ nome: u.nome, email: u.email, perfil: u.perfil, telefone: u.telefone });
           this.carregando.set(false);
         },
         error: () => this.carregando.set(false)
       });
     }
-
-    this.form.get('perfil')!.valueChanges.subscribe((perfil) => this.atualizarComissao(perfil ?? ''));
-  }
-
-  private atualizarComissao(perfil: string): void {
-    const ctrl = this.form.get('percentualComissao')!;
-    if (perfil === Perfil.Revendedor) {
-      this.mostrarComissao.set(true);
-      ctrl.setValidators(Validators.required);
-    } else {
-      this.mostrarComissao.set(false);
-      ctrl.clearValidators();
-      ctrl.setValue(null);
-    }
-    ctrl.updateValueAndValidity();
   }
 
   salvar(): void {
@@ -84,19 +69,24 @@ export class FormUsuarioComponent implements OnInit {
     if (this.form.invalid) return;
 
     this.salvando.set(true);
-    this.erro.set('');
 
-    const { nome, email, perfil, percentualComissao } = this.form.getRawValue();
+    const { nome, email, perfil, telefone } = this.form.getRawValue();
+
+    const onError = (e: { error?: { erros?: string[] } }) => {
+      const erros: string[] = e?.error?.erros ?? ['Erro ao salvar.'];
+      this.snackBar.open(erros.join('\n'), 'Fechar', { duration: 6000, panelClass: ['snack-error'] });
+      this.salvando.set(false);
+    };
 
     if (this.modoEdicao() && this.usuarioId) {
-      this.service.editar(this.usuarioId, { nome: nome!, perfil: perfil!, percentualComissao }).subscribe({
+      this.service.editar(this.usuarioId, { nome: nome!, perfil: perfil!, telefone: telefone! }).subscribe({
         next: () => this.router.navigate(['/usuarios']),
-        error: (e) => { this.erro.set(e?.error?.Erro ?? 'Erro ao salvar.'); this.salvando.set(false); }
+        error: onError
       });
     } else {
-      this.service.criar({ nome: nome!, email: email!, perfil: perfil!, percentualComissao }).subscribe({
+      this.service.criar({ nome: nome!, email: email!, perfil: perfil!, telefone: telefone! }).subscribe({
         next: () => this.router.navigate(['/usuarios']),
-        error: (e) => { this.erro.set(e?.error?.Erro ?? 'Erro ao salvar.'); this.salvando.set(false); }
+        error: onError
       });
     }
   }

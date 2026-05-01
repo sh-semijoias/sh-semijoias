@@ -7,6 +7,7 @@ public interface IUsuarioRepository
     Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina);
     Task<Usuario?> ObterPorIdAsync(Guid id);
     Task<Usuario?> ObterPorEmailAsync(string email);
+    Task<Usuario?> ObterPorTelefoneAsync(string telefone);
     Task<IList<string>> ObterPerfisAsync(Usuario usuario);
     Task CriarAsync(Usuario usuario);
     Task AdicionarPerfilAsync(Usuario usuario, string perfil);

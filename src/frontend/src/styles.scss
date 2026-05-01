@@ -99,6 +99,24 @@ mat-card {
     padding-top: 0.5rem;
     border-top: 1px solid var(--mat-sys-outline);
   }
+
+  td.mat-column-acoes,
+  th.mat-mdc-header-cell.mat-column-acoes {
+    background-color: var(--mat-card-elevated-container-color);
+  }
+}
+
+.snack-error .mdc-snackbar__surface {
+  background-color: var(--mat-sys-error) !important;
+  color: var(--mat-sys-on-error) !important;
+}
+
+.snack-error .mdc-snackbar__label {
+  white-space: pre-line;
+}
+
+.snack-error .mat-mdc-snack-bar-action {
+  color: var(--mat-sys-on-error) !important;
 }
 
 /* You can add global styles to this file, and also import other style files */

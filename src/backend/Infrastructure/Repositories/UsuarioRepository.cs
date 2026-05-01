@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
 
@@ -19,6 +20,9 @@ public class UsuarioRepository(UserManager<Usuario> userManager) : IUsuarioRepos
 
     public Task<Usuario?> ObterPorEmailAsync(string email) =>
         userManager.FindByEmailAsync(email);
+
+    public Task<Usuario?> ObterPorTelefoneAsync(string telefone) =>
+        userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == telefone);
 
     public async Task<IList<string>> ObterPerfisAsync(Usuario usuario) =>
         await userManager.GetRolesAsync(usuario);
