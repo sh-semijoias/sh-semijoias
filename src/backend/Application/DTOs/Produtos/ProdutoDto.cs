@@ -1,6 +1,6 @@
-namespace ShSemijoias.Application.DTOs.Usuarios;
+namespace ShSemijoias.Application.DTOs.Produtos;
 
-public record UsuarioDto(
+public record ProdutoDto(
     Guid IdProduto,
     string Data,
     string Descricao,

@@ -18,8 +18,7 @@ import { produtoService } from '../../../core/services/produto.service';
   imports: [
     ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule,
-    NgxMaskDirective
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatCardModule
   ],
   templateUrl: './form-produto.html'
 })
@@ -37,12 +36,11 @@ export class FormProdutoComponent implements OnInit {
   private produtoId: string | null = null;
 
   readonly form = this.fb.group({
-    data: ['', Validators.required]
-    //,
-    // descricao: ['', [Validators.required, Validators.email]],
-    // tipo: ['', Validators.required],
-    // precoCompra: [null as number | null, Validators.required],
-    // precoVendaSugerido: [null as number | null, Validators.required]
+    data: ['', Validators.required],
+    descricao: ['', [Validators.required]],
+    tipo: ['', Validators.required],
+    precoCompra: ['', Validators.required],
+    precoVendaSugerido: ['', Validators.required]
   });
 
 
@@ -55,17 +53,13 @@ export class FormProdutoComponent implements OnInit {
       this.carregando.set(true);
       this.service.obterPorId(this.produtoId).subscribe({
         next: (u) => {
-          this.form.patchValue({ data: u.data
-            // ,
-            // descricao: u.descricao, tipo: u.tipo, precoCompra: u.precoCompra, precoVendaSugerido: u.precoVendaSugerido
-           });
+          this.form.patchValue({ data: u.data,descricao: u.descricao, tipo: u.tipo, precoCompra:u.precoCompra, precoVendaSugerido:u.precoVendaSugerido});
           this.carregando.set(false);
         },
         error: () => this.carregando.set(false)
       });
     }
   }
-
 
   salvar(): void {
     this.form.markAllAsTouched();
@@ -74,7 +68,7 @@ export class FormProdutoComponent implements OnInit {
     this.salvando.set(true);
 
     const { data
-      // , descricao, tipo, precoCompra, precoVendaSugerido
+      , descricao, tipo, precoCompra, precoVendaSugerido
      } = this.form.getRawValue();
 
     const onError = (e: { error?: { erros?: string[] } }) => {
@@ -84,13 +78,12 @@ export class FormProdutoComponent implements OnInit {
     };
 
     if (this.modoEdicao() && this.produtoId) {
-      // this.service.editar(this.produtoId, {descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido! }).subscribe({
-      //   next: () => this.router.navigate(['/produtos']),
-      //   error: onError
-      // });
+      this.service.editar(this.produtoId, {descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido! }).subscribe({
+        next: () => this.router.navigate(['/produtos']),
+        error: onError
+      });
     } else {
-      this.service.criar({ data: data!
-        // , descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido!
+      this.service.criar({ data: data!, descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido!
        }).subscribe({
         next: () => this.router.navigate(['/produtos']),
         error: onError
