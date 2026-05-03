@@ -30,8 +30,20 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
         var total = await dbQuery.CountAsync();
 
-        var items = await dbQuery
-            .OrderBy(e => e.Produto.Descricao)
+        var itemsOrdenados = query.OrdenarPor switch
+        {
+            OrdenacaoEstoque.Categoria  => query.OrdemDecrescente
+                ? dbQuery.OrderByDescending(e => e.Produto.TipoProduto.Descricao)
+                : dbQuery.OrderBy(e => e.Produto.TipoProduto.Descricao),
+            OrdenacaoEstoque.Quantidade => query.OrdemDecrescente
+                ? dbQuery.OrderByDescending(e => e.Quantidade)
+                : dbQuery.OrderBy(e => e.Quantidade),
+            _                           => query.OrdemDecrescente
+                ? dbQuery.OrderByDescending(e => e.Produto.Descricao)
+                : dbQuery.OrderBy(e => e.Produto.Descricao),
+        };
+
+        var items = await itemsOrdenados
             .Skip((query.Pagina - 1) * query.TamanhoPagina)
             .Take(query.TamanhoPagina)
             .Select(e => new EstoqueDto(

@@ -12,9 +12,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { EstoqueDto, EstoqueService } from '../../../core/services/estoque.service';
+import { EstoqueDto, EstoqueService, OrdenacaoEstoque } from '../../../core/services/estoque.service';
 
 @Component({
   selector: 'app-lista-estoque',
@@ -33,12 +34,19 @@ import { EstoqueDto, EstoqueService } from '../../../core/services/estoque.servi
     MatInputModule,
     MatSelectModule,
     MatChipsModule,
+    MatSortModule,
   ],
   templateUrl: './lista-estoque.html'
 })
 export class ListaEstoqueComponent implements OnInit, OnDestroy {
   private readonly service = inject(EstoqueService);
   private readonly destroy$ = new Subject<void>();
+
+  private readonly colunaParaOrdenacao: Record<string, OrdenacaoEstoque> = {
+    produto:    OrdenacaoEstoque.Produto,
+    categoria:  OrdenacaoEstoque.Categoria,
+    quantidade: OrdenacaoEstoque.Quantidade,
+  };
 
   readonly colunas = ['produto', 'categoria', 'quantidade', 'acoes'];
   readonly itens = signal<EstoqueDto[]>([]);
@@ -47,8 +55,9 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
   readonly total = signal(0);
   readonly pagina = signal(1);
   readonly tamanhoPagina = signal(10);
-
   readonly emEstoque = signal<boolean | null>(null);
+  readonly ordenarPor = signal<OrdenacaoEstoque>(OrdenacaoEstoque.Produto);
+  readonly ordemDecrescente = signal(false);
 
   readonly buscaControl = new FormControl('');
 
@@ -78,6 +87,8 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
       tamanhoPagina: this.tamanhoPagina(),
       emEstoque: this.emEstoque() ?? undefined,
       busca: this.buscaControl.value ?? undefined,
+      ordenarPor: this.ordenarPor(),
+      ordemDecrescente: this.ordemDecrescente(),
     }).subscribe({
       next: (resultado) => {
         this.itens.set(resultado.items);
@@ -107,6 +118,13 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
   onPaginaChange(event: PageEvent): void {
     this.pagina.set(event.pageIndex + 1);
     this.tamanhoPagina.set(event.pageSize);
+    this.carregar();
+  }
+
+  aoOrdenar(sort: Sort): void {
+    this.ordenarPor.set(this.colunaParaOrdenacao[sort.active] ?? OrdenacaoEstoque.Produto);
+    this.ordemDecrescente.set(sort.direction === 'desc');
+    this.pagina.set(1);
     this.carregar();
   }
 }

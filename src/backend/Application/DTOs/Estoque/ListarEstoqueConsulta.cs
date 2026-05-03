@@ -5,5 +5,7 @@ public record ListarEstoqueConsulta(
     int TamanhoPagina,
     int? IdProduto,
     bool? EmEstoque,
-    string? Busca
+    string? Busca,
+    OrdenacaoEstoque OrdenarPor = OrdenacaoEstoque.Produto,
+    bool OrdemDecrescente = false
 );
