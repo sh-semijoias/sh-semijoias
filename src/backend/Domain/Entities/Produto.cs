@@ -7,4 +7,5 @@ public class Produto
     public string Tipo { get; set; } = null!;
     public decimal PrecoCompra { get; set; }
     public decimal PrecoVendaSugerido { get; set; }
+    public TipoProduto TipoProduto { get; set; }
 }

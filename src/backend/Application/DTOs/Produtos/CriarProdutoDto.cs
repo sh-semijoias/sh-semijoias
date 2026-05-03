@@ -4,6 +4,6 @@ public record CriarProdutoDto(
     string Data,
     string Descricao,
     string Tipo,
-    string PrecoCompra,
-    string PrecoVendaSugerido
+    decimal PrecoCompra,
+    decimal PrecoVendaSugerido
 );
