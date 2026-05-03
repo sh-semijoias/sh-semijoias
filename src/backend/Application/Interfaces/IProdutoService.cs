@@ -7,7 +7,7 @@ namespace ShSemijoias.Application.Interfaces;
 public interface IProdutoService
 {
     Task<Result<ListaPaginada<ProdutoDto>>> ListarAsync(int pagina, int tamanhoPagina);
-    Task<ProdutoDto?> ObterPorIdAsync(Guid id);
+    Task<ProdutoDto?> ObterPorIdAsync(int id);
     Task<Result<ProdutoDto>> CriarAsync(CriarProdutoDto dto, string baseUrl);
-    Task<Result<ProdutoDto>> EditarAsync(Guid id, EditarProdutoDto dto);
+    Task<Result<ProdutoDto>> EditarAsync(int id, EditarProdutoDto dto);
 }

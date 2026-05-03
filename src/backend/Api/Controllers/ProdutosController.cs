@@ -19,8 +19,8 @@ public class ProdutosController(IProdutoService produtoService) : ControllerBase
         return Ok(result.Valor);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> ObterPorId(Guid id)
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> ObterPorId(int id)
     {
         var dto = await produtoService.ObterPorIdAsync(id);
         return dto is null ? NotFound() : Ok(dto);
@@ -35,8 +35,8 @@ public class ProdutosController(IProdutoService produtoService) : ControllerBase
         return CreatedAtAction(nameof(ObterPorId), new { id = result.Valor!.IdProduto }, result.Valor);
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Editar(Guid id, [FromBody] EditarProdutoDto dto)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Editar(int id, [FromBody] EditarProdutoDto dto)
     {
         var result = await produtoService.EditarAsync(id, dto);
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
