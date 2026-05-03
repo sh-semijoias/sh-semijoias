@@ -29,6 +29,12 @@
             <mat-icon matListItemIcon>person</mat-icon>
             Usuários
           </a>
+          @if (authService.currentUser()?.role === 'Administrador') {
+            <a mat-list-item routerLink="/estoque" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>inventory_2</mat-icon>
+              Estoque
+            </a>
+          }
         </mat-nav-list>
       </mat-sidenav>
 
