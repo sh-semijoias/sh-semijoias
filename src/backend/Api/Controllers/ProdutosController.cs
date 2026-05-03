@@ -32,7 +32,7 @@ public class ProdutosController(IProdutoService produtoService) : ControllerBase
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var result = await produtoService.CriarAsync(dto, baseUrl);
         if (!result.Sucesso) return result.ToActionResult(this);
-        return CreatedAtAction(nameof(ObterPorId), new { id = result.Valor!.Id }, result.Valor);
+        return CreatedAtAction(nameof(ObterPorId), new { id = result.Valor!.IdProduto }, result.Valor);
     }
 
     [HttpPut("{id:guid}")]
