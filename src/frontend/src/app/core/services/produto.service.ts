@@ -14,23 +14,23 @@ export interface ProdutoDto {
   data: string;
   descricao: string;
   tipo: string;
-  precoCompra: number;
-  precoVendaSugerido: number;
+  precoCompra: string;
+  precoVendaSugerido: string;
 }
 
 export interface CriarProdutoDto {
   data: string;
-  // descricao: string;
-  // tipo: string;
-  // precoCompra: number;
-  // precoVendaSugerido: number;
+  descricao: string;
+  tipo: string;
+  precoCompra: string;
+  precoVendaSugerido: string;
 }
 
 export interface EditarProdutoDto {
   descricao: string;
   tipo: string;
-  precoCompra: number;
-  precoVendaSugerido: number;
+  precoCompra: string;
+  precoVendaSugerido: string;
 }
 
 @Injectable({ providedIn: 'root' })
