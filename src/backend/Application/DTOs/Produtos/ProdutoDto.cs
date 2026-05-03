@@ -2,9 +2,9 @@ namespace ShSemijoias.Application.DTOs.Produtos;
 
 public record ProdutoDto(
     Guid IdProduto,
-    string Data,
+    DateTime Data,
     string Descricao,
     string Tipo,
-    string PrecoCompra,
-    string PrecoVendaSugerido
+    decimal PrecoCompra,
+    decimal PrecoVendaSugerido
 );

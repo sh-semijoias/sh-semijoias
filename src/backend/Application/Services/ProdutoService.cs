@@ -50,11 +50,13 @@ public class ProdutoService(
 
         var produto = new Produto
         {
+            idProduto = dto.IdProduto,
             data = DateTime.UtcNow,
             descricao = dto.Descricao,
             tipo = dto.Tipo,
             PrecoCompra = dto.PrecoCompra,
             PrecoVendaSugerido = dto.PrecoVendaSugerido,
+
         };
 
         await produtoRepository.CriarAsync(produto);
