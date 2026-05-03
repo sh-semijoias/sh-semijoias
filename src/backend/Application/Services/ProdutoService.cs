@@ -17,7 +17,7 @@ public class ProdutoService(
 
         foreach (var u in produtos)
         {
-            var roles = await produtoRepository.ObterPerfisAsync(u);
+            var roles = await produtoRepository.ObterProdutosAsync(u);
             dtos.Add(new ProdutoDto(u.IdProduto, u.Data, u.Descricao, u.Tipo, u.PrecoCompra, u.PrecoVendaSugerido));
         }
 
@@ -28,7 +28,7 @@ public class ProdutoService(
         var produto = await produtoRepository.ObterPorIdAsync(id);
         if (produto is null) return null;
 
-        var roles = await produtoRepository.ObterPerfisAsync(produto);
+        var roles = await produtoRepository.ObterProdutosAsync(produto);
         return new ProdutoDto(produto.IdProduto, produto.Data, produto.Descricao, produto.Tipo, produto.PrecoCompra, produto.PrecoVendaSugerido);
     }
 
@@ -91,12 +91,12 @@ public class ProdutoService(
         produto.PrecoVendaSugerido = dto.PrecoVendaSugerido;
         produto.DataAtualizacao = DateTime.UtcNow;
 
-        var rolesAtuais = await produtoRepository.ObterPerfisAsync(produto);
+        var rolesAtuais = await produtoRepository.ObterProdutosAsync(produto);
         var perfilAtual = rolesAtuais.FirstOrDefault();
 
         await produtoRepository.AtualizarAsync(produto);
 
-        var roles = await produtoRepository.ObterPerfisAsync(produto);
+        var roles = await produtoRepository.ObterProdutosAsync(produto);
         return Result<ProdutoDto>.Ok(new ProdutoDto(produto.Id, produto.Data, produto.Descricao, produto.Tipo, produto.PrecoCompra, produto.PrecoVendaSugerido));
     }
 }
