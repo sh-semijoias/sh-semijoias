@@ -37,11 +37,12 @@ export class FormProdutoComponent implements OnInit {
   private produtoId: string | null = null;
 
   readonly form = this.fb.group({
-    data: ['', Validators.required],
-    descricao: ['', [Validators.required, Validators.email]],
-    tipo: ['', Validators.required],
-    precoCompra: [null as number | null, Validators.required],
-    precoVendaSugerido: [null as number | null, Validators.required]
+    data: ['', Validators.required]
+    //,
+    // descricao: ['', [Validators.required, Validators.email]],
+    // tipo: ['', Validators.required],
+    // precoCompra: [null as number | null, Validators.required],
+    // precoVendaSugerido: [null as number | null, Validators.required]
   });
 
 
@@ -50,11 +51,14 @@ export class FormProdutoComponent implements OnInit {
     this.produtoId = this.route.snapshot.paramMap.get('id');
     if (this.produtoId) {
       this.modoEdicao.set(true);
-      this.form.get('email')!.disable();
+      this.form.get('data')!.disable();
       this.carregando.set(true);
       this.service.obterPorId(this.produtoId).subscribe({
         next: (u) => {
-          this.form.patchValue({ data: u.data, descricao: u.descricao, tipo: u.tipo, precoCompra: u.precoCompra, precoVendaSugerido: u.precoVendaSugerido });
+          this.form.patchValue({ data: u.data
+            // ,
+            // descricao: u.descricao, tipo: u.tipo, precoCompra: u.precoCompra, precoVendaSugerido: u.precoVendaSugerido
+           });
           this.carregando.set(false);
         },
         error: () => this.carregando.set(false)
@@ -69,7 +73,9 @@ export class FormProdutoComponent implements OnInit {
 
     this.salvando.set(true);
 
-    const { data, descricao, tipo, precoCompra, precoVendaSugerido } = this.form.getRawValue();
+    const { data
+      // , descricao, tipo, precoCompra, precoVendaSugerido
+     } = this.form.getRawValue();
 
     const onError = (e: { error?: { erros?: string[] } }) => {
       const erros: string[] = e?.error?.erros ?? ['Erro ao salvar.'];
@@ -78,12 +84,14 @@ export class FormProdutoComponent implements OnInit {
     };
 
     if (this.modoEdicao() && this.produtoId) {
-      this.service.editar(this.produtoId, {descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido! }).subscribe({
-        next: () => this.router.navigate(['/produtos']),
-        error: onError
-      });
+      // this.service.editar(this.produtoId, {descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido! }).subscribe({
+      //   next: () => this.router.navigate(['/produtos']),
+      //   error: onError
+      // });
     } else {
-      this.service.criar({ data: data!, descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido! }).subscribe({
+      this.service.criar({ data: data!
+        // , descricao: descricao!, tipo: tipo!, precoCompra: precoCompra!, precoVendaSugerido: precoVendaSugerido!
+       }).subscribe({
         next: () => this.router.navigate(['/produtos']),
         error: onError
       });

@@ -20,10 +20,10 @@ export interface ProdutoDto {
 
 export interface CriarProdutoDto {
   data: string;
-  descricao: string;
-  tipo: string;
-  precoCompra: number;
-  precoVendaSugerido: number;
+  // descricao: string;
+  // tipo: string;
+  // precoCompra: number;
+  // precoVendaSugerido: number;
 }
 
 export interface EditarProdutoDto {
