@@ -42,15 +42,17 @@
         }
 
         <button
-          mat-raised-button
+          mat-flat-button
           color="primary"
           class="full"
           [disabled]="isLoading()"
         >
-          @if (isLoading()) {
-            <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
-          }
-          Entrar
+          <span class="flex items-center justify-center gap-2">
+            @if (isLoading()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+            }
+            Entrar
+          </span>
         </button>
       </form>
     </mat-card-content>
