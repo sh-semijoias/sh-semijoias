@@ -18,37 +18,37 @@
             }
           </mat-form-field>
 
-          <!-- <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline">
             <mat-label>Descricao</mat-label>
             <input matInput formControlName="descricao" />
             @if (form.get('descricao')?.invalid && form.get('descricao')?.touched) {
               <mat-error>Descrição é obrigatória</mat-error>
             }
-          </mat-form-field> -->
+          </mat-form-field>
 
-          <!-- <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline">
             <mat-label>Tipo</mat-label>
             <input matInput formControlName="tipo" />
             @if (form.get('tipo')?.invalid && form.get('tipo')?.touched) {
               <mat-error>Tipo é obrigatório</mat-error>
             }
-          </mat-form-field> -->
+          </mat-form-field>
 
-          <!-- <mat-form-field appearance="outline">
-            <mat-label>PrecoCompra</mat-label>
-            <input matInput formControlName="precoCompra" />
+          <mat-form-field appearance="outline">
+            <mat-label>Preço de compra</mat-label>
+            <input matInput type="number" formControlName="precoCompra" />
             @if (form.get('precoCompra')?.invalid && form.get('precoCompra')?.touched) {
               <mat-error>Preço de compra é obrigatório</mat-error>
             }
-          </mat-form-field> -->
+          </mat-form-field>
 
-          <!-- <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline">
             <mat-label>PrecoVenda</mat-label>
-            <input matInput formControlName="PrecoVenda" />
-            @if (form.get('PrecoVenda')?.invalid && form.get('PrecoVenda')?.touched) {
+            <input matInput formControlName="precoVendaSugerido" />
+            @if (form.get('precoVendaSugerido')?.invalid && form.get('precoVendaSugerido')?.touched) {
               <mat-error>Preço de venda é obrigatório</mat-error>
             }
-          </mat-form-field> -->
+          </mat-form-field>
 
           <div class="flex gap-3 mt-2">
             <button mat-flat-button type="submit" [disabled]="salvando()">
