@@ -5,7 +5,7 @@ public record EstoqueDto(
     int IdProduto,
     string Produto,
     int IdTipoProduto,
-    string Categoria,
+    string Tipo,
     int Quantidade,
     decimal PrecoCompra,
     decimal PrecoVendaSugerido

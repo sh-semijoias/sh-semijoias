@@ -56,10 +56,11 @@ public class EstoqueService(IEstoqueRepository estoqueRepository) : IEstoqueServ
         return Result<bool>.Ok(true);
     }
 
-    public async Task<Result<IList<ProdutoResumidoDto>>> ListarProdutosAsync()
+    public async Task<Result<ListaPaginada<ProdutoResumidoDto>>> ListarProdutosAsync(ListarProdutosConsulta consulta)
     {
-        var produtos = await estoqueRepository.ListarProdutosAsync();
-        var dtos = produtos.Select(p => new ProdutoResumidoDto(p.Id, p.Descricao)).ToList();
-        return Result<IList<ProdutoResumidoDto>>.Ok(dtos);
+        var (items, total) = await estoqueRepository.ListarProdutosAsync(consulta);
+        var dtos = items.Select(e => new ProdutoResumidoDto(e.IdProduto, e.Produto.Descricao, e.Quantidade)).ToList();
+        return Result<ListaPaginada<ProdutoResumidoDto>>.Ok(
+            new ListaPaginada<ProdutoResumidoDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
     }
 }

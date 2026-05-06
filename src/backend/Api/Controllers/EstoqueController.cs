@@ -27,9 +27,12 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
     }
 
     [HttpGet("produtos")]
-    public async Task<IActionResult> ListarProdutos()
+    public async Task<IActionResult> ListarProdutos(
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanhoPagina = 10,
+        [FromQuery] string? busca = null)
     {
-        var result = await estoqueService.ListarProdutosAsync();
+        var result = await estoqueService.ListarProdutosAsync(new ListarProdutosConsulta(pagina, tamanhoPagina, busca));
         return Ok(result.Valor);
     }
 

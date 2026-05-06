@@ -50,13 +50,13 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
 
   private readonly colunaParaOrdenacao: Record<string, OrdenacaoEstoque> = {
     produto:             OrdenacaoEstoque.Produto,
-    categoria:           OrdenacaoEstoque.Categoria,
+    tipo:                OrdenacaoEstoque.Tipo,
     quantidade:          OrdenacaoEstoque.Quantidade,
     precoCompra:         OrdenacaoEstoque.PrecoCompra,
     precoVendaSugerido:  OrdenacaoEstoque.PrecoVendaSugerido,
   };
 
-  readonly colunas = ['produto', 'categoria', 'quantidade', 'precoCompra', 'precoVendaSugerido', 'acoes'];
+  readonly colunas = ['produto', 'tipo', 'quantidade', 'precoCompra', 'precoVendaSugerido', 'acoes'];
   readonly itens = signal<EstoqueDto[]>([]);
   readonly carregando = signal(true);
   readonly erroCarregamento = signal(false);

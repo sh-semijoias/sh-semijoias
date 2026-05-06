@@ -9,5 +9,5 @@ public interface IEstoqueRepository
     Task<Estoque?> BuscarPorProdutoAsync(int idProduto);
     Task AdicionarAsync(Estoque estoque);
     Task SalvarAsync();
-    Task<IList<Produto>> ListarProdutosAsync();
+    Task<(IList<Estoque> Items, int Total)> ListarProdutosAsync(ListarProdutosConsulta consulta);
 }

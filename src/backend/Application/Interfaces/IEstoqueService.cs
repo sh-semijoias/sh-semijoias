@@ -8,5 +8,5 @@ public interface IEstoqueService
 {
     Task<Result<ListaPaginada<EstoqueDto>>> ListarAsync(ListarEstoqueConsulta query);
     Task<Result<bool>> RegistrarEntradaAsync(RegistrarEntradaEstoqueDto dto);
-    Task<Result<IList<ProdutoResumidoDto>>> ListarProdutosAsync();
+    Task<Result<ListaPaginada<ProdutoResumidoDto>>> ListarProdutosAsync(ListarProdutosConsulta consulta);
 }

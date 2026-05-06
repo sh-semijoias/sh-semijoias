@@ -5,7 +5,7 @@ import { ListaPaginada } from './usuario.service';
 
 export enum OrdenacaoEstoque {
   Produto = 0,
-  Categoria = 1,
+  Tipo = 1,
   Quantidade = 2,
   PrecoCompra = 3,
   PrecoVendaSugerido = 4,
@@ -16,7 +16,7 @@ export interface EstoqueDto {
   idProduto: number;
   produto: string;
   idTipoProduto: number;
-  categoria: string;
+  tipo: string;
   quantidade: number;
   precoCompra: number;
   precoVendaSugerido: number;
@@ -34,7 +34,7 @@ export interface ListarEstoqueFiltros {
 
 export interface ItemEntradaDto { idProduto: number; quantidade: number; }
 export interface RegistrarEntradaDto { itens: ItemEntradaDto[]; }
-export interface ProdutoResumidoDto { id: number; descricao: string; }
+export interface ProdutoResumidoDto { id: number; descricao: string; quantidade: number; }
 
 @Injectable({ providedIn: 'root' })
 export class EstoqueService {
@@ -55,8 +55,10 @@ export class EstoqueService {
     return this.http.get<ListaPaginada<EstoqueDto>>(this.baseUrl, { params });
   }
 
-  listarProdutos(): Observable<ProdutoResumidoDto[]> {
-    return this.http.get<ProdutoResumidoDto[]>(`${this.baseUrl}/produtos`);
+  listarProdutos(busca?: string, pagina = 1, tamanhoPagina = 10): Observable<ListaPaginada<ProdutoResumidoDto>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanhoPagina', tamanhoPagina);
+    if (busca) params = params.set('busca', busca);
+    return this.http.get<ListaPaginada<ProdutoResumidoDto>>(`${this.baseUrl}/produtos`, { params });
   }
 
   registrarEntrada(dto: RegistrarEntradaDto): Observable<void> {

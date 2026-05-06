@@ -33,7 +33,7 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
         var itemsOrdenados = query.OrdenarPor switch
         {
-            OrdenacaoEstoque.Categoria          => query.OrdemDecrescente
+            OrdenacaoEstoque.Tipo               => query.OrdemDecrescente
                 ? dbQuery.OrderByDescending(e => e.Produto.TipoProduto.Descricao)
                 : dbQuery.OrderBy(e => e.Produto.TipoProduto.Descricao),
             OrdenacaoEstoque.Quantidade         => query.OrdemDecrescente
@@ -68,8 +68,30 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
     public async Task SalvarAsync() =>
         await context.SaveChangesAsync();
 
-    public async Task<IList<Produto>> ListarProdutosAsync() =>
-        await context.Produtos
-            .OrderBy(p => p.Descricao)
+    public async Task<(IList<Estoque> Items, int Total)> ListarProdutosAsync(ListarProdutosConsulta consulta)
+    {
+        var baseQuery =
+            from p in context.Produtos
+            join e in context.Estoques.Where(e => e.IdMaleta == null)
+                on p.Id equals e.IdProduto into estGroup
+            from e in estGroup.DefaultIfEmpty()
+            select new { Produto = p, Quantidade = e == null ? 0 : e.Quantidade };
+
+        if (!string.IsNullOrWhiteSpace(consulta.Busca))
+            baseQuery = baseQuery.Where(x => EF.Functions.ILike(x.Produto.Descricao, $"%{consulta.Busca}%"));
+
+        var total = await baseQuery.CountAsync();
+
+        var raw = await baseQuery
+            .OrderBy(x => x.Produto.Descricao)
+            .Skip((consulta.Pagina - 1) * consulta.TamanhoPagina)
+            .Take(consulta.TamanhoPagina)
             .ToListAsync();
+
+        var items = raw
+            .Select(x => new Estoque { IdProduto = x.Produto.Id, Produto = x.Produto, Quantidade = x.Quantidade })
+            .ToList();
+
+        return (items, total);
+    }
 }
