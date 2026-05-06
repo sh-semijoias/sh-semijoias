@@ -1,4 +1,8 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, LOCALE_ID } from '@angular/core';
+import { CurrencyPipe, registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+
+registerLocaleData(localePt);
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -35,7 +39,9 @@ import { EstoqueDto, EstoqueService, OrdenacaoEstoque } from '../../../core/serv
     MatSelectModule,
     MatChipsModule,
     MatSortModule,
+    CurrencyPipe,
   ],
+  providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
   templateUrl: './lista-estoque.html'
 })
 export class ListaEstoqueComponent implements OnInit, OnDestroy {
@@ -48,7 +54,7 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
     quantidade: OrdenacaoEstoque.Quantidade,
   };
 
-  readonly colunas = ['produto', 'categoria', 'quantidade', 'acoes'];
+  readonly colunas = ['produto', 'categoria', 'quantidade', 'precoCompra', 'precoVendaSugerido', 'acoes'];
   readonly itens = signal<EstoqueDto[]>([]);
   readonly carregando = signal(true);
   readonly erroCarregamento = signal(false);

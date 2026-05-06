@@ -58,6 +58,16 @@
                 </td>
               </ng-container>
 
+              <ng-container matColumnDef="precoCompra">
+                <th mat-header-cell *matHeaderCellDef>Preço de Compra</th>
+                <td mat-cell *matCellDef="let item">{{ item.precoCompra | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="precoVendaSugerido">
+                <th mat-header-cell *matHeaderCellDef>Venda Sugerida</th>
+                <td mat-cell *matCellDef="let item">{{ item.precoVendaSugerido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
               <ng-container matColumnDef="acoes" stickyEnd>
                 <th mat-header-cell *matHeaderCellDef>Ações</th>
                 <td mat-cell *matCellDef="let item">

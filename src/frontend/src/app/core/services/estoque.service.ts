@@ -16,6 +16,8 @@ export interface EstoqueDto {
   idTipoProduto: number;
   categoria: string;
   quantidade: number;
+  precoCompra: number;
+  precoVendaSugerido: number;
 }
 
 export interface ListarEstoqueFiltros {

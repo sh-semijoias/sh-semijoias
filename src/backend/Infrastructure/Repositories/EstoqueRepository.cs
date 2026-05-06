@@ -52,7 +52,9 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
                 e.Produto.Descricao,
                 e.Produto.IdTipoProduto,
                 e.Produto.TipoProduto.Descricao,
-                e.Quantidade
+                e.Quantidade,
+                e.Produto.PrecoCompra,
+                e.Produto.PrecoVendaSugerido
             ))
             .ToListAsync();
 
