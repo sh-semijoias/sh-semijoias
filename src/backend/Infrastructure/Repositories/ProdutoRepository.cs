@@ -26,12 +26,16 @@ public class ProdutoRepository(ApplicationDbContext context) : IProdutoRepositor
             .Include(p => p.TipoProduto)
             .FirstOrDefaultAsync(p => p.Id == id);
 
-    public Task<int?> ObterIdTipoProdutoPorDescricaoAsync(string descricao) =>
+    public Task<bool> CategoriaExisteAsync(int idCategoria) =>
         context.TiposProduto
             .AsNoTracking()
-            .Where(t => t.Descricao == descricao)
-            .Select(t => (int?)t.Id)
-            .FirstOrDefaultAsync();
+            .AnyAsync(t => t.Id == idCategoria);
+
+    public async Task<IReadOnlyList<TipoProduto>> ListarCategoriasAsync() =>
+        await context.TiposProduto
+            .AsNoTracking()
+            .OrderBy(t => t.Descricao)
+            .ToListAsync();
 
     public async Task CriarAsync(Produto produto)
     {

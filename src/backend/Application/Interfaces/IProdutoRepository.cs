@@ -6,7 +6,8 @@ public interface IProdutoRepository
 {
     Task<(IList<Produto> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina);
     Task<Produto?> ObterPorIdAsync(int id);
-    Task<int?> ObterIdTipoProdutoPorDescricaoAsync(string descricao);
+    Task<bool> CategoriaExisteAsync(int idCategoria);
+    Task<IReadOnlyList<TipoProduto>> ListarCategoriasAsync();
     Task CriarAsync(Produto produto);
     Task AtualizarAsync(Produto produto);
 }

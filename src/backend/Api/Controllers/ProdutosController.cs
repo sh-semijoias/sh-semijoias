@@ -19,6 +19,13 @@ public class ProdutosController(IProdutoService produtoService) : ControllerBase
         return Ok(result.Valor);
     }
 
+    [HttpGet("categorias")]
+    public async Task<IActionResult> ListarCategorias()
+    {
+        var categorias = await produtoService.ListarCategoriasAsync();
+        return Ok(categorias);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId(int id)
     {

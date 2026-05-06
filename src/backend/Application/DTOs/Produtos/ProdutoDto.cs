@@ -4,7 +4,7 @@ public record ProdutoDto(
     int IdProduto,
     DateTime Data,
     string Descricao,
-    string Tipo,
+    string Categoria,
     decimal PrecoCompra,
     decimal PrecoVendaSugerido
 );

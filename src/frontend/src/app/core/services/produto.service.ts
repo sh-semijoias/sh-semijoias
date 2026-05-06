@@ -13,24 +13,29 @@ export interface ProdutoDto {
   idProduto: string;
   data: string;
   descricao: string;
-  tipo: string;
-  precoCompra: string;
-  precoVendaSugerido: string;
+  categoria: string;
+  precoCompra: number;
+  precoVendaSugerido: number;
+}
+
+export interface CategoriaProdutoDto {
+  id: number;
+  descricao: string;
 }
 
 export interface CriarProdutoDto {
   data: string;
   descricao: string;
-  tipo: string;
-  precoCompra: string;
-  precoVendaSugerido: string;
+  idCategoria: number;
+  precoCompra: number;
+  precoVendaSugerido: number;
 }
 
 export interface EditarProdutoDto {
   descricao: string;
-  tipo: string;
-  precoCompra: string;
-  precoVendaSugerido: string;
+  idCategoria: number;
+  precoCompra: number;
+  precoVendaSugerido: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +47,10 @@ export class produtoService {
     return this.http.get<ListaPaginada<ProdutoDto>>(this.baseUrl, {
       params: { pagina, tamanhoPagina }
     });
+  }
+
+  listarCategorias(): Observable<CategoriaProdutoDto[]> {
+    return this.http.get<CategoriaProdutoDto[]>(`${this.baseUrl}/categorias`);
   }
 
   obterPorId(id: string): Observable<ProdutoDto> {

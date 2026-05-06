@@ -2,7 +2,7 @@ namespace ShSemijoias.Application.DTOs.Produtos;
 
 public record EditarProdutoDto(
     string Descricao,
-    string Tipo,
+    int IdCategoria,
     decimal PrecoCompra,
     decimal PrecoVendaSugerido
 );
