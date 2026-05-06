@@ -49,9 +49,11 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   private readonly colunaParaOrdenacao: Record<string, OrdenacaoEstoque> = {
-    produto:    OrdenacaoEstoque.Produto,
-    categoria:  OrdenacaoEstoque.Categoria,
-    quantidade: OrdenacaoEstoque.Quantidade,
+    produto:             OrdenacaoEstoque.Produto,
+    categoria:           OrdenacaoEstoque.Categoria,
+    quantidade:          OrdenacaoEstoque.Quantidade,
+    precoCompra:         OrdenacaoEstoque.PrecoCompra,
+    precoVendaSugerido:  OrdenacaoEstoque.PrecoVendaSugerido,
   };
 
   readonly colunas = ['produto', 'categoria', 'quantidade', 'precoCompra', 'precoVendaSugerido', 'acoes'];
@@ -62,7 +64,7 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
   readonly pagina = signal(1);
   readonly tamanhoPagina = signal(10);
   readonly emEstoque = signal<boolean | null>(null);
-  readonly ordenarPor = signal<OrdenacaoEstoque>(OrdenacaoEstoque.Produto);
+  readonly ordenarPor = signal<OrdenacaoEstoque | null>(null);
   readonly ordemDecrescente = signal(false);
 
   readonly buscaControl = new FormControl('');
@@ -93,7 +95,7 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
       tamanhoPagina: this.tamanhoPagina(),
       emEstoque: this.emEstoque() ?? undefined,
       busca: this.buscaControl.value ?? undefined,
-      ordenarPor: this.ordenarPor(),
+      ordenarPor: this.ordenarPor() ?? undefined,
       ordemDecrescente: this.ordemDecrescente(),
     }).subscribe({
       next: (resultado) => {
@@ -128,8 +130,13 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
   }
 
   aoOrdenar(sort: Sort): void {
-    this.ordenarPor.set(this.colunaParaOrdenacao[sort.active] ?? OrdenacaoEstoque.Produto);
-    this.ordemDecrescente.set(sort.direction === 'desc');
+    if (sort.direction === '') {
+      this.ordenarPor.set(null);
+      this.ordemDecrescente.set(false);
+    } else {
+      this.ordenarPor.set(this.colunaParaOrdenacao[sort.active] ?? OrdenacaoEstoque.Produto);
+      this.ordemDecrescente.set(sort.direction === 'desc');
+    }
     this.pagina.set(1);
     this.carregar();
   }

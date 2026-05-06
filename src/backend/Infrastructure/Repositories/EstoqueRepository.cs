@@ -32,13 +32,19 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
         var itemsOrdenados = query.OrdenarPor switch
         {
-            OrdenacaoEstoque.Categoria  => query.OrdemDecrescente
+            OrdenacaoEstoque.Categoria         => query.OrdemDecrescente
                 ? dbQuery.OrderByDescending(e => e.Produto.TipoProduto.Descricao)
                 : dbQuery.OrderBy(e => e.Produto.TipoProduto.Descricao),
-            OrdenacaoEstoque.Quantidade => query.OrdemDecrescente
+            OrdenacaoEstoque.Quantidade        => query.OrdemDecrescente
                 ? dbQuery.OrderByDescending(e => e.Quantidade)
                 : dbQuery.OrderBy(e => e.Quantidade),
-            _                           => query.OrdemDecrescente
+            OrdenacaoEstoque.PrecoCompra       => query.OrdemDecrescente
+                ? dbQuery.OrderByDescending(e => e.Produto.PrecoCompra)
+                : dbQuery.OrderBy(e => e.Produto.PrecoCompra),
+            OrdenacaoEstoque.PrecoVendaSugerido => query.OrdemDecrescente
+                ? dbQuery.OrderByDescending(e => e.Produto.PrecoVendaSugerido)
+                : dbQuery.OrderBy(e => e.Produto.PrecoVendaSugerido),
+            _                                  => query.OrdemDecrescente
                 ? dbQuery.OrderByDescending(e => e.Produto.Descricao)
                 : dbQuery.OrderBy(e => e.Produto.Descricao),
         };

@@ -4,5 +4,7 @@ public enum OrdenacaoEstoque
 {
     Produto = 0,
     Categoria,
-    Quantidade
+    Quantidade,
+    PrecoCompra,
+    PrecoVendaSugerido
 }

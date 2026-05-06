@@ -7,6 +7,8 @@ export enum OrdenacaoEstoque {
   Produto = 0,
   Categoria = 1,
   Quantidade = 2,
+  PrecoCompra = 3,
+  PrecoVendaSugerido = 4,
 }
 
 export interface EstoqueDto {
