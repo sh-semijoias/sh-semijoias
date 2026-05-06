@@ -32,6 +32,10 @@ export interface ListarEstoqueFiltros {
   ordemDecrescente?: boolean;
 }
 
+export interface ItemEntradaDto { idProduto: number; quantidade: number; }
+export interface RegistrarEntradaDto { itens: ItemEntradaDto[]; }
+export interface ProdutoResumidoDto { id: number; descricao: string; }
+
 @Injectable({ providedIn: 'root' })
 export class EstoqueService {
   private readonly http = inject(HttpClient);
@@ -49,5 +53,13 @@ export class EstoqueService {
     if (filtros.ordemDecrescente) params = params.set('ordemDecrescente', true);
 
     return this.http.get<ListaPaginada<EstoqueDto>>(this.baseUrl, { params });
+  }
+
+  listarProdutos(): Observable<ProdutoResumidoDto[]> {
+    return this.http.get<ProdutoResumidoDto[]>(`${this.baseUrl}/produtos`);
+  }
+
+  registrarEntrada(dto: RegistrarEntradaDto): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/entrada`, dto);
   }
 }

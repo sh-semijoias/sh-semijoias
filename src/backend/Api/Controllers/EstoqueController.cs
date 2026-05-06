@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Estoque;
 using ShSemijoias.Application.Interfaces;
 
@@ -23,5 +24,20 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
         var query = new ListarEstoqueConsulta(pagina, tamanhoPagina, idProduto, emEstoque, busca, ordenarPor, ordemDecrescente);
         var result = await estoqueService.ListarAsync(query);
         return Ok(result.Valor);
+    }
+
+    [HttpGet("produtos")]
+    public async Task<IActionResult> ListarProdutos()
+    {
+        var result = await estoqueService.ListarProdutosAsync();
+        return Ok(result.Valor);
+    }
+
+    [HttpPost("entrada")]
+    public async Task<IActionResult> RegistrarEntrada([FromBody] RegistrarEntradaEstoqueDto dto)
+    {
+        var result = await estoqueService.RegistrarEntradaAsync(dto);
+        if (!result.Sucesso) return result.ToActionResult(this);
+        return NoContent();
     }
 }
