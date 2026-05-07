@@ -1,0 +1,84 @@
+<div class="p-4 sm:p-6">
+  <div class="flex items-center gap-2 mb-6">
+    <a mat-icon-button routerLink="/clientes"><mat-icon>arrow_back</mat-icon></a>
+    <h2 class="text-xl font-semibold">{{ modoEdicao() ? 'Editar Cliente' : 'Novo Cliente' }}</h2>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4 pt-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="nome" />
+            @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+              <mat-error>Nome é obrigatório</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>E-mail</mat-label>
+            <input matInput formControlName="email" type="email" />
+            @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+              <mat-error>E-mail é obrigatório</mat-error>
+            }
+            @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+              <mat-error>E-mail inválido</mat-error>
+            }
+          </mat-form-field>
+           <!--
+          <mat-form-field appearance="outline">
+         
+            <mat-label>Perfil</mat-label>
+            <mat-select formControlName="perfil">
+              
+              @for (p of perfis(); track p.id) {
+                <mat-option [value]="p.nome">{{ p.nome }}</mat-option>
+              }
+            </mat-select>
+           
+            @if (form.get('perfil')?.invalid && form.get('perfil')?.touched) {
+              <mat-error>Perfil é obrigatório</mat-error>
+            }
+          </mat-form-field>
+           -->
+          <mat-form-field appearance="outline">
+            <mat-label>Telefone</mat-label>
+            <input matInput formControlName="telefone"
+                   [mask]="'(00) 00000-0000||(00) 0000-0000'"
+                   [dropSpecialCharacters]="false"
+                   [validation]="true"
+                   placeholder="(XX) XXXXX-XXXX" />
+            @if (form.get('telefone')?.hasError('required') && form.get('telefone')?.touched) {
+              <mat-error>Telefone é obrigatório</mat-error>
+            }
+            @if (form.get('telefone')?.hasError('mask') && form.get('telefone')?.touched) {
+              <mat-error>Telefone inválido</mat-error>
+            }
+          </mat-form-field>
+
+
+          <mat-form-field appearance="outline">
+            <mat-label>CPF</mat-label>
+             <input matInput formControlName="cpf"
+               mask="000.000.000-00"
+              placeholder="000.000.000-00" />
+
+           @if (form.get('cpf')?.hasError('required') && form.get('cpf')?.touched) {
+               <mat-error>CPF é obrigatório</mat-error>
+            }
+        </mat-form-field>
+
+          <div class="flex gap-3 mt-2">
+            <button mat-flat-button type="submit" [disabled]="salvando()">
+              @if (salvando()) { <mat-spinner diameter="20" /> } @else { Salvar }
+            </button>
+            <a mat-button routerLink="/clientes">Cancelar</a>
+          </div>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
