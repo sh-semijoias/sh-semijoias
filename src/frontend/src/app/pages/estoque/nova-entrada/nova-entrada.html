@@ -1,0 +1,68 @@
+<div class="p-4 sm:p-6">
+  <div class="flex items-center gap-2 mb-6">
+    <a mat-icon-button routerLink="/estoque"><mat-icon>arrow_back</mat-icon></a>
+    <h2 class="text-xl font-semibold">Entrada de Estoque</h2>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="confirmar()" class="flex flex-col gap-4 pt-2">
+        <div formArrayName="itens" class="flex flex-col gap-4">
+          @for (item of itens.controls; track $index) {
+            <div [formGroupName]="$index" class="flex gap-3 items-start">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Produto</mat-label>
+                <input matInput
+                  [value]="estadoLinhas()[$index]?.displayValue ?? ''"
+                  (input)="atualizarDisplay($index, $event)"
+                  [matAutocomplete]="autoProduto"
+                  placeholder="Digite para buscar..."
+                />
+                <mat-autocomplete #autoProduto="matAutocomplete"
+                  (optionSelected)="selecionarProduto($index, $event.option.value)">
+                  @if (estadoLinhas()[$index]?.carregando) {
+                    <mat-option disabled>Carregando...</mat-option>
+                  } @else {
+                    @for (p of estadoLinhas()[$index]?.produtos ?? []; track p.id) {
+                      <mat-option [value]="p">{{ p.descricao }} ({{ p.quantidade }})</mat-option>
+                    }
+                    @if ((estadoLinhas()[$index]?.total ?? 0) > 10) {
+                      <mat-option disabled>Refine a busca para ver mais resultados</mat-option>
+                    }
+                  }
+                </mat-autocomplete>
+                @if (item.get('idProduto')?.invalid && item.get('idProduto')?.touched) {
+                  <mat-error>Selecione um produto.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-36">
+                <mat-label>Quantidade</mat-label>
+                <input matInput type="number" min="1" formControlName="quantidade" />
+                @if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
+                  <mat-error>Mínimo 1.</mat-error>
+                }
+              </mat-form-field>
+
+              <button mat-icon-button type="button" (click)="removerItem($index)"
+                [disabled]="itens.length === 1" class="mt-2">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+
+        <app-add-row-button label="Adicionar produto" (clicked)="adicionarItem()" />
+
+        <mat-divider />
+
+        <div class="flex gap-3">
+          <button mat-flat-button type="submit" [disabled]="salvando()">
+            @if (salvando()) { <mat-spinner diameter="20" /> } @else { Confirmar entrada }
+          </button>
+          <a mat-button routerLink="/estoque">Cancelar</a>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

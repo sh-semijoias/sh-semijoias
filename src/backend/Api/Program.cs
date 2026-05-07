@@ -85,6 +85,8 @@ builder.Services.AddScoped<IClienteService, ClientesService>();
 builder.Services.AddScoped<IPerfilService, PerfilService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddTransient<IEmailService, ConsoleEmailService>();
+builder.Services.AddScoped<IEstoqueRepository, EstoqueRepository>();
+builder.Services.AddScoped<IEstoqueService, EstoqueService>();
 
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
