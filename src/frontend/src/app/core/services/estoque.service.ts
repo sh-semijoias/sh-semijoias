@@ -64,4 +64,8 @@ export class EstoqueService {
   registrarEntrada(dto: RegistrarEntradaDto): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/entrada`, dto);
   }
+
+  atualizarQuantidade(idEstoque: number, novaQuantidade: number): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${idEstoque}/quantidade`, { novaQuantidade });
+  }
 }

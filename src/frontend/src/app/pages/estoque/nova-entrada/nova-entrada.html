@@ -57,10 +57,10 @@
         <mat-divider />
 
         <div class="flex gap-3">
-          <a mat-button routerLink="/estoque">Cancelar</a>
           <button mat-flat-button type="submit" [disabled]="salvando()">
             @if (salvando()) { <mat-spinner diameter="20" /> } @else { Confirmar entrada }
           </button>
+          <a mat-button routerLink="/estoque">Cancelar</a>
         </div>
       </form>
     </mat-card-content>

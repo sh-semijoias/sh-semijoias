@@ -58,6 +58,9 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
         return (items, total);
     }
 
+    public async Task<Estoque?> BuscarPorIdAsync(int id) =>
+        await context.Estoques.FirstOrDefaultAsync(e => e.Id == id);
+
     public async Task<Estoque?> BuscarPorProdutoAsync(int idProduto) =>
         await context.Estoques
             .FirstOrDefaultAsync(e => e.IdProduto == idProduto && e.IdMaleta == null);

@@ -56,6 +56,21 @@ public class EstoqueService(IEstoqueRepository estoqueRepository) : IEstoqueServ
         return Result<bool>.Ok(true);
     }
 
+    public async Task<Result<bool>> AtualizarQuantidadeAsync(int idEstoque, AtualizarQuantidadeEstoqueDto dto)
+    {
+        if (dto.NovaQuantidade < 0)
+            return Result<bool>.Falha("A quantidade não pode ser negativa.");
+
+        var estoque = await estoqueRepository.BuscarPorIdAsync(idEstoque);
+        if (estoque is null)
+            return Result<bool>.Falha("Registro de estoque não encontrado.", TipoErro.NaoEncontrado);
+
+        estoque.Quantidade = dto.NovaQuantidade;
+        estoque.DataAtualizacao = DateTime.UtcNow;
+        await estoqueRepository.SalvarAsync();
+        return Result<bool>.Ok(true);
+    }
+
     public async Task<Result<ListaPaginada<ProdutoResumidoDto>>> ListarProdutosAsync(ListarProdutosConsulta consulta)
     {
         var (items, total) = await estoqueRepository.ListarProdutosAsync(consulta);

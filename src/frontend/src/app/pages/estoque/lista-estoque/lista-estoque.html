@@ -79,6 +79,10 @@
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="editarQuantidade(item)">
+                      <mat-icon>inventory</mat-icon>
+                      Editar quantidade
+                    </button>
                     <a mat-menu-item [routerLink]="['/produtos', item.idProduto, 'editar']">
                       <mat-icon>edit</mat-icon>
                       Editar produto

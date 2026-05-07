@@ -8,5 +8,6 @@ public interface IEstoqueService
 {
     Task<Result<ListaPaginada<EstoqueDto>>> ListarAsync(ListarEstoqueConsulta query);
     Task<Result<bool>> RegistrarEntradaAsync(RegistrarEntradaEstoqueDto dto);
+    Task<Result<bool>> AtualizarQuantidadeAsync(int idEstoque, AtualizarQuantidadeEstoqueDto dto);
     Task<Result<ListaPaginada<ProdutoResumidoDto>>> ListarProdutosAsync(ListarProdutosConsulta consulta);
 }

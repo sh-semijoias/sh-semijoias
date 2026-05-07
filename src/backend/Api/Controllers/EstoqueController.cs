@@ -36,6 +36,14 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
         return Ok(result.Valor);
     }
 
+    [HttpPut("{id:int}/quantidade")]
+    public async Task<IActionResult> AtualizarQuantidade(int id, [FromBody] AtualizarQuantidadeEstoqueDto dto)
+    {
+        var result = await estoqueService.AtualizarQuantidadeAsync(id, dto);
+        if (!result.Sucesso) return result.ToActionResult(this);
+        return NoContent();
+    }
+
     [HttpPost("entrada")]
     public async Task<IActionResult> RegistrarEntrada([FromBody] RegistrarEntradaEstoqueDto dto)
     {

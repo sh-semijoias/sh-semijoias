@@ -17,9 +17,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { EstoqueDto, EstoqueService, OrdenacaoEstoque } from '../../../core/services/estoque.service';
+import { DialogEditarQuantidadeComponent } from '../dialog-editar-quantidade/dialog-editar-quantidade';
 
 @Component({
   selector: 'app-lista-estoque',
@@ -46,6 +48,7 @@ import { EstoqueDto, EstoqueService, OrdenacaoEstoque } from '../../../core/serv
 })
 export class ListaEstoqueComponent implements OnInit, OnDestroy {
   private readonly service = inject(EstoqueService);
+  private readonly dialog = inject(MatDialog);
   private readonly destroy$ = new Subject<void>();
 
   private readonly colunaParaOrdenacao: Record<string, OrdenacaoEstoque> = {
@@ -127,6 +130,16 @@ export class ListaEstoqueComponent implements OnInit, OnDestroy {
     this.pagina.set(event.pageIndex + 1);
     this.tamanhoPagina.set(event.pageSize);
     this.carregar();
+  }
+
+  editarQuantidade(item: EstoqueDto): void {
+    const ref = this.dialog.open(DialogEditarQuantidadeComponent, {
+      width: '360px',
+      data: { idEstoque: item.id, quantidadeAtual: item.quantidade, nomeProduto: item.produto },
+    });
+    ref.afterClosed().subscribe((salvo) => {
+      if (salvo) this.carregar();
+    });
   }
 
   aoOrdenar(sort: Sort): void {
