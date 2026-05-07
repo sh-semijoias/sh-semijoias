@@ -24,21 +24,21 @@
     </mat-form-field>
   </div>
 
-  <mat-card>
+  <mat-card class="relative overflow-hidden">
     <mat-card-content>
+      @if (carregando()) {
+        <div class="absolute inset-0 z-10 flex items-center justify-center bg-overlay-loading">
+          <mat-spinner diameter="40" />
+        </div>
+      }
+
       @if (erroCarregamento() && itens().length === 0) {
         <div class="text-center py-8">
           <p class="text-red-600 mb-3">Não foi possível carregar o estoque.</p>
           <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
         </div>
       } @else {
-        <div class="relative min-h-24">
-          @if (carregando()) {
-            <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 rounded">
-              <mat-spinner diameter="40" />
-            </div>
-          }
-
+        <div class="min-h-24">
           <div class="overflow-x-auto">
             <table mat-table [dataSource]="itens()" matSort (matSortChange)="aoOrdenar($event)" class="w-full">
               <ng-container matColumnDef="produto">
