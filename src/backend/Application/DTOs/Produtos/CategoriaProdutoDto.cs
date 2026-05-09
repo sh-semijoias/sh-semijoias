@@ -1,6 +1,6 @@
 namespace ShSemijoias.Application.DTOs.Produtos;
 
 public record CategoriaProdutoDto(
-    int Id,
+    int IdCategoria,
     string Descricao
 );
