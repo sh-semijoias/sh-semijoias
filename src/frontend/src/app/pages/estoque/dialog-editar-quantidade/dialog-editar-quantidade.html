@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>Editar quantidade</h2>
+
+<mat-dialog-content>
+  <p class="mb-4 text-sm text-gray-600">{{ data.nomeProduto }}</p>
+
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>Nova quantidade</mat-label>
+    <input matInput type="number" [formControl]="quantidadeControl" min="0" step="1" />
+    @if (quantidadeControl.hasError('required')) {
+      <mat-error>Informe a quantidade.</mat-error>
+    } @else if (quantidadeControl.hasError('min')) {
+      <mat-error>A quantidade não pode ser negativa.</mat-error>
+    } @else if (quantidadeControl.hasError('pattern')) {
+      <mat-error>Informe um número inteiro.</mat-error>
+    }
+  </mat-form-field>
+
+  @if (erro()) {
+    <p class="text-red-600 text-sm mt-1">{{ erro() }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close [disabled]="salvando()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()" [disabled]="salvando() || quantidadeControl.invalid">
+    Salvar
+  </button>
+</mat-dialog-actions>

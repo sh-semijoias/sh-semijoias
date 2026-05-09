@@ -12,7 +12,8 @@
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5224"
-      }
+      },
+      "hotReloadOnSave": true
     },
     {
       "name": "Frontend: ng serve",

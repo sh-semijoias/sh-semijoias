@@ -28,6 +28,22 @@ mat-toolbar {
   ));
 }
 
+$_light-theme: mat.define-theme((
+  color: (
+    primary: mat.$cyan-palette,
+    tertiary: mat.$violet-palette,
+    theme-type: light,
+  ),
+));
+
+$_dark-theme: mat.define-theme((
+  color: (
+    primary: mat.$cyan-palette,
+    tertiary: mat.$violet-palette,
+    theme-type: dark,
+  ),
+));
+
 html {
   height: 100%;
   @include mat.theme(
@@ -35,11 +51,23 @@ html {
       color: (
         primary: mat.$cyan-palette,
         tertiary: mat.$violet-palette,
+        warn: mat.$red-palette,
       ),
       typography: Lato,
       density: 0,
     )
   );
+  @include mat.color-variants-backwards-compatibility($_light-theme);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light-mode) {
+    @include mat.color-variants-backwards-compatibility($_dark-theme);
+  }
+}
+
+html.dark-mode {
+  @include mat.color-variants-backwards-compatibility($_dark-theme);
 }
 
 html.dark-mode {
@@ -118,5 +146,6 @@ mat-card {
 .snack-error .mat-mdc-snack-bar-action {
   color: var(--mat-sys-on-error) !important;
 }
+
 
 /* You can add global styles to this file, and also import other style files */
