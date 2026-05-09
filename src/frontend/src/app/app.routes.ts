@@ -27,4 +27,5 @@ export const routes: Routes = [
   { path: 'produtos', component: ListaEstoqueComponent, canActivate: [authGuard()] },
   { path: 'produtos/novo', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
+  { path: 'produtos/categorias', component: FormProdutoComponent, canActivate: [authGuard()] },
 ];
