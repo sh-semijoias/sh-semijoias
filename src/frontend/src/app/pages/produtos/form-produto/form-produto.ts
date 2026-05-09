@@ -125,22 +125,49 @@ export class FormProdutoComponent implements OnInit {
 
     this.saving.set(true);
 
-    const onError = (e: { error?: { erros?: string[] } }) => {
-      const erros: string[] = e?.error?.erros ?? ['Erro ao salvar.'];
-      this.snackBar.open(erros.join('\n'), 'Fechar', { duration: 6000, panelClass: ['snack-error'] });
-      this.saving.set(false);
-    };
+  const onError = (e: { error?: { erros?: string[] } }) => {
+    const erros: string[] = e?.error?.erros ?? ['Erro ao salvar.'];
+    this.snackBar.open(
+      erros.join('\n'),
+      'Fechar',
+      { duration: 6000, panelClass: ['snack-error'] }
+    );
+    this.saving.set(false);
+  };
 
-    if (this.modoEdicao() && this.productId) {
-      this.service.editar(this.productId, { descricao: descricao!, idCategoria: idCategoria!, precoCompra: precoCompraValor!, precoVendaSugerido: precoVendaValor! }).subscribe({
-        next: () => this.router.navigate(['/produtos']),
-        error: onError
-      });
-    } else {
-      this.service.criar({ data: data!, descricao: descricao!, idCategoria: idCategoria!, precoCompra: precoCompraValor!, precoVendaSugerido: precoVendaValor! }).subscribe({
-        next: () => this.router.navigate(['/produtos']),
-        error: onError
-      });
-    }
+  const onSuccess = () => {
+    this.snackBar.open(
+      this.modoEdicao()
+        ? 'Produto atualizado com sucesso!'
+        : 'Produto cadastrado com sucesso!',
+      'Fechar',
+      { duration: 3000 }
+    );
+
+    this.router.navigate(['/produtos']);
+  };
+
+  if (this.modoEdicao() && this.productId) {
+    this.service.editar(this.productId, {
+      descricao: descricao!,
+      idCategoria: idCategoria!,
+      precoCompra: precoCompraValor!,
+      precoVendaSugerido: precoVendaValor!
+    }).subscribe({
+      next: onSuccess,
+      error: onError
+    });
+  } else {
+    this.service.criar({
+      data: data!,
+      descricao: descricao!,
+      idCategoria: idCategoria!,
+      precoCompra: precoCompraValor!,
+      precoVendaSugerido: precoVendaValor!
+    }).subscribe({
+      next: onSuccess,
+      error: onError
+    });
   }
+}
 }
