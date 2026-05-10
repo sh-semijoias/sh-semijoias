@@ -19,6 +19,7 @@
                   placeholder="Digite para buscar..."
                 />
                 <mat-autocomplete #autoProduto="matAutocomplete"
+                  [displayWith]="displayProduto"
                   (optionSelected)="selecionarProduto($index, $event.option.value)">
                   @if (estadoLinhas()[$index]?.carregando) {
                     <mat-option disabled>Carregando...</mat-option>
