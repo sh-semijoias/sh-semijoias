@@ -1,0 +1,86 @@
+<div class="p-4 sm:p-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-xl font-semibold">Maletas</h2>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3 mb-4">
+    <mat-form-field appearance="outline" class="flex-1">
+      <mat-label>Buscar por descrição</mat-label>
+      <input matInput [formControl]="buscaControl" placeholder="Descrição da maleta..." />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <mat-card class="relative overflow-hidden">
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="absolute inset-0 z-10 flex items-center justify-center bg-overlay-loading">
+          <mat-spinner diameter="40" />
+        </div>
+      }
+
+      @if (erroCarregamento() && itens().length === 0) {
+        <div class="text-center py-8">
+          <p class="text-red-600 mb-3">Não foi possível carregar as maletas.</p>
+          <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+        </div>
+      } @else {
+        <div class="min-h-24">
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="itens()" matSort (matSortChange)="aoOrdenar($event)" class="w-full">
+              <ng-container matColumnDef="descricao">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Descrição</th>
+                <td mat-cell *matCellDef="let item">{{ item.descricao }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="nomeUsuario">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuário</th>
+                <td mat-cell *matCellDef="let item">{{ item.nomeUsuario }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalProdutos">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Produtos</th>
+                <td mat-cell *matCellDef="let item">{{ item.totalProdutos }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalItens">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Itens</th>
+                <td mat-cell *matCellDef="let item">{{ item.totalItens }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="dataCadastro">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Data de Cadastro</th>
+                <td mat-cell *matCellDef="let item">{{ item.dataCadastro | date:'dd/MM/yyyy':'':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="acoes" stickyEnd>
+                <th mat-header-cell *matHeaderCellDef>Ações</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+              <tr mat-row *matRowDef="let row; columns: colunas;"></tr>
+            </table>
+          </div>
+
+          @if (!carregando() && itens().length === 0) {
+            <p class="text-center py-8 text-gray-500">Nenhuma maleta cadastrada.</p>
+          }
+        </div>
+      }
+
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="tamanhoPagina()"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPaginaChange($event)"
+        showFirstLastButtons />
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -8,6 +8,7 @@ import { authGuard } from './core/services/auth.guard';
 import { Perfil } from './core/enums/perfil.enum';
 import { ListaClientesComponent } from './pages/clientes/lista-clientes/lista-clientes';
 import { FormClienteComponent } from './pages/clientes/form-clientes/form-clientes';
+import { ListaMaletasComponent } from './pages/estoque/maletas/lista-maletas/lista-maletas';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -20,6 +21,7 @@ export const routes: Routes = [
   { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard] },
   { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard] },
   { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard] },
+  { path: 'maletas', component: ListaMaletasComponent, canActivate: [authGuard()] },
   { path: 'clientes', component: ListaClientesComponent, canActivate: [authGuard] },
   { path: 'clientes/novo', component: FormClienteComponent, canActivate: [authGuard] },
   { path: 'clientes/:id/editar', component: FormClienteComponent, canActivate: [authGuard] },
