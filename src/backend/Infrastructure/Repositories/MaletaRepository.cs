@@ -14,6 +14,7 @@ public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
             from m in context.Maletas.Include(m => m.Usuario)
             join e in context.Estoques on m.Id equals e.IdMaleta into estoques
             from e in estoques.DefaultIfEmpty()
+            where query.IdUsuario == null || m.IdUsuario == query.IdUsuario
             where string.IsNullOrWhiteSpace(query.Busca) || EF.Functions.ILike(m.Descricao, $"%{query.Busca}%")
             group new { e } by m into g
             select new

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Application.DTOs.Maletas;
@@ -18,7 +19,11 @@ public class MaletasController(IMaletaService maletaService) : ControllerBase
         [FromQuery] OrdenacaoMaleta ordenarPor = OrdenacaoMaleta.Descricao,
         [FromQuery] bool ordemDecrescente = false)
     {
-        var query = new ListarMaletasConsulta(pagina, tamanhoPagina, busca, ordenarPor, ordemDecrescente);
+        Guid? idUsuario = User.IsInRole("Administrador")
+            ? null
+            : Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var query = new ListarMaletasConsulta(pagina, tamanhoPagina, busca, idUsuario, ordenarPor, ordemDecrescente);
         var result = await maletaService.ListarAsync(query);
         return Ok(result.Valor);
     }
