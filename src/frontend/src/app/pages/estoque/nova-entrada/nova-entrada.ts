@@ -135,6 +135,12 @@ export class NovaEntradaEstoqueComponent implements OnInit, OnDestroy {
     this.busca$.next({ index, busca: valor });
   }
 
+  produtosSelecionadosExceto(index: number): number[] {
+    return this.itens.controls
+      .map((c, i) => i !== index ? c.get('idProduto')?.value as number | null : null)
+      .filter((id): id is number => id !== null);
+  }
+
   selecionarProduto(index: number, produto: ProdutoResumidoDto): void {
     this.itens.at(index).get('idProduto')?.setValue(produto.id);
     this.estadoLinhas.update(arr =>

@@ -25,7 +25,9 @@
                     <mat-option disabled>Carregando...</mat-option>
                   } @else {
                     @for (p of estadoLinhas()[$index]?.produtos ?? []; track p.id) {
-                      <mat-option [value]="p">{{ p.descricao }} ({{ p.quantidade }})</mat-option>
+                      @if (!produtosSelecionadosExceto($index).includes(p.id)) {
+                        <mat-option [value]="p">{{ p.descricao }} ({{ p.quantidade }})</mat-option>
+                      }
                     }
                     @if ((estadoLinhas()[$index]?.total ?? 0) > 10) {
                       <mat-option disabled>Refine a busca para ver mais resultados</mat-option>
