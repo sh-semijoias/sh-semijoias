@@ -64,7 +64,7 @@ export class ListaMaletasComponent implements OnInit, OnDestroy {
   readonly erroCarregamento = signal(false);
   readonly total = signal(0);
   readonly pagina = signal(1);
-  readonly tamanhoPagina = signal(10);
+  readonly tamanhoPagina = signal(5);
   readonly ordenarPor = signal<OrdenacaoMaleta | null>(null);
   readonly ordemDecrescente = signal(false);
 
