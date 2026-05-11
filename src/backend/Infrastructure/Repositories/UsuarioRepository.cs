@@ -57,4 +57,7 @@ public class UsuarioRepository(UserManager<Usuario> userManager) : IUsuarioRepos
 
     public Task<string> GerarTokenResetSenhaAsync(Usuario usuario) =>
         userManager.GeneratePasswordResetTokenAsync(usuario);
+
+    public async Task<IList<Usuario>> ListarPorPerfilAsync(string perfil) =>
+        await userManager.GetUsersInRoleAsync(perfil);
 }

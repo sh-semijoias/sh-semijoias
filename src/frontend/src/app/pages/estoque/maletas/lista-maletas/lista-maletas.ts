@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, signal, LOCALE_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, LOCALE_ID } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 
 registerLocaleData(localePt);
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,6 +18,8 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { MaletaDto, MaletaService, OrdenacaoMaleta } from '../../../../core/services/maleta.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Perfil } from '../../../../core/enums/perfil.enum';
 
 @Component({
   selector: 'app-lista-maletas',
@@ -40,7 +43,11 @@ import { MaletaDto, MaletaService, OrdenacaoMaleta } from '../../../../core/serv
 })
 export class ListaMaletasComponent implements OnInit, OnDestroy {
   private readonly service = inject(MaletaService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
+
+  readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
   private readonly colunaParaOrdenacao: Record<string, OrdenacaoMaleta> = {
     descricao:      OrdenacaoMaleta.Descricao,
@@ -119,5 +126,13 @@ export class ListaMaletasComponent implements OnInit, OnDestroy {
     }
     this.pagina.set(1);
     this.carregar();
+  }
+
+  nova(): void {
+    this.router.navigate(['/maletas/nova']);
+  }
+
+  editar(item: MaletaDto): void {
+    this.router.navigate(['/maletas', item.id, 'editar']);
   }
 }

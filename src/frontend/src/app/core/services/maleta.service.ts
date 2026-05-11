@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ListaPaginada } from './usuario.service';
+import { ProdutoResumidoDto } from './estoque.service';
 
 export enum OrdenacaoMaleta {
   Descricao = 0,
@@ -20,6 +21,38 @@ export interface MaletaDto {
   totalItens: number;
   dataCadastro: string;
   dataAtualizacao: string;
+}
+
+export interface ItemMaletaDetalheDto {
+  idEstoque: number;
+  idProduto: number;
+  descricao: string;
+  quantidade: number;
+  quantidadeGeral: number;
+}
+
+export interface MaletaDetalheDto {
+  id: number;
+  descricao: string;
+  idUsuario: string;
+  nomeUsuario: string;
+  itens: ItemMaletaDetalheDto[];
+}
+
+export interface ItemMaletaDto {
+  idProduto: number;
+  quantidade: number;
+}
+
+export interface CriarEditarMaletaDto {
+  descricao: string;
+  idUsuario: string;
+  itens: ItemMaletaDto[];
+}
+
+export interface RevendedorDto {
+  id: string;
+  nome: string;
 }
 
 export interface ListarMaletasFiltros {
@@ -45,5 +78,28 @@ export class MaletaService {
     if (filtros.ordemDecrescente) params = params.set('ordemDecrescente', true);
 
     return this.http.get<ListaPaginada<MaletaDto>>(this.baseUrl, { params });
+  }
+
+  obterPorId(id: number): Observable<MaletaDetalheDto> {
+    return this.http.get<MaletaDetalheDto>(`${this.baseUrl}/${id}`);
+  }
+
+  criar(dto: CriarEditarMaletaDto): Observable<MaletaDto> {
+    return this.http.post<MaletaDto>(this.baseUrl, dto);
+  }
+
+  editar(id: number, dto: CriarEditarMaletaDto): Observable<MaletaDto> {
+    return this.http.put<MaletaDto>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  listarProdutos(busca?: string, pagina = 1, tamanhoPagina = 10, idMaletaContexto?: number): Observable<ListaPaginada<ProdutoResumidoDto>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanhoPagina', tamanhoPagina);
+    if (busca) params = params.set('busca', busca);
+    if (idMaletaContexto != null) params = params.set('idMaletaContexto', idMaletaContexto);
+    return this.http.get<ListaPaginada<ProdutoResumidoDto>>(`${this.baseUrl}/produtos`, { params });
+  }
+
+  listarRevendedores(): Observable<RevendedorDto[]> {
+    return this.http.get<RevendedorDto[]>(`${this.baseUrl}/revendedores`);
   }
 }

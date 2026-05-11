@@ -9,6 +9,7 @@ import { Perfil } from './core/enums/perfil.enum';
 import { ListaClientesComponent } from './pages/clientes/lista-clientes/lista-clientes';
 import { FormClienteComponent } from './pages/clientes/form-clientes/form-clientes';
 import { ListaMaletasComponent } from './pages/estoque/maletas/lista-maletas/lista-maletas';
+import { FormMaletaComponent } from './pages/estoque/maletas/form-maleta/form-maleta';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -22,6 +23,8 @@ export const routes: Routes = [
   { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard] },
   { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard] },
   { path: 'maletas', component: ListaMaletasComponent, canActivate: [authGuard()] },
+  { path: 'maletas/nova', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
+  { path: 'maletas/:id/editar', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'clientes', component: ListaClientesComponent, canActivate: [authGuard] },
   { path: 'clientes/novo', component: FormClienteComponent, canActivate: [authGuard] },
   { path: 'clientes/:id/editar', component: FormClienteComponent, canActivate: [authGuard] },

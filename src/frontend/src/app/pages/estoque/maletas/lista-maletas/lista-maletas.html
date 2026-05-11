@@ -1,6 +1,11 @@
 <div class="p-4 sm:p-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h2 class="text-xl font-semibold">Maletas</h2>
+    @if (isAdmin()) {
+      <button mat-flat-button (click)="nova()">
+        <mat-icon>add</mat-icon>Nova Maleta
+      </button>
+    }
   </div>
 
   <div class="flex flex-col sm:flex-row gap-3 mb-4">
@@ -60,6 +65,12 @@
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
+                    @if (isAdmin()) {
+                      <button mat-menu-item (click)="editar(item)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                    }
                   </mat-menu>
                 </td>
               </ng-container>

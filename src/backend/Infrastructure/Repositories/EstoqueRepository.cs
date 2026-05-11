@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShSemijoias.Application.DTOs.Estoque;
+using ShSemijoias.Application.DTOs.Maletas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
 using ShSemijoias.Infrastructure.Persistence;
@@ -65,8 +66,18 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
         await context.Estoques
             .FirstOrDefaultAsync(e => e.IdProduto == idProduto && e.IdMaleta == null);
 
+    public async Task<Estoque?> BuscarPorProdutoEMaletaAsync(int idProduto, int idMaleta) =>
+        await context.Estoques
+            .FirstOrDefaultAsync(e => e.IdProduto == idProduto && e.IdMaleta == idMaleta);
+
     public async Task AdicionarAsync(Estoque estoque) =>
         await context.Estoques.AddAsync(estoque);
+
+    public Task RemoverAsync(Estoque estoque)
+    {
+        context.Estoques.Remove(estoque);
+        return Task.CompletedTask;
+    }
 
     public async Task SalvarAsync() =>
         await context.SaveChangesAsync();
@@ -93,6 +104,46 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
         var items = raw
             .Select(x => new Estoque { IdProduto = x.Produto.Id, Produto = x.Produto, Quantidade = x.Quantidade })
+            .ToList();
+
+        return (items, total);
+    }
+
+    public async Task<(IList<Estoque> Items, int Total)> ListarProdutosComContextoMaletaAsync(ListarProdutosMaletaConsulta consulta)
+    {
+        var baseQuery =
+            from p in context.Produtos
+            join eg in context.Estoques.Where(e => e.IdMaleta == null)
+                on p.Id equals eg.IdProduto into estoqueGeral
+            from eg in estoqueGeral.DefaultIfEmpty()
+            join em in context.Estoques.Where(e => consulta.IdMaletaContexto != null && e.IdMaleta == consulta.IdMaletaContexto)
+                on p.Id equals em.IdProduto into estoqueMaleta
+            from em in estoqueMaleta.DefaultIfEmpty()
+            select new
+            {
+                Produto = p,
+                QuantidadeGeral = eg == null ? 0 : eg.Quantidade,
+                QuantidadeMaleta = em == null ? 0 : em.Quantidade,
+            };
+
+        if (!string.IsNullOrWhiteSpace(consulta.Busca))
+            baseQuery = baseQuery.Where(x => EF.Functions.ILike(x.Produto.Descricao, $"%{consulta.Busca}%"));
+
+        var total = await baseQuery.CountAsync();
+
+        var raw = await baseQuery
+            .OrderBy(x => x.Produto.Descricao)
+            .Skip((consulta.Pagina - 1) * consulta.TamanhoPagina)
+            .Take(consulta.TamanhoPagina)
+            .ToListAsync();
+
+        var items = raw
+            .Select(x => new Estoque
+            {
+                IdProduto = x.Produto.Id,
+                Produto = x.Produto,
+                Quantidade = x.QuantidadeGeral + x.QuantidadeMaleta,
+            })
             .ToList();
 
         return (items, total);

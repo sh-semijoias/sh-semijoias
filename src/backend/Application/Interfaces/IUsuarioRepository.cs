@@ -14,4 +14,5 @@ public interface IUsuarioRepository
     Task RemoverPerfilAsync(Usuario usuario, string perfil);
     Task AtualizarAsync(Usuario usuario);
     Task<string> GerarTokenResetSenhaAsync(Usuario usuario);
+    Task<IList<Usuario>> ListarPorPerfilAsync(string perfil);
 }

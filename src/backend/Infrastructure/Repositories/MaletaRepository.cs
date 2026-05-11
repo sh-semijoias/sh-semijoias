@@ -8,18 +8,54 @@ namespace ShSemijoias.Infrastructure.Repositories;
 
 public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
 {
+    public async Task<Maleta?> ObterPorIdAsync(int id) =>
+        await context.Maletas.Include(m => m.Usuario).FirstOrDefaultAsync(m => m.Id == id);
+
+    public async Task<IList<Estoque>> ListarItensMaletaAsync(int idMaleta) =>
+        await context.Estoques.Include(e => e.Produto).Where(e => e.IdMaleta == idMaleta).ToListAsync();
+
+    public async Task<Maleta> AdicionarAsync(Maleta maleta)
+    {
+        await context.Maletas.AddAsync(maleta);
+        return maleta;
+    }
+
+    public Task AtualizarAsync(Maleta maleta)
+    {
+        context.Maletas.Update(maleta);
+        return Task.CompletedTask;
+    }
+
+    public async Task SalvarAsync() =>
+        await context.SaveChangesAsync();
+
+
     public async Task<(IList<VisaoMaleta> Items, int Total)> ListarAsync(ListarMaletasConsulta query)
     {
         var grouped =
-            from m in context.Maletas.Include(m => m.Usuario)
-            join e in context.Estoques on m.Id equals e.IdMaleta into estoques
-            from e in estoques.DefaultIfEmpty()
-            where query.IdUsuario == null || m.IdUsuario == query.IdUsuario
-            where string.IsNullOrWhiteSpace(query.Busca) || EF.Functions.ILike(m.Descricao, $"%{query.Busca}%")
-            group new { e } by m into g
+            from maleta in context.Maletas.AsNoTracking()
+            join usuario in context.Users.AsNoTracking() on maleta.IdUsuario equals usuario.Id
+            join estoque in context.Estoques on maleta.Id equals estoque.IdMaleta into estoqueJoin
+            from estoque in estoqueJoin.DefaultIfEmpty()
+            where query.IdUsuario == null || maleta.IdUsuario == query.IdUsuario
+            where string.IsNullOrWhiteSpace(query.Busca) || EF.Functions.ILike(maleta.Descricao, $"%{query.Busca}%")
+            group new { e=estoque } by new
+            {
+                maleta.Id,
+                maleta.Descricao,
+                maleta.DataCadastro,
+                maleta.DataAtualizacao,
+                maleta.IdUsuario,
+                NomeUsuario = usuario.Nome
+            } into g
             select new
             {
-                Maleta = g.Key,
+                g.Key.Id,
+                g.Key.Descricao,
+                g.Key.DataCadastro,
+                g.Key.DataAtualizacao,
+                g.Key.IdUsuario,
+                g.Key.NomeUsuario,
                 TotalProdutos = g.Count(x => x.e != null && x.e.Quantidade > 0),
                 TotalItens = g.Sum(x => x.e != null ? x.e.Quantidade : 0)
             };
@@ -29,14 +65,14 @@ public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
         var ordenado = query.OrdenarPor switch
         {
             OrdenacaoMaleta.DataCadastro => query.OrdemDecrescente
-                ? grouped.OrderByDescending(x => x.Maleta.DataCadastro)
-                : grouped.OrderBy(x => x.Maleta.DataCadastro),
+                ? grouped.OrderByDescending(x => x.DataCadastro)
+                : grouped.OrderBy(x => x.DataCadastro),
             OrdenacaoMaleta.DataAtualizacao => query.OrdemDecrescente
-                ? grouped.OrderByDescending(x => x.Maleta.DataAtualizacao)
-                : grouped.OrderBy(x => x.Maleta.DataAtualizacao),
+                ? grouped.OrderByDescending(x => x.DataAtualizacao)
+                : grouped.OrderBy(x => x.DataAtualizacao),
             OrdenacaoMaleta.NomeUsuario => query.OrdemDecrescente
-                ? grouped.OrderByDescending(x => x.Maleta.Usuario.Nome)
-                : grouped.OrderBy(x => x.Maleta.Usuario.Nome),
+                ? grouped.OrderByDescending(x => x.NomeUsuario)
+                : grouped.OrderBy(x => x.NomeUsuario),
             OrdenacaoMaleta.TotalProdutos => query.OrdemDecrescente
                 ? grouped.OrderByDescending(x => x.TotalProdutos)
                 : grouped.OrderBy(x => x.TotalProdutos),
@@ -44,8 +80,8 @@ public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
                 ? grouped.OrderByDescending(x => x.TotalItens)
                 : grouped.OrderBy(x => x.TotalItens),
             _ => query.OrdemDecrescente
-                ? grouped.OrderByDescending(x => x.Maleta.Descricao)
-                : grouped.OrderBy(x => x.Maleta.Descricao),
+                ? grouped.OrderByDescending(x => x.Descricao)
+                : grouped.OrderBy(x => x.Descricao),
         };
 
         var items = await ordenado
@@ -53,6 +89,22 @@ public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
             .Take(query.TamanhoPagina)
             .ToListAsync();
 
-        return (items.Select(x => new VisaoMaleta(x.Maleta, x.TotalProdutos, x.TotalItens)).ToList(), total);
+        return (items.Select(x =>
+        {
+            var maleta = new Maleta
+            {
+                Id = x.Id,
+                Descricao = x.Descricao,
+                DataCadastro = x.DataCadastro,
+                DataAtualizacao = x.DataAtualizacao,
+                IdUsuario = x.IdUsuario,
+                Usuario = new Usuario
+                {
+                    Id = x.IdUsuario,
+                    Nome = x.NomeUsuario
+                }
+            };
+            return new VisaoMaleta(maleta, x.TotalProdutos, x.TotalItens);
+        }).ToList(), total);
     }
 }
