@@ -29,6 +29,7 @@ interface EstadoLinha {
   total: number;
   produtos: ProdutoResumidoDto[];
   carregando: boolean;
+  produtoSelecionado: ProdutoResumidoDto | null;
 }
 
 @Component({
@@ -70,7 +71,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
   readonly displayProduto = (produto: ProdutoResumidoDto | null): string =>
-    produto ? `${produto.descricao} (${produto.quantidade})` : '';
+    produto ? produto.descricao : '';
 
   private readonly busca$ = new Subject<{ index: number; busca: string }>();
   private readonly destroy$ = new Subject<void>();
@@ -115,10 +116,11 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
             this.estadoLinhas.update(arr => [
               ...arr,
               {
-                displayValue: `${item.descricao} (${item.quantidadeGeral})`,
+                displayValue: item.descricao,
                 total: 1,
                 produtos: [{ id: item.idProduto, descricao: item.descricao, quantidade: item.quantidadeGeral }],
                 carregando: false,
+                produtoSelecionado: { id: item.idProduto, descricao: item.descricao, quantidade: item.quantidadeGeral },
               },
             ]);
           });
@@ -147,7 +149,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
     );
     this.estadoLinhas.update(arr => [
       ...arr,
-      { displayValue: '', total: 0, produtos: [], carregando: false },
+      { displayValue: '', total: 0, produtos: [], carregando: false, produtoSelecionado: null },
     ]);
     this.carregarProdutosLinha(index, '');
   }
@@ -200,7 +202,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   selecionarProduto(index: number, produto: ProdutoResumidoDto): void {
     this.itens.at(index).get('idProduto')?.setValue(produto.id);
     this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, displayValue: `${produto.descricao} (${produto.quantidade})` } : e)
+      arr.map((e, i) => i === index ? { ...e, displayValue: produto.descricao, produtoSelecionado: produto } : e)
     );
   }
 

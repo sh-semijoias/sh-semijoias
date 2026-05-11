@@ -58,7 +58,7 @@
                       } @else {
                         @for (p of estadoLinhas()[$index]?.produtos ?? []; track p.id) {
                           @if (!produtosSelecionadosExceto($index).includes(p.id)) {
-                            <mat-option [value]="p">{{ p.descricao }} ({{ p.quantidade }})</mat-option>
+                            <mat-option [value]="p">{{ p.descricao }}</mat-option>
                           }
                         }
                         @if ((estadoLinhas()[$index]?.total ?? 0) > 10) {
@@ -77,6 +77,9 @@
                   <input matInput type="number"
                     [min]="modoEdicao() && $index < itensOriginaisCount() ? 0 : 1"
                     formControlName="quantidade" />
+                  @if (estadoLinhas()[$index]?.produtoSelecionado; as p) {
+                    <mat-hint>Em estoque: {{ p.quantidade }}</mat-hint>
+                  }
                   @if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
                     @if (modoEdicao() && $index < itensOriginaisCount()) {
                       <mat-error>Mínimo 0.</mat-error>
