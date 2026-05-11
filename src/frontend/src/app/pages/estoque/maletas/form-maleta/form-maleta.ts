@@ -107,9 +107,10 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
           this.form.patchValue({ descricao: maleta.descricao, idUsuario: maleta.idUsuario });
           this.itensOriginaisCount.set(maleta.itens.length);
           maleta.itens.forEach(item => {
+            const maxOriginal = item.quantidadeGeral + item.quantidade;
             const group = this.fb.group({
               idProduto: [item.idProduto, Validators.required],
-              quantidade: [item.quantidade, [Validators.required, Validators.min(0)]],
+              quantidade: [item.quantidade, [Validators.required, Validators.min(0), Validators.max(maxOriginal)]],
             });
             group.get('idProduto')?.disable();
             this.itens.push(group);
@@ -118,9 +119,9 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
               {
                 displayValue: item.descricao,
                 total: 1,
-                produtos: [{ id: item.idProduto, descricao: item.descricao, quantidade: item.quantidadeGeral }],
+                produtos: [{ id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal }],
                 carregando: false,
-                produtoSelecionado: { id: item.idProduto, descricao: item.descricao, quantidade: item.quantidadeGeral },
+                produtoSelecionado: { id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal },
               },
             ]);
           });
@@ -189,7 +190,15 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
     this.estadoLinhas.update(arr =>
       arr.map((e, i) => i === index ? { ...e, displayValue: valor } : e)
     );
-    if (!valor) this.itens.at(index).get('idProduto')?.setValue(null);
+    if (!valor) {
+      this.itens.at(index).get('idProduto')?.setValue(null);
+      const qtdCtrl = this.itens.at(index).get('quantidade');
+      qtdCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      qtdCtrl?.updateValueAndValidity();
+      this.estadoLinhas.update(arr =>
+        arr.map((e, i) => i === index ? { ...e, produtoSelecionado: null } : e)
+      );
+    }
     this.busca$.next({ index, busca: valor });
   }
 
@@ -201,6 +210,9 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
 
   selecionarProduto(index: number, produto: ProdutoResumidoDto): void {
     this.itens.at(index).get('idProduto')?.setValue(produto.id);
+    const qtdCtrl = this.itens.at(index).get('quantidade');
+    qtdCtrl?.setValidators([Validators.required, Validators.min(1), Validators.max(produto.quantidade)]);
+    qtdCtrl?.updateValueAndValidity();
     this.estadoLinhas.update(arr =>
       arr.map((e, i) => i === index ? { ...e, displayValue: produto.descricao, produtoSelecionado: produto } : e)
     );

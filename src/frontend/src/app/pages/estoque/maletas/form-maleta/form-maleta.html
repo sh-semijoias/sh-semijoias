@@ -78,14 +78,12 @@
                     [min]="modoEdicao() && $index < itensOriginaisCount() ? 0 : 1"
                     formControlName="quantidade" />
                   @if (estadoLinhas()[$index]?.produtoSelecionado; as p) {
-                    <mat-hint>Em estoque: {{ p.quantidade }}</mat-hint>
+                    <mat-hint>Disponível: {{ p.quantidade }}</mat-hint>
                   }
-                  @if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
-                    @if (modoEdicao() && $index < itensOriginaisCount()) {
-                      <mat-error>Mínimo 0.</mat-error>
-                    } @else {
-                      <mat-error>Mínimo 1.</mat-error>
-                    }
+                  @if (item.get('quantidade')?.hasError('max') && item.get('quantidade')?.touched) {
+                    <mat-error>Máximo disponível: {{ estadoLinhas()[$index]?.produtoSelecionado?.quantidade }}.</mat-error>
+                  } @else if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
+                    <mat-error>Mínimo {{ modoEdicao() && $index < itensOriginaisCount() ? 0 : 1 }}.</mat-error>
                   }
                 </mat-form-field>
 
