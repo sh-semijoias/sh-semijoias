@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ShSemijoias.Domain.Entities;
@@ -12,5 +13,12 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
 
         builder.Property(u => u.DataCadastro).IsRequired();
         builder.Property(u => u.DataAtualizacao).IsRequired();
+
+        builder.HasMany(u => u.Perfis)
+            .WithMany()
+            .UsingEntity<IdentityUserRole<Guid>>(
+                j => j.HasOne<Perfil>().WithMany().HasForeignKey(ur => ur.RoleId).IsRequired(),
+                j => j.HasOne<Usuario>().WithMany().HasForeignKey(ur => ur.UserId).IsRequired()
+            );
     }
 }

@@ -5,6 +5,7 @@ using ShSemijoias.Application.DTOs.Maletas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Api.Extensions;
 
+
 namespace ShSemijoias.Api.Controllers;
 
 [ApiController]
@@ -26,26 +27,6 @@ public class MaletasController(IMaletaService maletaService) : ControllerBase
 
         var query = new ListarMaletasConsulta(pagina, tamanhoPagina, busca, idUsuario, ordenarPor, ordemDecrescente);
         var result = await maletaService.ListarAsync(query);
-        return Ok(result.Valor);
-    }
-
-    [HttpGet("produtos")]
-    public async Task<IActionResult> ListarProdutos(
-        [FromQuery] int pagina = 1,
-        [FromQuery] int tamanhoPagina = 10,
-        [FromQuery] string? busca = null,
-        [FromQuery] int? idMaletaContexto = null)
-    {
-        var result = await maletaService.ListarProdutosAsync(
-            new ListarProdutosMaletaConsulta(pagina, tamanhoPagina, busca, idMaletaContexto));
-        return Ok(result.Valor);
-    }
-
-    [HttpGet("revendedores")]
-    [Authorize(Roles = "Administrador")]
-    public async Task<IActionResult> ListarRevendedores()
-    {
-        var result = await maletaService.ListarRevendedoresAsync();
         return Ok(result.Valor);
     }
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using ShSemijoias.Application.DTOs.Maletas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
@@ -29,6 +30,8 @@ public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
     public async Task SalvarAsync() =>
         await context.SaveChangesAsync();
 
+    public Task<IDbContextTransaction> BeginTransacaoAsync() =>
+        context.Database.BeginTransactionAsync();
 
     public async Task<(IList<VisaoMaleta> Items, int Total)> ListarAsync(ListarMaletasConsulta query)
     {

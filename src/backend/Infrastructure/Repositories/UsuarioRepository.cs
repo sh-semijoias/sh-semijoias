@@ -2,17 +2,26 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
+using ShSemijoias.Infrastructure.Persistence;
 
 namespace ShSemijoias.Infrastructure.Repositories;
 
-public class UsuarioRepository(UserManager<Usuario> userManager) : IUsuarioRepository
+public class UsuarioRepository(UserManager<Usuario> userManager, ApplicationDbContext context) : IUsuarioRepository
 {
-    public Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina)
+    public async Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null)
     {
-        var query = userManager.Users.OrderBy(u => u.Nome);
-        var total = query.Count();
-        var items = query.Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
-        return Task.FromResult<(IList<Usuario>, int)>((items, total));
+        var query = context.Users
+            .Include(u => u.Perfis)
+            .Where(u => perfil == null || u.Perfis.Any(p => p.NormalizedName == perfil.ToUpper()))
+            .OrderBy(u => u.Nome);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToListAsync();
+
+        return (items, total);
     }
 
     public Task<Usuario?> ObterPorIdAsync(Guid id) =>

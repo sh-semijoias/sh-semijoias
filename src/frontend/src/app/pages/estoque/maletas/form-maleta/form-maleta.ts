@@ -13,9 +13,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { MaletaService, RevendedorDto } from '../../../../core/services/maleta.service';
+import { MaletaService } from '../../../../core/services/maleta.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ProdutoResumidoDto } from '../../../../core/services/estoque.service';
+import { EstoqueService, ProdutoResumidoDto } from '../../../../core/services/estoque.service';
 import { AddRowButtonComponent } from '../../../../shared/components/add-row-button/add-row-button';
 import { Perfil } from '../../../../core/enums/perfil.enum';
 
@@ -52,6 +52,7 @@ interface EstadoLinha {
 })
 export class FormMaletaComponent implements OnInit, OnDestroy {
   private readonly service = inject(MaletaService);
+  private readonly estoqueService = inject(EstoqueService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -63,8 +64,9 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   readonly modoEdicao = signal(false);
   readonly carregando = signal(false);
   readonly salvando = signal(false);
-  readonly revendedores = signal<RevendedorDto[]>([]);
+  readonly revendedores = signal<{ id: string; nome: string }[]>([]);
   readonly estadoLinhas = signal<EstadoLinha[]>([]);
+  readonly itensOriginaisCount = signal(0);
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
   readonly displayProduto = (produto: ProdutoResumidoDto | null): string =>
@@ -102,14 +104,14 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
       this.service.obterPorId(this.maletaId).subscribe({
         next: (maleta) => {
           this.form.patchValue({ descricao: maleta.descricao, idUsuario: maleta.idUsuario });
+          this.itensOriginaisCount.set(maleta.itens.length);
           maleta.itens.forEach(item => {
-            const index = this.itens.length;
-            this.itens.push(
-              this.fb.group({
-                idProduto: [item.idProduto, Validators.required],
-                quantidade: [item.quantidade, [Validators.required, Validators.min(1)]],
-              })
-            );
+            const group = this.fb.group({
+              idProduto: [item.idProduto, Validators.required],
+              quantidade: [item.quantidade, [Validators.required, Validators.min(0)]],
+            });
+            group.get('idProduto')?.disable();
+            this.itens.push(group);
             this.estadoLinhas.update(arr => [
               ...arr,
               {
@@ -119,7 +121,6 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
                 carregando: false,
               },
             ]);
-            this.carregarProdutosLinha(index, '');
           });
           if (maleta.itens.length === 0) this.adicionarItem();
           this.carregando.set(false);
@@ -152,6 +153,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   }
 
   removerItem(index: number): void {
+    if (this.modoEdicao() && index < this.itensOriginaisCount()) return;
     if (this.itens.length > 1) {
       this.itens.removeAt(index);
       this.estadoLinhas.update(arr => arr.filter((_, i) => i !== index));
@@ -162,7 +164,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
     this.estadoLinhas.update(arr =>
       arr.map((e, i) => i === index ? { ...e, carregando: true } : e)
     );
-    this.service.listarProdutos(busca || undefined, 1, 10, this.maletaId ?? undefined)
+    this.estoqueService.listarProdutos(busca || undefined, 1, 10)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
@@ -210,10 +212,11 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
 
     this.salvando.set(true);
 
+    const raw = this.form.getRawValue();
     const dto = {
-      descricao: this.form.getRawValue().descricao!,
-      idUsuario: this.form.getRawValue().idUsuario!,
-      itens: this.itens.value as { idProduto: number; quantidade: number }[],
+      descricao: raw.descricao!,
+      idUsuario: raw.idUsuario!,
+      itens: this.itens.getRawValue() as { idProduto: number; quantidade: number }[],
     };
 
     const onError = (e: { error?: { erros?: string[] } }) => {

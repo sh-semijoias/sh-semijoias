@@ -1,6 +1,5 @@
 using ShSemijoias.Application.Common;
 using ShSemijoias.Application.DTOs;
-using ShSemijoias.Application.DTOs.Estoque;
 using ShSemijoias.Application.DTOs.Maletas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
@@ -9,8 +8,7 @@ namespace ShSemijoias.Application.Services;
 
 public class MaletaService(
     IMaletaRepository maletaRepository,
-    IEstoqueRepository estoqueRepository,
-    IUsuarioRepository usuarioRepository) : IMaletaService
+    IEstoqueRepository estoqueRepository) : IMaletaService
 {
     public async Task<Result<ListaPaginada<MaletaDto>>> ListarAsync(ListarMaletasConsulta query)
     {
@@ -40,19 +38,14 @@ public class MaletaService(
         var itensEstoque = await maletaRepository.ListarItensMaletaAsync(id);
 
         var itensMaletaIds = itensEstoque.Select(e => e.IdProduto).ToList();
-        var estoqueGeral = new Dictionary<int, int>();
-        foreach (var idProduto in itensMaletaIds)
-        {
-            var eg = await estoqueRepository.BuscarPorProdutoAsync(idProduto);
-            estoqueGeral[idProduto] = eg?.Quantidade ?? 0;
-        }
+        var estoqueGeralDict = await estoqueRepository.BuscarPorProdutosAsync(itensMaletaIds);
 
         var itensDto = itensEstoque.Select(e => new ItemMaletaDetalheDto(
             e.Id,
             e.IdProduto,
             e.Produto.Descricao,
             e.Quantidade,
-            (estoqueGeral.TryGetValue(e.IdProduto, out var qg) ? qg : 0) + e.Quantidade
+            estoqueGeralDict.TryGetValue(e.IdProduto, out var qg) ? qg.Quantidade : 0
         )).ToList();
 
         return Result<MaletaDetalheDto>.Ok(new MaletaDetalheDto(
@@ -88,12 +81,14 @@ public class MaletaService(
             return Result<MaletaDto>.Falha(erros);
 
         var descricao = dto.Descricao.Trim();
+        var idsParaValidar = dto.Itens!.Select(i => i.IdProduto).ToList();
+        var estoqueGeralDict = await estoqueRepository.BuscarPorProdutosAsync(idsParaValidar);
 
         foreach (var item in dto.Itens!)
         {
-            var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
-            if (estoqueGeral is null || estoqueGeral.Quantidade < item.Quantidade)
-                erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {estoqueGeral?.Quantidade ?? 0}.");
+            estoqueGeralDict.TryGetValue(item.IdProduto, out var eg);
+            if (eg is null || eg.Quantidade < item.Quantidade)
+                erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {eg?.Quantidade ?? 0}.");
         }
 
         if (erros.Count > 0)
@@ -107,25 +102,35 @@ public class MaletaService(
             DataAtualizacao = DateTime.UtcNow,
         };
 
-        await maletaRepository.AdicionarAsync(maleta);
-        await maletaRepository.SalvarAsync();
-
-        foreach (var item in dto.Itens)
+        await using var transacao = await maletaRepository.BeginTransacaoAsync();
+        try
         {
-            var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
-            estoqueGeral!.Quantidade -= item.Quantidade;
-            estoqueGeral.DataAtualizacao = DateTime.UtcNow;
+            await maletaRepository.AdicionarAsync(maleta);
+            await maletaRepository.SalvarAsync();
 
-            await estoqueRepository.AdicionarAsync(new Estoque
+            foreach (var item in dto.Itens)
             {
-                IdProduto = item.IdProduto,
-                IdMaleta = maleta.Id,
-                Quantidade = item.Quantidade,
-                DataAtualizacao = DateTime.UtcNow,
-            });
-        }
+                var eg = estoqueGeralDict[item.IdProduto];
+                eg.Quantidade -= item.Quantidade;
+                eg.DataAtualizacao = DateTime.UtcNow;
 
-        await maletaRepository.SalvarAsync();
+                await estoqueRepository.AdicionarAsync(new Estoque
+                {
+                    IdProduto = item.IdProduto,
+                    IdMaleta = maleta.Id,
+                    Quantidade = item.Quantidade,
+                    DataAtualizacao = DateTime.UtcNow,
+                });
+            }
+
+            await maletaRepository.SalvarAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
 
         var recarregada = await maletaRepository.ObterPorIdAsync(maleta.Id);
         return Result<MaletaDto>.Ok(new MaletaDto(
@@ -152,8 +157,8 @@ public class MaletaService(
 
         if (dto.Itens != null)
         {
-            if (dto.Itens.Any(i => i.Quantidade <= 0))
-                erros.Add("A quantidade de cada produto deve ser maior que zero.");
+            if (dto.Itens.Any(i => i.Quantidade < 0))
+                erros.Add("A quantidade de cada produto não pode ser negativa.");
 
             if (dto.Itens.GroupBy(i => i.IdProduto).Any(g => g.Count() > 1))
                 erros.Add("Não é permitido informar o mesmo produto mais de uma vez.");
@@ -171,16 +176,12 @@ public class MaletaService(
         var mapaAtual = itensAtuais.ToDictionary(e => e.IdProduto);
         var novosIds = dto.Itens!.Select(i => i.IdProduto).ToHashSet();
 
-        foreach (var itemAtual in itensAtuais.Where(e => !novosIds.Contains(e.IdProduto)))
-        {
-            var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(itemAtual.IdProduto);
-            if (estoqueGeral is not null)
-            {
-                estoqueGeral.Quantidade += itemAtual.Quantidade;
-                estoqueGeral.DataAtualizacao = DateTime.UtcNow;
-            }
-            await estoqueRepository.RemoverAsync(itemAtual);
-        }
+        var idsExistentesAusentes = mapaAtual.Keys.Where(idP => !novosIds.Contains(idP)).ToList();
+        if (idsExistentesAusentes.Count > 0)
+            return Result<MaletaDto>.Falha("Não é permitido remover produtos que já existiam na maleta.");
+
+        var todosIdsRelevantes = novosIds.ToList();
+        var estoqueGeralDict = await estoqueRepository.BuscarPorProdutosAsync(todosIdsRelevantes);
 
         foreach (var item in dto.Itens!)
         {
@@ -189,24 +190,23 @@ public class MaletaService(
                 var delta = item.Quantidade - itemAtual.Quantidade;
                 if (delta > 0)
                 {
-                    var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
-                    if (estoqueGeral is null || estoqueGeral.Quantidade < delta)
-                        erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {estoqueGeral?.Quantidade ?? 0}.");
+                    estoqueGeralDict.TryGetValue(item.IdProduto, out var eg);
+                    if (eg is null || eg.Quantidade < delta)
+                        erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {eg?.Quantidade ?? 0}.");
                     else
                     {
-                        estoqueGeral.Quantidade -= delta;
-                        estoqueGeral.DataAtualizacao = DateTime.UtcNow;
+                        eg.Quantidade -= delta;
+                        eg.DataAtualizacao = DateTime.UtcNow;
                         itemAtual.Quantidade = item.Quantidade;
                         itemAtual.DataAtualizacao = DateTime.UtcNow;
                     }
                 }
                 else if (delta < 0)
                 {
-                    var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
-                    if (estoqueGeral is not null)
+                    if (estoqueGeralDict.TryGetValue(item.IdProduto, out var eg))
                     {
-                        estoqueGeral.Quantidade += Math.Abs(delta);
-                        estoqueGeral.DataAtualizacao = DateTime.UtcNow;
+                        eg.Quantidade += Math.Abs(delta);
+                        eg.DataAtualizacao = DateTime.UtcNow;
                     }
                     itemAtual.Quantidade = item.Quantidade;
                     itemAtual.DataAtualizacao = DateTime.UtcNow;
@@ -214,21 +214,26 @@ public class MaletaService(
             }
             else
             {
-                var estoqueGeral = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
-                if (estoqueGeral is null || estoqueGeral.Quantidade < item.Quantidade)
-                    erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {estoqueGeral?.Quantidade ?? 0}.");
+                if (item.Quantidade <= 0)
+                    erros.Add($"A quantidade do produto {item.IdProduto} deve ser maior que zero.");
                 else
                 {
-                    estoqueGeral.Quantidade -= item.Quantidade;
-                    estoqueGeral.DataAtualizacao = DateTime.UtcNow;
-
-                    await estoqueRepository.AdicionarAsync(new Estoque
+                    estoqueGeralDict.TryGetValue(item.IdProduto, out var eg);
+                    if (eg is null || eg.Quantidade < item.Quantidade)
+                        erros.Add($"Estoque insuficiente para o produto {item.IdProduto}. Disponível: {eg?.Quantidade ?? 0}.");
+                    else
                     {
-                        IdProduto = item.IdProduto,
-                        IdMaleta = id,
-                        Quantidade = item.Quantidade,
-                        DataAtualizacao = DateTime.UtcNow,
-                    });
+                        eg.Quantidade -= item.Quantidade;
+                        eg.DataAtualizacao = DateTime.UtcNow;
+
+                        await estoqueRepository.AdicionarAsync(new Estoque
+                        {
+                            IdProduto = item.IdProduto,
+                            IdMaleta = id,
+                            Quantidade = item.Quantidade,
+                            DataAtualizacao = DateTime.UtcNow,
+                        });
+                    }
                 }
             }
         }
@@ -240,7 +245,17 @@ public class MaletaService(
         maleta.Descricao = descricao;
         maleta.DataAtualizacao = DateTime.UtcNow;
 
-        await maletaRepository.SalvarAsync();
+        await using var transacao = await maletaRepository.BeginTransacaoAsync();
+        try
+        {
+            await maletaRepository.SalvarAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
 
         var recarregada = await maletaRepository.ObterPorIdAsync(id);
         return Result<MaletaDto>.Ok(new MaletaDto(
@@ -251,20 +266,5 @@ public class MaletaService(
             dto.Itens.Sum(i => i.Quantidade),
             maleta.DataCadastro,
             maleta.DataAtualizacao));
-    }
-
-    public async Task<Result<ListaPaginada<ProdutoResumidoDto>>> ListarProdutosAsync(ListarProdutosMaletaConsulta consulta)
-    {
-        var (items, total) = await estoqueRepository.ListarProdutosComContextoMaletaAsync(consulta);
-        var dtos = items.Select(e => new ProdutoResumidoDto(e.IdProduto, e.Produto.Descricao, e.Quantidade)).ToList();
-        return Result<ListaPaginada<ProdutoResumidoDto>>.Ok(
-            new ListaPaginada<ProdutoResumidoDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
-    }
-
-    public async Task<Result<IList<RevendedorDto>>> ListarRevendedoresAsync()
-    {
-        var usuarios = await usuarioRepository.ListarPorPerfilAsync("Revendedor");
-        var dtos = usuarios.OrderBy(u => u.Nome).Select(u => new RevendedorDto(u.Id, u.Nome)).ToList();
-        return Result<IList<RevendedorDto>>.Ok(dtos);
     }
 }

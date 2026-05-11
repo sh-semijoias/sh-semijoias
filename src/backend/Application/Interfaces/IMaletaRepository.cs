@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Storage;
 using ShSemijoias.Application.DTOs.Maletas;
 using ShSemijoias.Domain.Entities;
 
@@ -11,4 +12,5 @@ public interface IMaletaRepository
     Task<Maleta> AdicionarAsync(Maleta maleta);
     Task AtualizarAsync(Maleta maleta);
     Task SalvarAsync();
+    Task<IDbContextTransaction> BeginTransacaoAsync();
 }

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ListaPaginada } from './usuario.service';
-import { ProdutoResumidoDto } from './estoque.service';
 
 export enum OrdenacaoMaleta {
   Descricao = 0,
@@ -50,11 +50,6 @@ export interface CriarEditarMaletaDto {
   itens: ItemMaletaDto[];
 }
 
-export interface RevendedorDto {
-  id: string;
-  nome: string;
-}
-
 export interface ListarMaletasFiltros {
   pagina: number;
   tamanhoPagina: number;
@@ -92,14 +87,13 @@ export class MaletaService {
     return this.http.put<MaletaDto>(`${this.baseUrl}/${id}`, dto);
   }
 
-  listarProdutos(busca?: string, pagina = 1, tamanhoPagina = 10, idMaletaContexto?: number): Observable<ListaPaginada<ProdutoResumidoDto>> {
-    let params = new HttpParams().set('pagina', pagina).set('tamanhoPagina', tamanhoPagina);
-    if (busca) params = params.set('busca', busca);
-    if (idMaletaContexto != null) params = params.set('idMaletaContexto', idMaletaContexto);
-    return this.http.get<ListaPaginada<ProdutoResumidoDto>>(`${this.baseUrl}/produtos`, { params });
-  }
-
-  listarRevendedores(): Observable<RevendedorDto[]> {
-    return this.http.get<RevendedorDto[]>(`${this.baseUrl}/revendedores`);
+  listarRevendedores(): Observable<{ id: string; nome: string }[]> {
+    const params = new HttpParams()
+      .set('perfil', 'Revendedor')
+      .set('tamanhoPagina', 100)
+      .set('pagina', 1);
+    return this.http.get<ListaPaginada<{ id: string; nome: string }>>('/api/usuarios', { params }).pipe(
+      map(res => res.items)
+    );
   }
 }
