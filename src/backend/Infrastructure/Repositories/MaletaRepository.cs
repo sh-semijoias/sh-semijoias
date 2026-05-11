@@ -9,6 +9,9 @@ namespace ShSemijoias.Infrastructure.Repositories;
 
 public class MaletaRepository(ApplicationDbContext context) : IMaletaRepository
 {
+    public Task<bool> ExisteParaUsuarioAsync(Guid idUsuario) =>
+        context.Maletas.AnyAsync(m => m.IdUsuario == idUsuario);
+
     public async Task<Maleta?> ObterPorIdAsync(int id) =>
         await context.Maletas.Include(m => m.Usuario).FirstOrDefaultAsync(m => m.Id == id);
 

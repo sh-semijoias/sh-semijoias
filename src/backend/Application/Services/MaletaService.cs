@@ -80,6 +80,9 @@ public class MaletaService(
         if (erros.Count > 0)
             return Result<MaletaDto>.Falha(erros);
 
+        if (await maletaRepository.ExisteParaUsuarioAsync(dto.IdUsuario))
+            return Result<MaletaDto>.Falha("O usuário já possui uma maleta ativa.");
+
         var descricao = dto.Descricao.Trim();
         var idsParaValidar = dto.Itens!.Select(i => i.IdProduto).ToList();
         var estoqueGeralDict = await estoqueRepository.BuscarPorProdutosAsync(idsParaValidar);
