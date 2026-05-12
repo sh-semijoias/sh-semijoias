@@ -507,6 +507,32 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasName("pk_tipo_produto");
 
                     b.ToTable("tipo_produto", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ativo = true,
+                            Descricao = "Brinco"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ativo = true,
+                            Descricao = "Anel"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ativo = true,
+                            Descricao = "Gargantilha"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ativo = true,
+                            Descricao = "Pulseira"
+                        });
                 });
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Usuario", b =>
