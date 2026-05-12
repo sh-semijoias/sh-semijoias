@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { MatPaginatorIntl } from '@angular/material/paginator';
@@ -30,6 +30,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideRouter(routes),
     provideNgxMask(),
+    { provide: LOCALE_ID, useValue: 'pt-BR' },
     { provide: MatPaginatorIntl, useFactory: paginatorIntlPtBr }
   ]
 };

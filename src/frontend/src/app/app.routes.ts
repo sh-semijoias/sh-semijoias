@@ -10,6 +10,7 @@ import { ListaClientesComponent } from './pages/clientes/lista-clientes/lista-cl
 import { FormClienteComponent } from './pages/clientes/form-clientes/form-clientes';
 import { ListaMaletasComponent } from './pages/estoque/maletas/lista-maletas/lista-maletas';
 import { FormMaletaComponent } from './pages/estoque/maletas/form-maleta/form-maleta';
+import { FormProdutoComponent } from './pages/produtos/form-produto/form-produto';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -28,4 +29,7 @@ export const routes: Routes = [
   { path: 'clientes', component: ListaClientesComponent, canActivate: [authGuard] },
   { path: 'clientes/novo', component: FormClienteComponent, canActivate: [authGuard] },
   { path: 'clientes/:id/editar', component: FormClienteComponent, canActivate: [authGuard] },
+  { path: 'produtos', component: ListaEstoqueComponent, canActivate: [authGuard()] },
+  { path: 'produtos/novo', component: FormProdutoComponent, canActivate: [authGuard()] },
+  { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
 ];
