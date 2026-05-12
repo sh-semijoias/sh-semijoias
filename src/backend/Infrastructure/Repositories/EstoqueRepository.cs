@@ -61,12 +61,23 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
     public async Task<Estoque?> BuscarPorIdAsync(int id) =>
         await context.Estoques.FirstOrDefaultAsync(e => e.Id == id);
 
-    public async Task<Estoque?> BuscarPorProdutoAsync(int idProduto) =>
+    public async Task<Estoque?> BuscarPorProdutoAsync(int idProduto, int? idMaleta = null) =>
         await context.Estoques
-            .FirstOrDefaultAsync(e => e.IdProduto == idProduto && e.IdMaleta == null);
+            .FirstOrDefaultAsync(e => e.IdProduto == idProduto && e.IdMaleta == idMaleta);
+
+    public async Task<Dictionary<int, Estoque>> BuscarPorProdutosAsync(IList<int> idsProdutos, int? idMaleta = null) =>
+        await context.Estoques
+            .Where(e => idsProdutos.Contains(e.IdProduto) && e.IdMaleta == idMaleta)
+            .ToDictionaryAsync(e => e.IdProduto);
 
     public async Task AdicionarAsync(Estoque estoque) =>
         await context.Estoques.AddAsync(estoque);
+
+    public Task RemoverAsync(Estoque estoque)
+    {
+        context.Estoques.Remove(estoque);
+        return Task.CompletedTask;
+    }
 
     public async Task SalvarAsync() =>
         await context.SaveChangesAsync();
@@ -97,4 +108,5 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
         return (items, total);
     }
+
 }

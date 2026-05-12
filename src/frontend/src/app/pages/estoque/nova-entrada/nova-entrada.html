@@ -19,12 +19,15 @@
                   placeholder="Digite para buscar..."
                 />
                 <mat-autocomplete #autoProduto="matAutocomplete"
+                  [displayWith]="displayProduto"
                   (optionSelected)="selecionarProduto($index, $event.option.value)">
                   @if (estadoLinhas()[$index]?.carregando) {
                     <mat-option disabled>Carregando...</mat-option>
                   } @else {
                     @for (p of estadoLinhas()[$index]?.produtos ?? []; track p.id) {
-                      <mat-option [value]="p">{{ p.descricao }} ({{ p.quantidade }})</mat-option>
+                      @if (!produtosSelecionadosExceto($index).includes(p.id)) {
+                        <mat-option [value]="p">{{ p.descricao }}</mat-option>
+                      }
                     }
                     @if ((estadoLinhas()[$index]?.total ?? 0) > 10) {
                       <mat-option disabled>Refine a busca para ver mais resultados</mat-option>
@@ -39,6 +42,9 @@
               <mat-form-field appearance="outline" class="w-36">
                 <mat-label>Quantidade</mat-label>
                 <input matInput type="number" min="1" formControlName="quantidade" />
+                @if (estadoLinhas()[$index]?.produtoSelecionado; as p) {
+                  <mat-hint>Em estoque: {{ p.quantidade }}</mat-hint>
+                }
                 @if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
                   <mat-error>Mínimo 1.</mat-error>
                 }

@@ -27,11 +27,19 @@ public class EstoqueService(IEstoqueRepository estoqueRepository) : IEstoqueServ
 
     public async Task<Result<bool>> RegistrarEntradaAsync(RegistrarEntradaEstoqueDto dto)
     {
+        var erros = new List<string>();
+
         if (dto.Itens == null || dto.Itens.Count == 0)
             return Result<bool>.Falha("Informe ao menos um item.");
 
         if (dto.Itens.Any(i => i.Quantidade <= 0))
-            return Result<bool>.Falha("A quantidade de cada item deve ser maior que zero.");
+            erros.Add("A quantidade de cada item deve ser maior que zero.");
+
+        if (dto.Itens.GroupBy(i => i.IdProduto).Any(g => g.Count() > 1))
+            erros.Add("Não é permitido informar o mesmo produto mais de uma vez.");
+
+        if (erros.Count > 0)
+            return Result<bool>.Falha(erros);
 
         foreach (var item in dto.Itens)
         {

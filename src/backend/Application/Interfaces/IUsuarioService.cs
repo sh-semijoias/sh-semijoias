@@ -6,7 +6,7 @@ namespace ShSemijoias.Application.Interfaces;
 
 public interface IUsuarioService
 {
-    Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina);
+    Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null);
     Task<UsuarioDto?> ObterPorIdAsync(Guid id);
     Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl);
     Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto);
