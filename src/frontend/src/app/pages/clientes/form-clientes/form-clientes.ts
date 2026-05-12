@@ -53,7 +53,7 @@ export class FormClienteComponent implements OnInit {
     this.clienteId = this.route.snapshot.paramMap.get('id');
     if (this.clienteId) {
       this.modoEdicao.set(true);
-      this.form.get('email')!.disable();
+      //this.form.get('email')!.disable();
       this.carregando.set(true);
       this.service.obterPorId(this.clienteId).subscribe({
         next: (u) => {

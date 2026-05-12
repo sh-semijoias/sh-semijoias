@@ -22,7 +22,7 @@ public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(int pagina, in
             u.Id,
             u.Nome,
             u.Email ?? string.Empty,
-            string.Empty,
+            u.CPF ?? string.Empty,
             u.Telefone ?? string.Empty
         )
     ).ToList();
@@ -41,7 +41,7 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
         cliente.Id,
         cliente.Nome,
         cliente.Email ?? string.Empty,
-        string.Empty,
+        cliente.CPF ?? string.Empty,
         cliente.Telefone ?? string.Empty
     );
 }
@@ -79,6 +79,7 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
     {
         Nome = dto.Nome,
         Email = dto.Email,
+        CPF = dto.CPF,
         Telefone = dto.Telefone,
         DataCadastro = DateTime.UtcNow,
         DataAtualizacao = DateTime.UtcNow
@@ -130,6 +131,8 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
 
     cliente.Nome = dto.Nome;
     cliente.Telefone = dto.Telefone;
+    cliente.Email = dto.Email;
+    cliente.CPF = dto.CPF;
     cliente.DataAtualizacao = DateTime.UtcNow;
 
     await clienteRepository.AtualizarAsync(cliente);
@@ -137,6 +140,7 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
     return Result<ClientesDto>.Ok(new ClientesDto(
         cliente.Id,
         cliente.Nome,
+    
         cliente.Email ?? string.Empty,
         string.Empty,
         cliente.Telefone ?? string.Empty
