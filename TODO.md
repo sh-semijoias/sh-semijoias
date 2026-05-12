@@ -10,6 +10,7 @@
 
 ## Produtos
 - [ ] data de criação e atualização do produto devem ser preenchidas automaticamente
+- [ ] ao cadastrar produto, inserir estoque com quantidade 0
 
 ## Venda
 - [ ] listagem de vendas, onde admin vê todas e revendedor vê só as próprias
