@@ -1,0 +1,68 @@
+<div class="p-4 sm:p-6">
+  <div class="flex items-center gap-2 mb-6">
+    <a mat-icon-button routerLink="/produtos"><mat-icon>arrow_back</mat-icon></a>
+    <h2 class="text-xl font-semibold">{{ modoEdicao() ? 'Editar Produto' : 'Novo Produto' }}</h2>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4 pt-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Data</mat-label>
+            <input matInput formControlName="data" mask="d0/M0/0000" />
+            @if (form.get('data')?.invalid && form.get('data')?.touched) {
+              <mat-error>Data é obrigatória</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Descrição</mat-label>
+            <input matInput formControlName="descricao" />
+            @if (form.get('descricao')?.invalid && form.get('descricao')?.touched) {
+              <mat-error>Descrição é obrigatória</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="idCategoria">
+              <mat-option [value]="null">Selecione</mat-option>
+              @for (categoria of categories(); track categoria.id) {
+                <mat-option [value]="categoria.id">{{ categoria.descricao }}</mat-option>
+              }
+            </mat-select>
+            @if (form.get('idCategoria')?.invalid && form.get('idCategoria')?.touched) {
+              <mat-error>Categoria é obrigatória</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Preço de compra</mat-label>
+            <input matInput formControlName="precoCompra" mask="separator.2" prefix="R$ " thousandSeparator="." decimalMarker="," />
+            @if (form.get('precoCompra')?.invalid && form.get('precoCompra')?.touched) {
+              <mat-error>Preço de compra é obrigatório</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Preço de venda</mat-label>
+            <input matInput formControlName="precoVendaSugerido" mask="separator.2" prefix="R$ " thousandSeparator="." decimalMarker="," />
+            @if (form.get('precoVendaSugerido')?.invalid && form.get('precoVendaSugerido')?.touched) {
+              <mat-error>Preço de venda é obrigatório</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="flex gap-3 mt-2">
+            <button mat-flat-button type="submit" [disabled]="saving()">
+              @if (saving()) { <mat-spinner diameter="20" /> } @else { Salvar }
+            </button>
+            <a mat-button routerLink="/produtos">Cancelar</a>
+          </div>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
