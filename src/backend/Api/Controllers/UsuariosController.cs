@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Usuarios;
 using ShSemijoias.Application.Interfaces;
+using ShSemijoias.Domain.Enums;
 
 namespace ShSemijoias.Api.Controllers;
 
 [ApiController]
 [Route("api/usuarios")]
-[Authorize]
+[Authorize(Roles = Perfis.Administrador)]
 public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
 {
     [HttpGet]
