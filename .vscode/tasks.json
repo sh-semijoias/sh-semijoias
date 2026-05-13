@@ -17,6 +17,9 @@
       "label": "ng: stop",
       "type": "shell",
       "command": "pkill -f 'ng serve' || true",
+      "windows": {
+        "command": "powershell -Command \"Get-Process -Name 'node' -ErrorAction SilentlyContinue | Stop-Process -Force\""
+      },
       "presentation": {
         "reveal": "silent"
       },
@@ -49,6 +52,9 @@
       "label": "backend: wait",
       "type": "shell",
       "command": "until curl -sf http://localhost:5224/scalar/v1 > /dev/null; do sleep 1; done",
+      "windows": {
+        "command": "powershell -Command \"while (-not (try { Invoke-WebRequest -Uri http://localhost:5224/scalar/v1 -UseBasicParsing -ErrorAction Stop; $true } catch { $false })) { Start-Sleep 1 }\""
+      },
       "presentation": {
         "reveal": "silent"
       },
