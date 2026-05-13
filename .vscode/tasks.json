@@ -89,6 +89,18 @@
       "problemMatcher": []
     },
     {
+      "label": "start: dependencies",
+      "dependsOn": ["docker: up", "ng: serve"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "stop: all",
+      "dependsOn": ["docker: down", "ng: stop"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
       "label": "ng: test",
       "type": "npm",
       "script": "test",
