@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface ListaPaginada<T> {
   items: T[];
@@ -51,5 +52,15 @@ export class UsuarioService {
 
   editar(id: string, dto: EditarUsuarioDto): Observable<UsuarioDto> {
     return this.http.put<UsuarioDto>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  listarRevendedores(): Observable<{ id: string; nome: string }[]> {
+    const params = new HttpParams()
+      .set('perfil', 'Revendedor')
+      .set('tamanhoPagina', 100)
+      .set('pagina', 1);
+    return this.http.get<ListaPaginada<{ id: string; nome: string }>>(this.baseUrl, { params }).pipe(
+      map(res => res.items)
+    );
   }
 }

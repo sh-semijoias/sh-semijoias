@@ -14,6 +14,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { MaletaService } from '../../../../core/services/maleta.service';
+import { UsuarioService } from '../../../../core/services/usuario.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { EstoqueService, ProdutoResumidoDto } from '../../../../core/services/estoque.service';
 import { AddRowButtonComponent } from '../../../../shared/components/add-row-button/add-row-button';
@@ -53,6 +54,7 @@ interface EstadoLinha {
 })
 export class FormMaletaComponent implements OnInit, OnDestroy {
   private readonly service = inject(MaletaService);
+  private readonly usuarioService = inject(UsuarioService);
   private readonly estoqueService = inject(EstoqueService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -93,7 +95,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(({ index, busca }) => this.carregarProdutosLinha(index, busca));
 
-    this.service.listarRevendedores().subscribe({
+    this.usuarioService.listarRevendedores().subscribe({
       next: (lista) => this.revendedores.set(lista),
     });
 

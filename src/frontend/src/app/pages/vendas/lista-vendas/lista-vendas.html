@@ -1,0 +1,145 @@
+<div class="p-4 sm:p-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-xl font-semibold">Vendas</h2>
+    <div class="sm:hidden">
+      <button mat-stroked-button (click)="filtrosAbertos.set(!filtrosAbertos())">
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+        @if (filtrosAtivosCount > 0) {
+          <span class="ml-1 text-primary font-semibold">({{ filtrosAtivosCount }})</span>
+        }
+        <mat-icon>{{ filtrosAbertos() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4" [class.hidden]="!filtrosAbertos()">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Comprador</mat-label>
+      <input matInput [formControl]="nomeClienteControl" placeholder="Nome do cliente..." />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Produto</mat-label>
+      <input matInput [formControl]="nomeProdutoControl" placeholder="Nome do produto..." />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    @if (isAdmin()) {
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Revendedora</mat-label>
+        <mat-select [formControl]="idRevendedoraControl">
+          <mat-option [value]="null">Todas</mat-option>
+          @for (rev of revendedoras(); track rev.id) {
+            <mat-option [value]="rev.id">{{ rev.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Período</mat-label>
+      <mat-date-range-input [rangePicker]="pickerPeriodo">
+        <input matStartDate [formControl]="dataInicioControl" placeholder="Início" />
+        <input matEndDate [formControl]="dataFimControl" placeholder="Fim" />
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="pickerPeriodo" />
+      <mat-date-range-picker #pickerPeriodo />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <mat-card appearance="outlined">
+      <mat-card-content class="flex items-center gap-4 py-4!">
+        <mat-icon class="text-4xl! w-10! h-10! opacity-60">shopping_cart</mat-icon>
+        <div>
+          <p class="text-sm text-secondary">Vendas no período</p>
+          <p class="text-2xl font-semibold">{{ total() }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="flex items-center gap-4 py-4!">
+        <mat-icon class="text-4xl! w-10! h-10! opacity-60">payments</mat-icon>
+        <div>
+          <p class="text-sm text-secondary">Total vendido</p>
+          <p class="text-2xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="relative overflow-hidden">
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="absolute inset-0 z-10 flex items-center justify-center bg-overlay-loading">
+          <mat-spinner diameter="40" />
+        </div>
+      }
+
+      @if (erroCarregamento() && itens().length === 0) {
+        <div class="text-center py-8">
+          <p class="text-red-600 mb-3">Não foi possível carregar as vendas.</p>
+          <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+        </div>
+      } @else {
+        <div class="min-h-24">
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="itens()" matSort (matSortChange)="aoOrdenar($event)" class="w-full">
+              <ng-container matColumnDef="dataVenda">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Data</th>
+                <td mat-cell *matCellDef="let item">{{ item.dataVenda | date:'dd/MM/yyyy':'':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="nomeCliente">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Comprador</th>
+                <td mat-cell *matCellDef="let item">{{ item.nomeCliente }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="nomeRevendedora">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revendedora</th>
+                <td mat-cell *matCellDef="let item">{{ item.nomeRevendedora }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalProdutos">
+                <th mat-header-cell *matHeaderCellDef>Produtos</th>
+                <td mat-cell *matCellDef="let item">{{ item.totalProdutos }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalItens">
+                <th mat-header-cell *matHeaderCellDef>Itens</th>
+                <td mat-cell *matCellDef="let item">{{ item.totalItens }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="valorTotal">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Valor Total</th>
+                <td mat-cell *matCellDef="let item">{{ item.valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="formaPagamento">
+                <th mat-header-cell *matHeaderCellDef>Pagamento</th>
+                <td mat-cell *matCellDef="let item">{{ item.formaPagamento }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+              <tr mat-row *matRowDef="let row; columns: colunas;"></tr>
+            </table>
+          </div>
+
+          @if (!carregando() && itens().length === 0) {
+            <p class="text-center py-8 text-gray-500">Nenhuma venda encontrada.</p>
+          }
+        </div>
+      }
+
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="tamanhoPagina()"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPaginaChange($event)"
+        showFirstLastButtons />
+    </mat-card-content>
+  </mat-card>
+</div>
