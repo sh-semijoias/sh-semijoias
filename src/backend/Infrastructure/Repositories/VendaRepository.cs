@@ -10,12 +10,6 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 {
     public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query)
     {
-        IQueryable<int>? idsVendasComProduto = query.IdProduto != null
-            ? context.ItensVenda
-                .Where(i => i.Estoque.IdProduto == query.IdProduto)
-                .Select(i => i.IdVenda)
-            : null;
-
         var grouped =
             from venda in context.Vendas.AsNoTracking()
             join cliente in context.Clientes.AsNoTracking() on venda.IdCliente equals cliente.Id
@@ -27,7 +21,7 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             where query.IdCliente == null || venda.IdCliente == query.IdCliente
             where query.DataInicio == null || venda.DataVenda >= query.DataInicio
             where query.DataFim == null || venda.DataVenda <= query.DataFim
-            where idsVendasComProduto == null || idsVendasComProduto.Contains(venda.Id)
+            where query.IdProduto == null || venda.Itens.Any(i => i.Estoque.IdProduto == query.IdProduto)
             group new { item } by new
             {
                 venda.Id,
