@@ -10,13 +10,11 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 {
     public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query)
     {
-        IQueryable<int>? idsVendasComProduto = null;
-        if (!string.IsNullOrWhiteSpace(query.NomeProduto))
-        {
-            idsVendasComProduto = context.ItensVenda
-                .Where(i => EF.Functions.ILike(i.Estoque.Produto.Descricao, $"%{query.NomeProduto}%"))
-                .Select(i => i.IdVenda);
-        }
+        IQueryable<int>? idsVendasComProduto = query.IdsProdutos.Count > 0
+            ? context.ItensVenda
+                .Where(i => query.IdsProdutos.Contains(i.Estoque.IdProduto))
+                .Select(i => i.IdVenda)
+            : null;
 
         var grouped =
             from venda in context.Vendas.AsNoTracking()
@@ -25,8 +23,8 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             join tipoPagamento in context.TiposPagamento.AsNoTracking() on venda.IdTipoPagamento equals tipoPagamento.Id
             join item in context.ItensVenda on venda.Id equals item.IdVenda
             where query.IdUsuario == null || venda.IdUsuario == query.IdUsuario
-            where query.IdRevendedora == null || venda.IdUsuario == query.IdRevendedora
-            where string.IsNullOrWhiteSpace(query.NomeCliente) || EF.Functions.ILike(cliente.Nome, $"%{query.NomeCliente}%")
+            where query.IdsRevendedores.Count == 0 || query.IdsRevendedores.Contains(venda.IdUsuario)
+            where query.IdsClientes.Count == 0 || query.IdsClientes.Contains(venda.IdCliente)
             where query.DataInicio == null || venda.DataVenda >= query.DataInicio
             where query.DataFim == null || venda.DataVenda <= query.DataFim
             where idsVendasComProduto == null || idsVendasComProduto.Contains(venda.Id)

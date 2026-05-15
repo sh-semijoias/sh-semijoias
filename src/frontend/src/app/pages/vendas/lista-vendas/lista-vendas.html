@@ -14,18 +14,6 @@
   </div>
 
   <div class="sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4" [class.hidden]="!filtrosAbertos()">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Comprador</mat-label>
-      <input matInput [formControl]="nomeClienteControl" placeholder="Nome do cliente..." />
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Produto</mat-label>
-      <input matInput [formControl]="nomeProdutoControl" placeholder="Nome do produto..." />
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-
     @if (isAdmin()) {
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Revendedora</mat-label>

@@ -14,7 +14,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { VendaListagemDto, VendaService, OrdenacaoVenda } from '../../../core/services/venda.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -74,16 +74,12 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly revendedoras = signal<{ id: string; nome: string }[]>([]);
   readonly filtrosAbertos = signal(false);
 
-  readonly nomeClienteControl = new FormControl('');
-  readonly nomeProdutoControl = new FormControl('');
   readonly idRevendedoraControl = new FormControl<string | null>(null);
   readonly dataInicioControl = new FormControl<Date | null>(null);
   readonly dataFimControl = new FormControl<Date | null>(null);
 
   get filtrosAtivosCount(): number {
     return [
-      this.nomeClienteControl.value,
-      this.nomeProdutoControl.value,
       this.idRevendedoraControl.value,
       this.dataInicioControl.value,
       this.dataFimControl.value,
@@ -94,18 +90,6 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     if (this.isAdmin()) {
       this.usuarioService.listarRevendedores().subscribe(lista => this.revendedoras.set(lista));
     }
-
-    this.nomeClienteControl.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(() => { this.pagina.set(1); this.carregar(); });
-
-    this.nomeProdutoControl.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(() => { this.pagina.set(1); this.carregar(); });
 
     this.idRevendedoraControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
@@ -130,13 +114,12 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
 
     const dataInicio = this.dataInicioControl.value;
     const dataFim = this.dataFimControl.value;
+    const idRevendedora = this.idRevendedoraControl.value;
 
     this.service.listar({
       pagina: this.pagina(),
       tamanhoPagina: this.tamanhoPagina(),
-      idRevendedora: this.idRevendedoraControl.value ?? undefined,
-      nomeCliente: this.nomeClienteControl.value ?? undefined,
-      nomeProduto: this.nomeProdutoControl.value ?? undefined,
+      idsRevendedores: idRevendedora ? [idRevendedora] : undefined,
       dataInicio: dataInicio ? dataInicio.toISOString() : undefined,
       dataFim: dataFim ? dataFim.toISOString() : undefined,
       ordenarPor: this.ordenarPor() ?? undefined,
