@@ -9,16 +9,20 @@ import { MatCardModule } from '@angular/material/card';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { VendaListagemDto, VendaService, OrdenacaoVenda } from '../../../core/services/venda.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { ClientesService, ClientesDto } from '../../../core/services/clientes.service';
+import { EstoqueService, ProdutoResumidoDto } from '../../../core/services/estoque.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
+
+interface RevendedorOpcao { id: string; nome: string; }
 
 @Component({
   selector: 'app-lista-vendas',
@@ -33,10 +37,10 @@ import { Perfil } from '../../../core/enums/perfil.enum';
     MatPaginatorModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatSortModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatAutocompleteModule,
     CurrencyPipe,
     DatePipe,
   ],
@@ -45,6 +49,8 @@ import { Perfil } from '../../../core/enums/perfil.enum';
 export class ListaVendasComponent implements OnInit, OnDestroy {
   private readonly service = inject(VendaService);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly clientesService = inject(ClientesService);
+  private readonly estoqueService = inject(EstoqueService);
   private readonly auth = inject(AuthService);
   private readonly destroy$ = new Subject<void>();
 
@@ -71,16 +77,40 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly ordenarPor = signal<OrdenacaoVenda | null>(null);
   readonly ordemDecrescente = signal(true);
   readonly totalVendasPeriodo = signal(0);
-  readonly revendedoras = signal<{ id: string; nome: string }[]>([]);
   readonly filtrosAbertos = signal(false);
 
-  readonly idRevendedoraControl = new FormControl<string | null>(null);
+  readonly revendedoras = signal<RevendedorOpcao[]>([]);
+  readonly clientesOpcoes = signal<ClientesDto[]>([]);
+  readonly produtosOpcoes = signal<ProdutoResumidoDto[]>([]);
+
+  readonly revendedorControl = new FormControl<RevendedorOpcao | string | null>(null);
+  readonly clienteControl = new FormControl<ClientesDto | string | null>(null);
+  readonly produtoControl = new FormControl<ProdutoResumidoDto | string | null>(null);
   readonly dataInicioControl = new FormControl<Date | null>(null);
   readonly dataFimControl = new FormControl<Date | null>(null);
 
+  readonly revendedoresOpcoes = computed(() => {
+    const valor = this.revendedorControl.value;
+    const termo = typeof valor === 'string' ? valor.toLowerCase() : '';
+    return this.revendedoras().filter(r => !termo || r.nome.toLowerCase().includes(termo));
+  });
+
+  readonly displayRevendedor = (r: RevendedorOpcao | string | null): string =>
+    r && typeof r === 'object' ? r.nome : '';
+  readonly displayCliente = (c: ClientesDto | string | null): string =>
+    c && typeof c === 'object' ? c.nome : '';
+  readonly displayProduto = (p: ProdutoResumidoDto | string | null): string =>
+    p && typeof p === 'object' ? p.descricao : '';
+
+  private idDe<T extends { id: string | number }>(valor: T | string | null): T['id'] | undefined {
+    return valor && typeof valor === 'object' ? valor.id : undefined;
+  }
+
   get filtrosAtivosCount(): number {
     return [
-      this.idRevendedoraControl.value,
+      this.idDe(this.revendedorControl.value),
+      this.idDe(this.clienteControl.value),
+      this.idDe(this.produtoControl.value),
       this.dataInicioControl.value,
       this.dataFimControl.value,
     ].filter(v => v != null && v !== '').length;
@@ -91,14 +121,48 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
       this.usuarioService.listarRevendedores().subscribe(lista => this.revendedoras.set(lista));
     }
 
-    this.idRevendedoraControl.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe(() => { this.pagina.set(1); this.carregar(); });
+    this.revendedorControl.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(valor => {
+        if (typeof valor !== 'string') { this.pagina.set(1); this.carregar(); }
+        else if (valor === '') { this.pagina.set(1); this.carregar(); }
+      });
+
+    this.clienteControl.valueChanges.pipe(
+      debounceTime(300),
+      takeUntil(this.destroy$)
+    ).subscribe(valor => {
+      if (typeof valor === 'string') {
+        this.clientesService.listar(1, 10, valor || undefined)
+          .subscribe(res => this.clientesOpcoes.set(res.items));
+        if (valor === '') { this.pagina.set(1); this.carregar(); }
+      } else {
+        this.pagina.set(1);
+        this.carregar();
+      }
+    });
+
+    this.produtoControl.valueChanges.pipe(
+      debounceTime(300),
+      takeUntil(this.destroy$)
+    ).subscribe(valor => {
+      if (typeof valor === 'string') {
+        this.estoqueService.listarProdutos(valor || undefined, 1, 10)
+          .subscribe(res => this.produtosOpcoes.set(res.items));
+        if (valor === '') { this.pagina.set(1); this.carregar(); }
+      } else {
+        this.pagina.set(1);
+        this.carregar();
+      }
+    });
 
     this.dataInicioControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
 
     this.dataFimControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
+
+    this.clientesService.listar(1, 10).subscribe(res => this.clientesOpcoes.set(res.items));
+    this.estoqueService.listarProdutos(undefined, 1, 10).subscribe(res => this.produtosOpcoes.set(res.items));
 
     this.carregar();
   }
@@ -114,12 +178,13 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
 
     const dataInicio = this.dataInicioControl.value;
     const dataFim = this.dataFimControl.value;
-    const idRevendedora = this.idRevendedoraControl.value;
 
     this.service.listar({
       pagina: this.pagina(),
       tamanhoPagina: this.tamanhoPagina(),
-      idsRevendedores: idRevendedora ? [idRevendedora] : undefined,
+      idRevendedora: this.idDe(this.revendedorControl.value) as string | undefined,
+      idCliente: this.idDe(this.clienteControl.value) as number | undefined,
+      idProduto: this.idDe(this.produtoControl.value) as number | undefined,
       dataInicio: dataInicio ? dataInicio.toISOString() : undefined,
       dataFim: dataFim ? dataFim.toISOString() : undefined,
       ordenarPor: this.ordenarPor() ?? undefined,

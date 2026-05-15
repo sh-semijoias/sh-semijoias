@@ -7,12 +7,18 @@ using ShSemijoias.Infrastructure.Persistence;
 namespace ShSemijoias.Infrastructure.Repositories;
 public class ClienteRepository(ApplicationDbContext context) : IClienteRepository
 {
-    public async Task<(IList<Cliente> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina)
+    public async Task<(IList<Cliente> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? busca = null)
     {
-        var query = context.Clientes.OrderBy(c => c.Nome);
+        var query = context.Clientes.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            query = query.Where(c => EF.Functions.ILike(c.Nome, $"%{busca}%"));
+        }
 
-        var total = await query.CountAsync();
-        var items = await query
+        var ordenado = query.OrderBy(c => c.Nome);
+
+        var total = await ordenado.CountAsync();
+        var items = await ordenado
             .Skip((pagina - 1) * tamanhoPagina)
             .Take(tamanhoPagina)
             .ToListAsync();

@@ -13,20 +13,46 @@
     </div>
   </div>
 
-  <div class="sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4" [class.hidden]="!filtrosAbertos()">
+  <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4 mb-4 items-start" [class.hidden]="!filtrosAbertos()">
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+      <mat-label>Cliente</mat-label>
+      <input matInput placeholder="Buscar cliente..."
+        [formControl]="clienteControl"
+        [matAutocomplete]="autoCliente" />
+      <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
+        @for (c of clientesOpcoes(); track c.id) {
+          <mat-option [value]="c">{{ c.nome }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+      <mat-label>Produto</mat-label>
+      <input matInput placeholder="Buscar produto..."
+        [formControl]="produtoControl"
+        [matAutocomplete]="autoProduto" />
+      <mat-autocomplete #autoProduto="matAutocomplete" [displayWith]="displayProduto">
+        @for (p of produtosOpcoes(); track p.id) {
+          <mat-option [value]="p">{{ p.descricao }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
     @if (isAdmin()) {
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Revendedora</mat-label>
-        <mat-select [formControl]="idRevendedoraControl">
-          <mat-option [value]="null">Todas</mat-option>
-          @for (rev of revendedoras(); track rev.id) {
-            <mat-option [value]="rev.id">{{ rev.nome }}</mat-option>
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-label>Revendedor</mat-label>
+        <input matInput placeholder="Buscar revendedor..."
+          [formControl]="revendedorControl"
+          [matAutocomplete]="autoRevendedor" />
+        <mat-autocomplete #autoRevendedor="matAutocomplete" [displayWith]="displayRevendedor">
+          @for (r of revendedoresOpcoes(); track r.id) {
+            <mat-option [value]="r">{{ r.nome }}</mat-option>
           }
-        </mat-select>
+        </mat-autocomplete>
       </mat-form-field>
     }
 
-    <mat-form-field appearance="outline" class="w-full">
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
       <mat-label>Período</mat-label>
       <mat-date-range-input [rangePicker]="pickerPeriodo">
         <input matStartDate [formControl]="dataInicioControl" placeholder="Início" />
@@ -82,12 +108,12 @@
               </ng-container>
 
               <ng-container matColumnDef="nomeCliente">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Comprador</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Cliente</th>
                 <td mat-cell *matCellDef="let item">{{ item.nomeCliente }}</td>
               </ng-container>
 
               <ng-container matColumnDef="nomeRevendedora">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revendedora</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revendedor</th>
                 <td mat-cell *matCellDef="let item">{{ item.nomeRevendedora }}</td>
               </ng-container>
 

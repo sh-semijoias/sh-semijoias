@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface ListaPaginada<T> {
@@ -36,10 +36,10 @@ export class ClientesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/clientes';
 
-  listar(pagina = 1, tamanhoPagina = 10): Observable<ListaPaginada<ClientesDto>> {
-    return this.http.get<ListaPaginada<ClientesDto>>(this.baseUrl, {
-      params: { pagina, tamanhoPagina }
-    });
+  listar(pagina = 1, tamanhoPagina = 10, busca?: string): Observable<ListaPaginada<ClientesDto>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanhoPagina', tamanhoPagina);
+    if (busca) params = params.set('busca', busca);
+    return this.http.get<ListaPaginada<ClientesDto>>(this.baseUrl, { params });
   }
 
   obterPorId(id: string): Observable<ClientesDto> {

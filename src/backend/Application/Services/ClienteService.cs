@@ -13,9 +13,9 @@ public class ClientesService(
     //IEmailService emailService
     ) : IClienteService
 {
-public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(int pagina, int tamanhoPagina)
+public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(int pagina, int tamanhoPagina, string? busca = null)
 {
-    var (clientes, total) = await clienteRepository.ListarAsync(pagina, tamanhoPagina);
+    var (clientes, total) = await clienteRepository.ListarAsync(pagina, tamanhoPagina, busca);
 
     var dtos = clientes.Select(u =>
         new ClientesDto(

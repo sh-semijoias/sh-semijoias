@@ -10,9 +10,9 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 {
     public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query)
     {
-        IQueryable<int>? idsVendasComProduto = query.IdsProdutos.Count > 0
+        IQueryable<int>? idsVendasComProduto = query.IdProduto != null
             ? context.ItensVenda
-                .Where(i => query.IdsProdutos.Contains(i.Estoque.IdProduto))
+                .Where(i => i.Estoque.IdProduto == query.IdProduto)
                 .Select(i => i.IdVenda)
             : null;
 
@@ -23,8 +23,8 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             join tipoPagamento in context.TiposPagamento.AsNoTracking() on venda.IdTipoPagamento equals tipoPagamento.Id
             join item in context.ItensVenda on venda.Id equals item.IdVenda
             where query.IdUsuario == null || venda.IdUsuario == query.IdUsuario
-            where query.IdsRevendedores.Count == 0 || query.IdsRevendedores.Contains(venda.IdUsuario)
-            where query.IdsClientes.Count == 0 || query.IdsClientes.Contains(venda.IdCliente)
+            where query.IdRevendedora == null || venda.IdUsuario == query.IdRevendedora
+            where query.IdCliente == null || venda.IdCliente == query.IdCliente
             where query.DataInicio == null || venda.DataVenda >= query.DataInicio
             where query.DataFim == null || venda.DataVenda <= query.DataFim
             where idsVendasComProduto == null || idsVendasComProduto.Contains(venda.Id)

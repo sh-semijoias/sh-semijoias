@@ -23,9 +23,9 @@ export interface VendaListagemDto {
 export interface ListarVendasFiltros {
   pagina: number;
   tamanhoPagina: number;
-  idsRevendedores?: string[];
-  idsClientes?: number[];
-  idsProdutos?: number[];
+  idRevendedora?: string;
+  idCliente?: number;
+  idProduto?: number;
   dataInicio?: string;
   dataFim?: string;
   ordenarPor?: OrdenacaoVenda;
@@ -50,9 +50,9 @@ export class VendaService {
       .set('pagina', filtros.pagina)
       .set('tamanhoPagina', filtros.tamanhoPagina);
 
-    for (const id of filtros.idsRevendedores ?? []) params = params.append('idsRevendedores', id);
-    for (const id of filtros.idsClientes ?? []) params = params.append('idsClientes', id);
-    for (const id of filtros.idsProdutos ?? []) params = params.append('idsProdutos', id);
+    if (filtros.idRevendedora) params = params.set('idRevendedora', filtros.idRevendedora);
+    if (filtros.idCliente != null) params = params.set('idCliente', filtros.idCliente);
+    if (filtros.idProduto != null) params = params.set('idProduto', filtros.idProduto);
     if (filtros.dataInicio) params = params.set('dataInicio', filtros.dataInicio);
     if (filtros.dataFim) params = params.set('dataFim', filtros.dataFim);
     if (filtros.ordenarPor != null) params = params.set('ordenarPor', filtros.ordenarPor);

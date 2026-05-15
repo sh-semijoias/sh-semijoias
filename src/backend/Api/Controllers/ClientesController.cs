@@ -12,9 +12,12 @@ namespace ShSemijoias.Api.Controllers;
 public class ClientesController(IClienteService clienteService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Listar([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10)
+    public async Task<IActionResult> Listar(
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanhoPagina = 10,
+        [FromQuery] string? busca = null)
     {
-        var result = await clienteService.ListarAsync(pagina, tamanhoPagina);
+        var result = await clienteService.ListarAsync(pagina, tamanhoPagina, busca);
         if (!result.Sucesso) return result.ToActionResult(this);
         return Ok(result.Valor);
     }
