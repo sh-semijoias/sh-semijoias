@@ -79,7 +79,7 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly statusFiltro = signal<boolean | null>(false);
 
   get colunas(): string[] {
-    const base = ['dataVenda', 'nomeCliente', 'totalProdutos', 'totalItens', 'valorTotal', 'formaPagamento', 'status', 'acoes'];
+    const base = ['dataVenda', 'nomeCliente', 'totalItens', 'valorTotal', 'formaPagamento', 'status', 'acoes'];
     return this.isAdmin() ? [...base.slice(0, 2), 'nomeRevendedora', ...base.slice(2)] : base;
   }
 

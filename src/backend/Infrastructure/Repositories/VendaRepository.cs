@@ -44,7 +44,6 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 g.Key.FormaPagamento,
                 g.Key.DataCancelamento,
                 g.Key.NomeMotivoCancelamento,
-                TotalProdutos = g.Select(x => x.item.Estoque.IdProduto).Distinct().Count(),
                 TotalItens = g.Sum(x => x.item.Quantidade),
                 ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade)
             };
@@ -85,7 +84,6 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 x.NomeCliente,
                 x.IdUsuario,
                 x.NomeRevendedora,
-                x.TotalProdutos,
                 x.TotalItens,
                 x.ValorTotal,
                 x.FormaPagamento,
