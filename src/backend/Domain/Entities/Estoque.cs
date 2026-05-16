@@ -7,6 +7,6 @@ public class Estoque
     public Produto Produto { get; set; } = null!;
     public int? IdMaleta { get; set; }
     public Maleta? Maleta { get; set; }
-    public int Quantidade { get; set; }
+    public int Quantidade { get; set; }= 0;
     public DateTime DataAtualizacao { get; set; }
 }
