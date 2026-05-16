@@ -22,7 +22,8 @@ public class VendasController(IVendaService vendaService) : ControllerBase
         [FromQuery] DateTime? dataInicio = null,
         [FromQuery] DateTime? dataFim = null,
         [FromQuery] OrdenacaoVenda ordenarPor = OrdenacaoVenda.DataVenda,
-        [FromQuery] bool ordemDecrescente = true)
+        [FromQuery] bool ordemDecrescente = true,
+        [FromQuery] bool? cancelada = null)
     {
         Guid? idUsuario = User.IsInRole("Administrador")
             ? null
@@ -40,6 +41,7 @@ public class VendasController(IVendaService vendaService) : ControllerBase
             DataFim = dataFim,
             OrdenarPor = ordenarPor,
             OrdemDecrescente = ordemDecrescente,
+            Cancelada = cancelada,
         };
 
         var result = await vendaService.ListarAsync(query);
@@ -53,6 +55,13 @@ public class VendasController(IVendaService vendaService) : ControllerBase
         return Ok(result.Valor);
     }
 
+    [HttpGet("motivos-cancelamento")]
+    public async Task<IActionResult> ListarMotivosCancelamento()
+    {
+        var result = await vendaService.ListarMotivosCancelamentoAsync();
+        return Ok(result.Valor);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarVendaDto dto)
     {
@@ -63,5 +72,15 @@ public class VendasController(IVendaService vendaService) : ControllerBase
         return result.Sucesso
             ? CreatedAtAction(nameof(Listar), new { }, result.Valor)
             : result.ToActionResult(this);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Cancelar(int id, [FromBody] CancelarVendaDto dto)
+    {
+        var isAdmin = User.IsInRole("Administrador");
+        var idUsuario = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var result = await vendaService.CancelarAsync(id, dto, idUsuario, isAdmin);
+        return result.Sucesso ? NoContent() : result.ToActionResult(this);
     }
 }

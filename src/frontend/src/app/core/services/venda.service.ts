@@ -13,11 +13,14 @@ export interface VendaListagemDto {
   id: number;
   dataVenda: string;
   nomeCliente: string;
+  idUsuario: string;
   nomeRevendedora: string;
   totalProdutos: number;
   totalItens: number;
   valorTotal: number;
   formaPagamento: string;
+  dataCancelamento: string | null;
+  nomeMotivoCancelamento: string | null;
 }
 
 export interface ListarVendasFiltros {
@@ -30,6 +33,16 @@ export interface ListarVendasFiltros {
   dataFim?: string;
   ordenarPor?: OrdenacaoVenda;
   ordemDecrescente?: boolean;
+  cancelada?: boolean | null;
+}
+
+export interface MotivoCancelamentoDto {
+  id: number;
+  nome: string;
+}
+
+export interface CancelarVendaDto {
+  idMotivoCancelamentoVenda: number;
 }
 
 export interface ListarVendasResultado {
@@ -85,6 +98,7 @@ export class VendaService {
     if (filtros.dataFim) params = params.set('dataFim', filtros.dataFim);
     if (filtros.ordenarPor != null) params = params.set('ordenarPor', filtros.ordenarPor);
     if (filtros.ordemDecrescente != null) params = params.set('ordemDecrescente', filtros.ordemDecrescente);
+    if (filtros.cancelada != null) params = params.set('cancelada', filtros.cancelada);
 
     return this.http.get<ListarVendasResultado>(this.baseUrl, { params });
   }
@@ -95,5 +109,13 @@ export class VendaService {
 
   criar(dto: CriarVendaDto): Observable<VendaCriadaDto> {
     return this.http.post<VendaCriadaDto>(this.baseUrl, dto);
+  }
+
+  listarMotivosCancelamento(): Observable<MotivoCancelamentoDto[]> {
+    return this.http.get<MotivoCancelamentoDto[]>(`${this.baseUrl}/motivos-cancelamento`);
+  }
+
+  cancelar(id: number, dto: CancelarVendaDto): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, { body: dto });
   }
 }

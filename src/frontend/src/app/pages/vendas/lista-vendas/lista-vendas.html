@@ -1,5 +1,5 @@
 <div class="p-4 sm:p-6">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <h2 class="text-xl font-semibold">Vendas</h2>
     <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
       <div class="sm:hidden">
@@ -17,6 +17,16 @@
         Nova venda
       </a>
     </div>
+  </div>
+
+  <div class="mb-4">
+    <mat-button-toggle-group
+      [value]="statusFiltro()"
+      (change)="statusFiltro.set($event.value); pagina.set(1); carregar()">
+      <mat-button-toggle [value]="false">Ativas</mat-button-toggle>
+      <mat-button-toggle [value]="null">Todas</mat-button-toggle>
+      <mat-button-toggle [value]="true">Canceladas</mat-button-toggle>
+    </mat-button-toggle-group>
   </div>
 
   <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4 mb-4 items-start" [class.hidden]="!filtrosAbertos()">
@@ -71,21 +81,25 @@
 
   <div class="grid grid-cols-2 gap-3 mb-4">
     <mat-card appearance="outlined">
-      <mat-card-content class="flex items-center gap-4 py-4!">
-        <mat-icon class="text-4xl! w-10! h-10! opacity-60">shopping_cart</mat-icon>
-        <div>
-          <p class="text-sm text-secondary">Vendas no período</p>
-          <p class="text-2xl font-semibold">{{ total() }}</p>
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-3xl! w-8! h-8! opacity-60">shopping_cart</mat-icon>
+          <div>
+            <p class="text-sm text-secondary">Vendas no período</p>
+            <p class="text-xl font-semibold">{{ total() }}</p>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
 
     <mat-card appearance="outlined">
-      <mat-card-content class="flex items-center gap-4 py-4!">
-        <mat-icon class="text-4xl! w-10! h-10! opacity-60">payments</mat-icon>
-        <div>
-          <p class="text-sm text-secondary">Total vendido</p>
-          <p class="text-2xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-3xl! w-8! h-8! opacity-60">payments</mat-icon>
+          <div>
+            <p class="text-sm text-secondary">Total vendido</p>
+            <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
@@ -141,6 +155,33 @@
               <ng-container matColumnDef="formaPagamento">
                 <th mat-header-cell *matHeaderCellDef>Pagamento</th>
                 <td mat-cell *matCellDef="let item">{{ item.formaPagamento }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  @if (item.dataCancelamento) {
+                    <mat-chip color="warn" highlighted [title]="item.nomeMotivoCancelamento ?? ''">Cancelada</mat-chip>
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acoes" stickyEnd>
+                <th mat-header-cell *matHeaderCellDef>Ações</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações"
+                    [disabled]="!podeCancelar(item)">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    @if (podeCancelar(item)) {
+                      <button mat-menu-item (click)="cancelarVenda(item)">
+                        <mat-icon>cancel</mat-icon>
+                        Cancelar venda
+                      </button>
+                    }
+                  </mat-menu>
+                </td>
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="colunas"></tr>

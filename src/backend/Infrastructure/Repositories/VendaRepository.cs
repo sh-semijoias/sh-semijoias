@@ -27,24 +27,36 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             {
                 venda.Id,
                 venda.DataVenda,
+                venda.IdUsuario,
                 NomeCliente = cliente.Nome,
                 NomeRevendedora = usuario.Nome,
-                FormaPagamento = tipoPagamento.Descricao
+                FormaPagamento = tipoPagamento.Descricao,
+                DataCancelamento = venda.Cancelamento == null ? (DateTime?)null : venda.Cancelamento.DataCancelamento,
+                NomeMotivoCancelamento = venda.Cancelamento == null ? null : venda.Cancelamento.MotivoCancelamentoVenda.Nome
             } into g
             select new
             {
                 g.Key.Id,
                 g.Key.DataVenda,
+                g.Key.IdUsuario,
                 g.Key.NomeCliente,
                 g.Key.NomeRevendedora,
                 g.Key.FormaPagamento,
+                g.Key.DataCancelamento,
+                g.Key.NomeMotivoCancelamento,
                 TotalProdutos = g.Select(x => x.item.Estoque.IdProduto).Distinct().Count(),
                 TotalItens = g.Sum(x => x.item.Quantidade),
                 ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade)
             };
 
+        if (query.Cancelada == true)
+            grouped = grouped.Where(x => x.DataCancelamento != null);
+        else if (query.Cancelada == false)
+            grouped = grouped.Where(x => x.DataCancelamento == null);
+
+        var ativas = grouped.Where(x => x.DataCancelamento == null);
         var total = await grouped.CountAsync();
-        var totalVendasPeriodo = total > 0 ? await grouped.SumAsync(x => x.ValorTotal) : 0m;
+        var totalVendasPeriodo = await ativas.SumAsync(x => (decimal?)x.ValorTotal) ?? 0m;
 
         var ordenado = query.OrdenarPor switch
         {
@@ -72,11 +84,14 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 x.Id,
                 x.DataVenda,
                 x.NomeCliente,
+                x.IdUsuario,
                 x.NomeRevendedora,
                 x.TotalProdutos,
                 x.TotalItens,
                 x.ValorTotal,
-                x.FormaPagamento
+                x.FormaPagamento,
+                x.DataCancelamento,
+                x.NomeMotivoCancelamento
             )).ToList(),
             total,
             totalVendasPeriodo
@@ -92,6 +107,21 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 
     public Task<TipoPagamento?> ObterTipoPagamentoAsync(int idTipoPagamento) =>
         context.TiposPagamento.FirstOrDefaultAsync(t => t.Id == idTipoPagamento);
+
+    public Task<Venda?> ObterPorIdAsync(int id) =>
+        context.Vendas
+            .Include(v => v.Itens).ThenInclude(i => i.Estoque)
+            .Include(v => v.Cancelamento)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+    public async Task<IReadOnlyList<MotivoCancelamentoVenda>> ListarMotivosCancelamentoAsync() =>
+        await context.MotivosCancelamentoVenda
+            .AsNoTracking()
+            .OrderBy(m => m.Id)
+            .ToListAsync();
+
+    public async Task AdicionarCancelamentoAsync(CancelamentoVenda cancelamento) =>
+        await context.CancelamentosVenda.AddAsync(cancelamento);
 
     public async Task<Venda> CriarAsync(Venda venda)
     {

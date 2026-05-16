@@ -14,6 +14,11 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { VendaListagemDto, VendaService, OrdenacaoVenda } from '../../../core/services/venda.service';
@@ -22,6 +27,7 @@ import { ClientesService, ClientesDto } from '../../../core/services/clientes.se
 import { EstoqueService, ProdutoResumidoDto } from '../../../core/services/estoque.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
+import { DialogConfirmarCancelamentoComponent, DialogConfirmarCancelamentoResult } from '../dialog-confirmar-cancelamento/dialog-confirmar-cancelamento';
 
 interface RevendedorOpcao { id: string; nome: string; }
 
@@ -43,6 +49,9 @@ interface RevendedorOpcao { id: string; nome: string; }
     MatDatepickerModule,
     MatNativeDateModule,
     MatAutocompleteModule,
+    MatButtonToggleModule,
+    MatChipsModule,
+    MatMenuModule,
     CurrencyPipe,
     DatePipe,
   ],
@@ -54,6 +63,8 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   private readonly clientesService = inject(ClientesService);
   private readonly estoqueService = inject(EstoqueService);
   private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
@@ -65,9 +76,16 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     valorTotal: OrdenacaoVenda.ValorTotal,
   };
 
+  readonly statusFiltro = signal<boolean | null>(false);
+
   get colunas(): string[] {
-    const base = ['dataVenda', 'nomeCliente', 'totalProdutos', 'totalItens', 'valorTotal', 'formaPagamento'];
+    const base = ['dataVenda', 'nomeCliente', 'totalProdutos', 'totalItens', 'valorTotal', 'formaPagamento', 'status', 'acoes'];
     return this.isAdmin() ? [...base.slice(0, 2), 'nomeRevendedora', ...base.slice(2)] : base;
+  }
+
+  podeCancelar(item: VendaListagemDto): boolean {
+    const uid = this.auth.currentUser()?.userId;
+    return !item.dataCancelamento && (this.isAdmin() || item.idUsuario === uid);
   }
 
   readonly itens = signal<VendaListagemDto[]>([]);
@@ -115,6 +133,7 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
       this.idDe(this.produtoControl.value),
       this.dataInicioControl.value,
       this.dataFimControl.value,
+      this.statusFiltro() !== false ? true : null,
     ].filter(v => v != null && v !== '').length;
   }
 
@@ -191,6 +210,7 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
       dataFim: dataFim ? dataFim.toISOString() : undefined,
       ordenarPor: this.ordenarPor() ?? undefined,
       ordemDecrescente: this.ordemDecrescente(),
+      cancelada: this.statusFiltro(),
     }).subscribe({
       next: (resultado) => {
         this.itens.set(resultado.items);
@@ -209,6 +229,21 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     this.pagina.set(event.pageIndex + 1);
     this.tamanhoPagina.set(event.pageSize);
     this.carregar();
+  }
+
+  cancelarVenda(item: VendaListagemDto): void {
+    const ref = this.dialog.open(DialogConfirmarCancelamentoComponent, {
+      data: { nomeCliente: item.nomeCliente },
+      width: '420px',
+    });
+
+    ref.afterClosed().subscribe((resultado: DialogConfirmarCancelamentoResult | undefined) => {
+      if (!resultado) return;
+      this.service.cancelar(item.id, { idMotivoCancelamentoVenda: resultado.idMotivoCancelamentoVenda }).subscribe({
+        next: () => this.carregar(),
+        error: () => this.snackBar.open('Não foi possível cancelar a venda.', 'Fechar', { duration: 4000 }),
+      });
+    });
   }
 
   aoOrdenar(sort: Sort): void {

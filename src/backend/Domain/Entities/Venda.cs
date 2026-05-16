@@ -10,7 +10,7 @@ public class Venda
     public int IdTipoPagamento { get; set; }
     public TipoPagamento TipoPagamento { get; set; } = null!;
     public int TotalParcelas { get; set; }
-    public DateTime? DataCancelamento { get; set; }
+    public CancelamentoVenda? Cancelamento { get; set; }
     public string? Comentario { get; set; }
     public DateTime DataVenda { get; set; }
     public DateTime DataAtualizacao { get; set; }

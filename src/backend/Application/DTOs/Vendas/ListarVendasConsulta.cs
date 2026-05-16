@@ -12,4 +12,5 @@ public class ListarVendasConsulta
     public DateTime? DataFim { get; init; }
     public OrdenacaoVenda OrdenarPor { get; init; } = OrdenacaoVenda.DataVenda;
     public bool OrdemDecrescente { get; init; } = true;
+    public bool? Cancelada { get; init; }
 }

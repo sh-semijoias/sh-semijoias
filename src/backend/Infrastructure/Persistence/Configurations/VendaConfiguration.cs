@@ -31,6 +31,5 @@ public class VendaConfiguration : IEntityTypeConfiguration<Venda>
         builder.HasIndex(v => v.IdUsuario).HasDatabaseName("ix_venda_id_usuario");
         builder.HasIndex(v => v.IdTipoPagamento).HasDatabaseName("ix_venda_id_tipo_pagamento");
         builder.HasIndex(v => v.DataVenda).HasDatabaseName("ix_venda_data_venda");
-        builder.HasIndex(v => v.DataCancelamento).HasDatabaseName("ix_venda_data_cancelamento");
     }
 }

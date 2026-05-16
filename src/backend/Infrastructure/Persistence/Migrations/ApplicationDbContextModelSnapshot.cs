@@ -152,6 +152,40 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                     b.ToTable("usuario_token", (string)null);
                 });
 
+            modelBuilder.Entity("ShSemijoias.Domain.Entities.CancelamentoVenda", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataCancelamento")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_cancelamento");
+
+                    b.Property<int>("IdMotivoCancelamentoVenda")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_motivo_cancelamento_venda");
+
+                    b.Property<int>("IdVenda")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_venda");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cancelamento_venda");
+
+                    b.HasIndex("IdMotivoCancelamentoVenda")
+                        .HasDatabaseName("ix_cancelamento_venda_id_motivo");
+
+                    b.HasIndex("IdVenda")
+                        .IsUnique()
+                        .HasDatabaseName("ix_cancelamento_venda_id_venda");
+
+                    b.ToTable("cancelamento_venda", (string)null);
+                });
+
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -310,6 +344,27 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_maleta_id_usuario");
 
                     b.ToTable("maleta", (string)null);
+                });
+
+            modelBuilder.Entity("ShSemijoias.Domain.Entities.MotivoCancelamentoVenda", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nome");
+
+                    b.HasKey("Id")
+                        .HasName("pk_motivo_cancelamento_venda");
+
+                    b.ToTable("motivo_cancelamento_venda", (string)null);
                 });
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Parcela", b =>
@@ -652,10 +707,6 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_atualizacao");
 
-                    b.Property<DateTime?>("DataCancelamento")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("data_cancelamento");
-
                     b.Property<DateTime>("DataVenda")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("data_venda");
@@ -678,9 +729,6 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_venda");
-
-                    b.HasIndex("DataCancelamento")
-                        .HasDatabaseName("ix_venda_data_cancelamento");
 
                     b.HasIndex("DataVenda")
                         .HasDatabaseName("ix_venda_data_venda");
@@ -752,6 +800,27 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_usuario_token_asp_net_users_user_id");
+                });
+
+            modelBuilder.Entity("ShSemijoias.Domain.Entities.CancelamentoVenda", b =>
+                {
+                    b.HasOne("ShSemijoias.Domain.Entities.MotivoCancelamentoVenda", "MotivoCancelamentoVenda")
+                        .WithMany()
+                        .HasForeignKey("IdMotivoCancelamentoVenda")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_cancelamento_venda_motivos_cancelamento_venda_id_motivo_can");
+
+                    b.HasOne("ShSemijoias.Domain.Entities.Venda", "Venda")
+                        .WithOne("Cancelamento")
+                        .HasForeignKey("ShSemijoias.Domain.Entities.CancelamentoVenda", "IdVenda")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_cancelamento_venda_vendas_id_venda");
+
+                    b.Navigation("MotivoCancelamentoVenda");
+
+                    b.Navigation("Venda");
                 });
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Estoque", b =>
@@ -885,6 +954,8 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Venda", b =>
                 {
+                    b.Navigation("Cancelamento");
+
                     b.Navigation("Itens");
 
                     b.Navigation("Parcelas");

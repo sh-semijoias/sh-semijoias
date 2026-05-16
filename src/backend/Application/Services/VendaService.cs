@@ -131,6 +131,62 @@ public class VendaService(
             new VendaCriadaDto(venda.Id, venda.DataVenda, valorTotal, venda.TotalParcelas));
     }
 
+    public async Task<Result<bool>> CancelarAsync(int idVenda, CancelarVendaDto dto, Guid idUsuario, bool isAdmin)
+    {
+        var venda = await vendaRepository.ObterPorIdAsync(idVenda);
+        if (venda is null)
+            return Result<bool>.Falha("Venda não encontrada.", TipoErro.NaoEncontrado);
+
+        if (venda.Cancelamento is not null)
+            return Result<bool>.Falha("Venda já cancelada.");
+
+        if (!isAdmin && venda.IdUsuario != idUsuario)
+            return Result<bool>.Falha("Sem permissão para cancelar esta venda.", TipoErro.NaoAutorizado);
+
+        var motivos = await vendaRepository.ListarMotivosCancelamentoAsync();
+        if (motivos.All(m => m.Id != dto.IdMotivoCancelamentoVenda))
+            return Result<bool>.Falha("Motivo de cancelamento inválido.");
+
+        var agora = DateTime.UtcNow;
+
+        await using var transacao = await vendaRepository.BeginTransacaoAsync();
+        try
+        {
+            foreach (var item in venda.Itens)
+            {
+                item.Estoque.Quantidade += item.Quantidade;
+                item.Estoque.DataAtualizacao = agora;
+            }
+
+            await vendaRepository.AdicionarCancelamentoAsync(new CancelamentoVenda
+            {
+                IdVenda = venda.Id,
+                IdMotivoCancelamentoVenda = dto.IdMotivoCancelamentoVenda,
+                DataCancelamento = agora,
+            });
+
+            venda.DataAtualizacao = agora;
+            await vendaRepository.SalvarAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
+
+        return Result<bool>.Ok(true);
+    }
+
+    public async Task<Result<IReadOnlyList<MotivoCancelamentoDto>>> ListarMotivosCancelamentoAsync()
+    {
+        var motivos = await vendaRepository.ListarMotivosCancelamentoAsync();
+        var dtos = motivos
+            .Select(m => new MotivoCancelamentoDto(m.Id, m.Nome))
+            .ToList();
+        return Result<IReadOnlyList<MotivoCancelamentoDto>>.Ok(dtos);
+    }
+
     private static List<Parcela> GerarParcelas(int total, decimal valorTotal, DateTime dataVenda)
     {
         var valorParcela = Math.Round(valorTotal / total, 2, MidpointRounding.AwayFromZero);
