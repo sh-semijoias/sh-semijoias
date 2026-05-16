@@ -46,6 +46,7 @@ export interface FormaPagamentoDto {
   permiteParcelamento: boolean;
 }
 
+
 @Injectable({ providedIn: 'root' })
 export class VendaService {
   private readonly http = inject(HttpClient);

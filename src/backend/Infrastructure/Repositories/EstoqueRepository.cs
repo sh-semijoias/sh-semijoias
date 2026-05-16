@@ -11,7 +11,7 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
     public async Task<(IList<Estoque> Items, int Total)> ListarAsync(ListarEstoqueConsulta query)
     {
         var dbQuery = context.Estoques
-            .Where(e => e.IdMaleta == null)
+            .Where(e => e.IdMaleta == query.IdMaleta)
             .Include(e => e.Produto)
                 .ThenInclude(p => p.TipoProduto)
             .AsQueryable();

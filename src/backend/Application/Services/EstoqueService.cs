@@ -6,10 +6,26 @@ using ShSemijoias.Domain.Entities;
 
 namespace ShSemijoias.Application.Services;
 
-public class EstoqueService(IEstoqueRepository estoqueRepository) : IEstoqueService
+public class EstoqueService(
+    IEstoqueRepository estoqueRepository,
+    IMaletaRepository maletaRepository) : IEstoqueService
 {
-    public async Task<Result<ListaPaginada<EstoqueDto>>> ListarAsync(ListarEstoqueConsulta query)
+    public async Task<Result<ListaPaginada<EstoqueDto>>> ListarAsync(ListarEstoqueConsulta query, Guid idUsuario, bool isAdmin)
     {
+        // Escopo derivado do usuário logado: admin vê o estoque central;
+        // revendedor vê apenas a própria maleta. Qualquer IdMaleta vindo do
+        // cliente é ignorado.
+        int? idMaleta = null;
+        if (!isAdmin)
+        {
+            var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
+            if (maleta is null)
+                return Result<ListaPaginada<EstoqueDto>>.Falha("Revendedor não possui maleta ativa.");
+            idMaleta = maleta.Id;
+        }
+
+        query = query with { IdMaleta = idMaleta };
+
         var (items, total) = await estoqueRepository.ListarAsync(query);
         var dtos = items.Select(e => new EstoqueDto(
             e.Id,
@@ -18,7 +34,7 @@ public class EstoqueService(IEstoqueRepository estoqueRepository) : IEstoqueServ
             e.Produto.IdTipoProduto,
             e.Produto.TipoProduto.Descricao,
             e.Quantidade,
-            e.Produto.PrecoCompra,
+            isAdmin ? e.Produto.PrecoCompra : 0m,
             e.Produto.PrecoVendaSugerido
         )).ToList();
         return Result<ListaPaginada<EstoqueDto>>.Ok(

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Api.Extensions;
@@ -8,7 +9,7 @@ namespace ShSemijoias.Api.Controllers;
 
 [ApiController]
 [Route("api/estoque")]
-[Authorize(Roles = "Administrador")]
+[Authorize]
 public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
 {
     [HttpGet]
@@ -21,12 +22,17 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
         [FromQuery] OrdenacaoEstoque ordenarPor = OrdenacaoEstoque.Produto,
         [FromQuery] bool ordemDecrescente = false)
     {
+        var isAdmin = User.IsInRole("Administrador");
+        var idUsuario = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var query = new ListarEstoqueConsulta(pagina, tamanhoPagina, idProduto, emEstoque, busca, ordenarPor, ordemDecrescente);
-        var result = await estoqueService.ListarAsync(query);
+        var result = await estoqueService.ListarAsync(query, idUsuario, isAdmin);
+        if (!result.Sucesso) return result.ToActionResult(this);
         return Ok(result.Valor);
     }
 
     [HttpGet("produtos")]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ListarProdutos(
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanhoPagina = 10,
@@ -37,6 +43,7 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
     }
 
     [HttpPut("{id:int}/quantidade")]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> AtualizarQuantidade(int id, [FromBody] AtualizarQuantidadeEstoqueDto dto)
     {
         var result = await estoqueService.AtualizarQuantidadeAsync(id, dto);
@@ -45,6 +52,7 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
     }
 
     [HttpPost("entrada")]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> RegistrarEntrada([FromBody] RegistrarEntradaEstoqueDto dto)
     {
         var result = await estoqueService.RegistrarEntradaAsync(dto);
