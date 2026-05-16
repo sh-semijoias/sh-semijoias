@@ -68,6 +68,7 @@ public class ProdutoService(
             Quantidade = 0,
         };
         await estoqueRepository.AdicionarAsync(estoque);
+        await estoqueRepository.SalvarAsync();
 
         var atualizado = await produtoRepository.ObterPorIdAsync(produto.Id);
         return Result<ProdutoDto>.Ok(ToDto(atualizado!));
