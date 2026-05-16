@@ -1,10 +1,15 @@
 using ShSemijoias.Application.Common;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
+using ShSemijoias.Domain.Entities;
 
 namespace ShSemijoias.Application.Services;
 
-public class VendaService(IVendaRepository vendaRepository) : IVendaService
+public class VendaService(
+    IVendaRepository vendaRepository,
+    IEstoqueRepository estoqueRepository,
+    IMaletaRepository maletaRepository,
+    IClienteRepository clienteRepository) : IVendaService
 {
     public async Task<Result<ListarVendasResultado>> ListarAsync(ListarVendasConsulta query)
     {
@@ -20,5 +25,128 @@ public class VendaService(IVendaRepository vendaRepository) : IVendaService
             .Select(f => new FormaPagamentoDto(f.Id, f.Descricao, f.PermiteParcelamento))
             .ToList();
         return Result<IReadOnlyList<FormaPagamentoDto>>.Ok(dtos);
+    }
+
+    public async Task<Result<VendaCriadaDto>> CriarAsync(CriarVendaDto dto, Guid idUsuario, bool isAdmin)
+    {
+        var erros = new List<string>();
+
+        if (dto.Itens == null || dto.Itens.Count == 0)
+            erros.Add("Informe ao menos um item.");
+
+        if (dto.Itens != null)
+        {
+            if (dto.Itens.Any(i => i.Quantidade <= 0))
+                erros.Add("A quantidade de cada item deve ser maior que zero.");
+
+            if (dto.Itens.Any(i => i.PrecoVendaReal <= 0))
+                erros.Add("O preço de venda de cada item deve ser maior que zero.");
+
+            if (dto.Itens.GroupBy(i => i.IdEstoque).Any(g => g.Count() > 1))
+                erros.Add("Não é permitido informar o mesmo produto mais de uma vez.");
+        }
+
+        if (dto.TotalParcelas < 1)
+            erros.Add("O número de parcelas deve ser no mínimo 1.");
+        else if (dto.TotalParcelas > 12)
+            erros.Add("O número de parcelas deve ser no máximo 12.");
+
+        if (await clienteRepository.ObterPorIdAsync(dto.IdCliente) is null)
+            erros.Add("Cliente não encontrado.");
+
+        var tipoPagamento = await vendaRepository.ObterTipoPagamentoAsync(dto.IdTipoPagamento);
+        if (tipoPagamento is null || !tipoPagamento.Ativo)
+            erros.Add("Forma de pagamento inválida.");
+        else if (!tipoPagamento.PermiteParcelamento && dto.TotalParcelas > 1)
+            erros.Add("A forma de pagamento selecionada não permite parcelamento.");
+
+        if (erros.Count > 0)
+            return Result<VendaCriadaDto>.Falha(erros);
+
+        int? idMaleta = null;
+        if (!isAdmin)
+        {
+            var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
+            if (maleta is null)
+                return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+            idMaleta = maleta.Id;
+        }
+
+        var idsEstoque = dto.Itens!.Select(i => i.IdEstoque).ToList();
+        var estoques = await estoqueRepository.BuscarPorIdsAsync(idsEstoque, idMaleta);
+
+        foreach (var item in dto.Itens!)
+        {
+            if (!estoques.TryGetValue(item.IdEstoque, out var estoque))
+                erros.Add($"Produto não disponível para venda (estoque {item.IdEstoque}).");
+            else if (estoque.Quantidade < item.Quantidade)
+                erros.Add($"Estoque insuficiente para o produto {estoque.IdProduto}. Disponível: {estoque.Quantidade}.");
+        }
+
+        if (erros.Count > 0)
+            return Result<VendaCriadaDto>.Falha(erros);
+
+        var agora = DateTime.UtcNow;
+        var valorTotal = dto.Itens!.Sum(i => i.PrecoVendaReal * i.Quantidade);
+
+        var venda = new Venda
+        {
+            IdCliente = dto.IdCliente,
+            IdUsuario = idUsuario,
+            IdTipoPagamento = dto.IdTipoPagamento,
+            TotalParcelas = dto.TotalParcelas,
+            Comentario = string.IsNullOrWhiteSpace(dto.Comentario) ? null : dto.Comentario.Trim(),
+            DataVenda = agora,
+            DataAtualizacao = agora,
+            Itens = dto.Itens.Select(i => new ItemVenda
+            {
+                IdEstoque = i.IdEstoque,
+                Quantidade = i.Quantidade,
+                PrecoVendaReal = i.PrecoVendaReal,
+            }).ToList(),
+            Parcelas = GerarParcelas(dto.TotalParcelas, valorTotal, agora),
+        };
+
+        await using var transacao = await vendaRepository.BeginTransacaoAsync();
+        try
+        {
+            foreach (var item in dto.Itens)
+            {
+                var estoque = estoques[item.IdEstoque];
+                estoque.Quantidade -= item.Quantidade;
+                estoque.DataAtualizacao = agora;
+            }
+
+            await vendaRepository.CriarAsync(venda);
+            await vendaRepository.SalvarAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
+
+        return Result<VendaCriadaDto>.Ok(
+            new VendaCriadaDto(venda.Id, venda.DataVenda, valorTotal, venda.TotalParcelas));
+    }
+
+    private static List<Parcela> GerarParcelas(int total, decimal valorTotal, DateTime dataVenda)
+    {
+        var valorParcela = Math.Round(valorTotal / total, 2, MidpointRounding.AwayFromZero);
+        var parcelas = new List<Parcela>(total);
+        for (var n = 1; n <= total; n++)
+        {
+            var valor = n == total
+                ? valorTotal - valorParcela * (total - 1)
+                : valorParcela;
+            parcelas.Add(new Parcela
+            {
+                NumeroParcela = n,
+                Valor = valor,
+                DataVencimento = dataVenda.AddMonths(n),
+            });
+        }
+        return parcelas;
     }
 }

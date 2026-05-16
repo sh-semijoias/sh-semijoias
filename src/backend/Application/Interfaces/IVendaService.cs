@@ -7,4 +7,5 @@ public interface IVendaService
 {
     Task<Result<ListarVendasResultado>> ListarAsync(ListarVendasConsulta query);
     Task<Result<IReadOnlyList<FormaPagamentoDto>>> ListarFormasPagamentoAsync();
+    Task<Result<VendaCriadaDto>> CriarAsync(CriarVendaDto dto, Guid idUsuario, bool isAdmin);
 }

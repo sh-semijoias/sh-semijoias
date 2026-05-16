@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
 
@@ -50,5 +51,17 @@ public class VendasController(IVendaService vendaService) : ControllerBase
     {
         var result = await vendaService.ListarFormasPagamentoAsync();
         return Ok(result.Valor);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Criar([FromBody] CriarVendaDto dto)
+    {
+        var isAdmin = User.IsInRole("Administrador");
+        var idUsuario = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var result = await vendaService.CriarAsync(dto, idUsuario, isAdmin);
+        return result.Sucesso
+            ? CreatedAtAction(nameof(Listar), new { }, result.Valor)
+            : result.ToActionResult(this);
     }
 }

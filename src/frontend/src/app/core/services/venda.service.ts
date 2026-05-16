@@ -46,6 +46,27 @@ export interface FormaPagamentoDto {
   permiteParcelamento: boolean;
 }
 
+export interface ItemVendaDto {
+  idEstoque: number;
+  quantidade: number;
+  precoVendaReal: number;
+}
+
+export interface CriarVendaDto {
+  idCliente: number;
+  idTipoPagamento: number;
+  totalParcelas: number;
+  comentario?: string;
+  itens: ItemVendaDto[];
+}
+
+export interface VendaCriadaDto {
+  id: number;
+  dataVenda: string;
+  valorTotal: number;
+  totalParcelas: number;
+}
+
 
 @Injectable({ providedIn: 'root' })
 export class VendaService {
@@ -70,5 +91,9 @@ export class VendaService {
 
   listarFormasPagamento(): Observable<FormaPagamentoDto[]> {
     return this.http.get<FormaPagamentoDto[]>(`${this.baseUrl}/formas-pagamento`);
+  }
+
+  criar(dto: CriarVendaDto): Observable<VendaCriadaDto> {
+    return this.http.post<VendaCriadaDto>(this.baseUrl, dto);
   }
 }

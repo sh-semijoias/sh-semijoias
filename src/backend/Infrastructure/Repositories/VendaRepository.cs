@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
@@ -88,4 +89,19 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             .Where(t => t.Ativo)
             .OrderBy(t => t.Descricao)
             .ToListAsync();
+
+    public Task<TipoPagamento?> ObterTipoPagamentoAsync(int idTipoPagamento) =>
+        context.TiposPagamento.FirstOrDefaultAsync(t => t.Id == idTipoPagamento);
+
+    public async Task<Venda> CriarAsync(Venda venda)
+    {
+        await context.Vendas.AddAsync(venda);
+        return venda;
+    }
+
+    public async Task SalvarAsync() =>
+        await context.SaveChangesAsync();
+
+    public Task<IDbContextTransaction> BeginTransacaoAsync() =>
+        context.Database.BeginTransactionAsync();
 }

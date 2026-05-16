@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule, FormBuilder, FormControl, FormArray,
   Validators, AbstractControl, ValidationErrors,
@@ -14,10 +14,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { NgxMaskDirective } from 'ngx-mask';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { VendaService, FormaPagamentoDto } from '../../../core/services/venda.service';
+import { VendaService, FormaPagamentoDto, CriarVendaDto } from '../../../core/services/venda.service';
 import { EstoqueService, EstoqueDto } from '../../../core/services/estoque.service';
 import { ClientesService, ClientesDto } from '../../../core/services/clientes.service';
 import { AddRowButtonComponent } from '../../../shared/components/add-row-button/add-row-button';
@@ -60,11 +61,14 @@ export class FormVendaComponent implements OnInit, OnDestroy {
   private readonly service = inject(VendaService);
   private readonly estoqueService = inject(EstoqueService);
   private readonly clientesService = inject(ClientesService);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
   private readonly busca$ = new Subject<{ index: number; busca: string }>();
 
   readonly carregando = signal(true);
+  readonly salvando = signal(false);
   readonly clientesOpcoes = signal<ClientesDto[]>([]);
   readonly formasPagamento = signal<FormaPagamentoDto[]>([]);
   readonly estadoLinhas = signal<EstadoLinha[]>([]);
@@ -74,6 +78,11 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 
   readonly form = this.fb.group({
     idTipoPagamento: [null as number | null, Validators.required],
+    totalParcelas: this.fb.control(
+      { value: 1, disabled: true },
+      { validators: [Validators.required, Validators.min(1), Validators.max(12)] }
+    ),
+    comentario: [''],
     itens: this.fb.array([], aoMenosUmItem),
   });
 
@@ -106,6 +115,9 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 
     this.itens.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => this.recalcularTotal());
+
+    this.form.get('idTipoPagamento')!.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(id => this.aplicarRegraParcelamento(id));
 
     this.clientesService.listar(1, 10).subscribe(res => this.clientesOpcoes.set(res.items));
 
@@ -208,6 +220,71 @@ export class FormVendaComponent implements OnInit, OnDestroy {
     this.estadoLinhas.update(arr =>
       arr.map((e, i) => i === index ? { ...e, displayValue: produto.produto, produtoSelecionado: produto } : e)
     );
+  }
+
+  get parcelamentoHabilitado(): boolean {
+    const id = this.form.get('idTipoPagamento')?.value;
+    return this.formasPagamento().find(f => f.id === id)?.permiteParcelamento ?? false;
+  }
+
+  get resumoParcelas(): { numero: number; valor: number; valorUltima: number; uniforme: boolean } | null {
+    const numero = this.form.get('totalParcelas')?.value ?? 1;
+    const total = this.total();
+    if (numero <= 1 || total <= 0) return null;
+    const round2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
+    const valor = round2(total / numero);
+    const valorUltima = round2(total - valor * (numero - 1));
+    return { numero, valor, valorUltima, uniforme: valor === valorUltima };
+  }
+
+  private aplicarRegraParcelamento(idTipoPagamento: number | null): void {
+    const ctrl = this.form.get('totalParcelas')!;
+    const forma = this.formasPagamento().find(f => f.id === idTipoPagamento);
+    if (forma?.permiteParcelamento) {
+      ctrl.enable({ emitEvent: false });
+    } else {
+      ctrl.setValue(1, { emitEvent: false });
+      ctrl.disable({ emitEvent: false });
+    }
+  }
+
+  salvar(): void {
+    const clienteSelecionado = this.clienteControl.value;
+    const clienteValido = !!clienteSelecionado && typeof clienteSelecionado === 'object';
+    if (this.form.invalid || !clienteValido) {
+      this.form.markAllAsTouched();
+      this.clienteControl.markAsTouched();
+      return;
+    }
+
+    this.salvando.set(true);
+
+    const cliente = clienteSelecionado as ClientesDto;
+    const raw = this.form.getRawValue();
+    const dto: CriarVendaDto = {
+      idCliente: Number(cliente.id),
+      idTipoPagamento: raw.idTipoPagamento!,
+      totalParcelas: raw.totalParcelas!,
+      comentario: raw.comentario?.trim() || undefined,
+      itens: (this.itens.getRawValue() as { idEstoque: number; quantidade: number; precoVendaReal: string }[])
+        .map(i => ({
+          idEstoque: i.idEstoque,
+          quantidade: i.quantidade,
+          precoVendaReal: this.parseMoeda(i.precoVendaReal) ?? 0,
+        })),
+    };
+
+    this.service.criar(dto).subscribe({
+      next: () => {
+        this.snackBar.open('Venda registrada com sucesso!', 'Fechar', { duration: 3000 });
+        this.router.navigate(['/vendas']);
+      },
+      error: (e: { error?: { erros?: string[] } }) => {
+        const erros = e?.error?.erros ?? ['Erro ao salvar. Tente novamente.'];
+        this.snackBar.open(erros.join('\n'), 'Fechar', { duration: 6000, panelClass: ['snack-error'] });
+        this.salvando.set(false);
+      },
+    });
   }
 
   private recalcularTotal(): void {

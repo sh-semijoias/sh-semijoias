@@ -9,7 +9,7 @@
       @if (carregando()) {
         <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
       } @else {
-        <form [formGroup]="form" class="flex flex-col gap-4 pt-2">
+        <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4 pt-2">
 
           <mat-form-field appearance="outline">
             <mat-label>Cliente</mat-label>
@@ -26,13 +26,31 @@
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Forma de pagamento</mat-label>
-            <mat-select formControlName="idTipoPagamento">
-              @for (f of formasPagamento(); track f.id) {
-                <mat-option [value]="f.id">{{ f.descricao }}</mat-option>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <mat-form-field appearance="outline" class="w-full sm:flex-1">
+              <mat-label>Forma de pagamento</mat-label>
+              <mat-select formControlName="idTipoPagamento">
+                @for (f of formasPagamento(); track f.id) {
+                  <mat-option [value]="f.id">{{ f.descricao }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full sm:w-40">
+              <mat-label>Parcelas</mat-label>
+              <input matInput type="number" min="1" max="12" formControlName="totalParcelas" />
+              @if (!parcelamentoHabilitado) {
+                <mat-hint>Sem parcelamento</mat-hint>
               }
-            </mat-select>
+              @if (form.get('totalParcelas')?.invalid && form.get('totalParcelas')?.touched) {
+                <mat-error>Entre 1 e 12.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Comentário (opcional)</mat-label>
+            <textarea matInput rows="2" formControlName="comentario"></textarea>
           </mat-form-field>
 
           <mat-divider />
@@ -112,8 +130,21 @@
             </span>
           </div>
 
+          @if (resumoParcelas; as p) {
+            <div class="text-sm text-secondary text-right">
+              @if (p.uniforme) {
+                {{ p.numero }}x de {{ p.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              } @else {
+                {{ p.numero - 1 }}x de {{ p.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                + última de {{ p.valorUltima | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              }
+            </div>
+          }
+
           <div class="flex gap-3 mt-2">
-            <button mat-flat-button type="submit" [disabled]="true">Salvar</button>
+            <button mat-flat-button type="submit" [disabled]="salvando()">
+              {{ salvando() ? 'Salvando...' : 'Salvar' }}
+            </button>
             <a mat-button routerLink="/vendas">Cancelar</a>
           </div>
         </form>
