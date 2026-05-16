@@ -72,6 +72,7 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
 
     public async Task<Dictionary<int, Estoque>> BuscarPorIdsAsync(IList<int> ids, int? idMaleta = null) =>
         await context.Estoques
+            .Include(e => e.Produto)
             .Where(e => ids.Contains(e.Id) && e.IdMaleta == idMaleta)
             .ToDictionaryAsync(e => e.Id);
 

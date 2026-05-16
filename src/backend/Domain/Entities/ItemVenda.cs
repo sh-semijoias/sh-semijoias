@@ -9,4 +9,6 @@ public class ItemVenda
     public Estoque Estoque { get; set; } = null!;
     public int Quantidade { get; set; }
     public decimal PrecoVendaReal { get; set; }
+    public decimal PrecoCompra { get; set; }
+    public decimal PrecoVendaSugerido { get; set; }
 }

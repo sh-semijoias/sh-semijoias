@@ -98,11 +98,17 @@ public class VendaService(
             Comentario = string.IsNullOrWhiteSpace(dto.Comentario) ? null : dto.Comentario.Trim(),
             DataVenda = agora,
             DataAtualizacao = agora,
-            Itens = dto.Itens.Select(i => new ItemVenda
+            Itens = dto.Itens.Select(i =>
             {
-                IdEstoque = i.IdEstoque,
-                Quantidade = i.Quantidade,
-                PrecoVendaReal = i.PrecoVendaReal,
+                var estoque = estoques[i.IdEstoque];
+                return new ItemVenda
+                {
+                    IdEstoque = i.IdEstoque,
+                    Quantidade = i.Quantidade,
+                    PrecoVendaReal = i.PrecoVendaReal,
+                    PrecoCompra = estoque.Produto.PrecoCompra,
+                    PrecoVendaSugerido = estoque.Produto.PrecoVendaSugerido,
+                };
             }).ToList(),
             Parcelas = GerarParcelas(dto.TotalParcelas, valorTotal, agora),
         };

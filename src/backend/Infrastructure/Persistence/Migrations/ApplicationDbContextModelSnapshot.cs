@@ -289,10 +289,20 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("id_venda");
 
+                    b.Property<decimal>("PrecoCompra")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("preco_compra");
+
                     b.Property<decimal>("PrecoVendaReal")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("preco_venda_real");
+
+                    b.Property<decimal>("PrecoVendaSugerido")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("preco_venda_sugerido");
 
                     b.Property<int>("Quantidade")
                         .HasColumnType("integer")
