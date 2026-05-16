@@ -1,0 +1,46 @@
+<div class="p-4 sm:p-6">
+  <div class="flex items-center gap-2 mb-6">
+    <a mat-icon-button routerLink="/vendas"><mat-icon>arrow_back</mat-icon></a>
+    <h2 class="text-xl font-semibold">Nova Venda</h2>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="flex justify-center py-12"><mat-spinner diameter="40" /></div>
+      } @else {
+        <form [formGroup]="form" class="flex flex-col gap-4 pt-2">
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cliente</mat-label>
+            <input matInput placeholder="Buscar cliente..."
+              [formControl]="clienteControl"
+              [matAutocomplete]="autoCliente" />
+            <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
+              @for (c of clientesOpcoes(); track c.id) {
+                <mat-option [value]="c">{{ c.nome }}</mat-option>
+              }
+            </mat-autocomplete>
+            @if (clienteControl.touched && clienteControl.hasError('required')) {
+              <mat-error>Cliente é obrigatório.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Forma de pagamento</mat-label>
+            <mat-select formControlName="idTipoPagamento">
+              @for (f of formasPagamento(); track f.id) {
+                <mat-option [value]="f.id">{{ f.descricao }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="flex gap-3 mt-2">
+            <button mat-flat-button type="submit" [disabled]="true">Salvar</button>
+            <a mat-button routerLink="/vendas">Cancelar</a>
+          </div>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

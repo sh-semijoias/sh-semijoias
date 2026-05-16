@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,7 @@ interface RevendedorOpcao { id: string; nome: string; }
   selector: 'app-lista-vendas',
   standalone: true,
   imports: [
+    RouterLink,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,

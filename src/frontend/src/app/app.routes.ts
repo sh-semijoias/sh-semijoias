@@ -12,6 +12,7 @@ import { ListaMaletasComponent } from './pages/estoque/maletas/lista-maletas/lis
 import { FormMaletaComponent } from './pages/estoque/maletas/form-maleta/form-maleta';
 import { FormProdutoComponent } from './pages/produtos/form-produto/form-produto';
 import { ListaVendasComponent } from './pages/vendas/lista-vendas/lista-vendas';
+import { FormVendaComponent } from './pages/vendas/form-venda/form-venda';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -31,4 +32,5 @@ export const routes: Routes = [
   { path: 'produtos/novo', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'vendas', component: ListaVendasComponent, canActivate: [authGuard()] },
+  { path: 'vendas/nova', component: FormVendaComponent, canActivate: [authGuard()] },
 ];

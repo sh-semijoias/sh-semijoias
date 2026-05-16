@@ -40,6 +40,12 @@ export interface ListarVendasResultado {
   totalVendasPeriodo: number;
 }
 
+export interface FormaPagamentoDto {
+  id: number;
+  descricao: string;
+  permiteParcelamento: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VendaService {
   private readonly http = inject(HttpClient);
@@ -59,5 +65,9 @@ export class VendaService {
     if (filtros.ordemDecrescente != null) params = params.set('ordemDecrescente', filtros.ordemDecrescente);
 
     return this.http.get<ListarVendasResultado>(this.baseUrl, { params });
+  }
+
+  listarFormasPagamento(): Observable<FormaPagamentoDto[]> {
+    return this.http.get<FormaPagamentoDto[]>(`${this.baseUrl}/formas-pagamento`);
   }
 }

@@ -44,4 +44,11 @@ public class VendasController(IVendaService vendaService) : ControllerBase
         var result = await vendaService.ListarAsync(query);
         return Ok(result.Valor);
     }
+
+    [HttpGet("formas-pagamento")]
+    public async Task<IActionResult> ListarFormasPagamento()
+    {
+        var result = await vendaService.ListarFormasPagamentoAsync();
+        return Ok(result.Valor);
+    }
 }

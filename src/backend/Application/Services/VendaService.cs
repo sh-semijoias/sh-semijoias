@@ -12,4 +12,13 @@ public class VendaService(IVendaRepository vendaRepository) : IVendaService
         return Result<ListarVendasResultado>.Ok(
             new ListarVendasResultado(items, total, query.Pagina, query.TamanhoPagina, totalVendasPeriodo));
     }
+
+    public async Task<Result<IReadOnlyList<FormaPagamentoDto>>> ListarFormasPagamentoAsync()
+    {
+        var formas = await vendaRepository.ListarFormasPagamentoAtivasAsync();
+        var dtos = formas
+            .Select(f => new FormaPagamentoDto(f.Id, f.Descricao, f.PermiteParcelamento))
+            .ToList();
+        return Result<IReadOnlyList<FormaPagamentoDto>>.Ok(dtos);
+    }
 }

@@ -478,6 +478,12 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("descricao");
 
+                    b.Property<bool>("PermiteParcelamento")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("permite_parcelamento");
+
                     b.HasKey("Id")
                         .HasName("pk_tipo_pagamento");
 

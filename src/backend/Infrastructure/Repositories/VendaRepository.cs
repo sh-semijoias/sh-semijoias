@@ -81,4 +81,11 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             totalVendasPeriodo
         );
     }
+
+    public async Task<IReadOnlyList<TipoPagamento>> ListarFormasPagamentoAtivasAsync() =>
+        await context.TiposPagamento
+            .AsNoTracking()
+            .Where(t => t.Ativo)
+            .OrderBy(t => t.Descricao)
+            .ToListAsync();
 }

@@ -1,15 +1,21 @@
 <div class="p-4 sm:p-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h2 class="text-xl font-semibold">Vendas</h2>
-    <div class="sm:hidden">
-      <button mat-stroked-button (click)="filtrosAbertos.set(!filtrosAbertos())">
-        <mat-icon>filter_list</mat-icon>
-        Filtros
-        @if (filtrosAtivosCount > 0) {
-          <span class="ml-1 text-primary font-semibold">({{ filtrosAtivosCount }})</span>
-        }
-        <mat-icon>{{ filtrosAbertos() ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </button>
+    <div class="flex items-center gap-3">
+      <a mat-flat-button routerLink="/vendas/nova">
+        <mat-icon>add</mat-icon>
+        Nova venda
+      </a>
+      <div class="sm:hidden">
+        <button mat-stroked-button (click)="filtrosAbertos.set(!filtrosAbertos())">
+          <mat-icon>filter_list</mat-icon>
+          Filtros
+          @if (filtrosAtivosCount > 0) {
+            <span class="ml-1 text-primary font-semibold">({{ filtrosAtivosCount }})</span>
+          }
+          <mat-icon>{{ filtrosAbertos() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 
