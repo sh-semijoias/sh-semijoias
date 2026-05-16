@@ -15,8 +15,8 @@ export interface VendaListagemDto {
   nomeCliente: string;
   idUsuario: string;
   nomeRevendedora: string;
-  totalProdutos: number;
   totalItens: number;
+  totalParcelas: number;
   valorTotal: number;
   formaPagamento: string;
   dataCancelamento: string | null;

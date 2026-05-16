@@ -7,6 +7,7 @@ public record VisaoVenda(
     Guid IdUsuario,
     string NomeRevendedora,
     int TotalItens,
+    int TotalParcelas,
     decimal ValorTotal,
     string FormaPagamento,
     DateTime? DataCancelamento,
