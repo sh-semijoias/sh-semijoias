@@ -54,9 +54,8 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
         else if (query.Cancelada == false)
             grouped = grouped.Where(x => x.DataCancelamento == null);
 
-        var ativas = grouped.Where(x => x.DataCancelamento == null);
         var total = await grouped.CountAsync();
-        var totalVendasPeriodo = await ativas.SumAsync(x => (decimal?)x.ValorTotal) ?? 0m;
+        var totalVendasPeriodo = await grouped.SumAsync(x => (decimal?)x.ValorTotal) ?? 0m;
 
         var ordenado = query.OrdenarPor switch
         {
