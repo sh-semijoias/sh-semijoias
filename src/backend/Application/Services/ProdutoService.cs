@@ -12,6 +12,7 @@ public class ProdutoService(
     private static ProdutoDto ToDto(Produto produto) =>
         new(
             produto.Id,
+            produto.DataCadastro,
             produto.Descricao,
             produto.TipoProduto.Descricao,
             produto.PrecoCompra,
