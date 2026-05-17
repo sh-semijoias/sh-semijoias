@@ -16,6 +16,8 @@ public class ApplicationDbContext : IdentityDbContext<Usuario, Perfil, Guid>
     public DbSet<Maleta> Maletas => Set<Maleta>();
     public DbSet<Estoque> Estoques => Set<Estoque>();
     public DbSet<TipoPagamento> TiposPagamento => Set<TipoPagamento>();
+    public DbSet<MotivoCancelamentoVenda> MotivosCancelamentoVenda => Set<MotivoCancelamentoVenda>();
+    public DbSet<CancelamentoVenda> CancelamentosVenda => Set<CancelamentoVenda>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Venda> Vendas => Set<Venda>();
     public DbSet<ItemVenda> ItensVenda => Set<ItemVenda>();

@@ -12,5 +12,6 @@ public class TipoPagamentoConfiguration : IEntityTypeConfiguration<TipoPagamento
 
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Descricao).IsRequired().HasMaxLength(100);
+        builder.Property(t => t.PermiteParcelamento).HasDefaultValue(false);
     }
 }

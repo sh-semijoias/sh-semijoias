@@ -12,5 +12,12 @@ public class TipoProdutoConfiguration : IEntityTypeConfiguration<TipoProduto>
 
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Descricao).IsRequired().HasMaxLength(100);
+
+        builder.HasData(
+            new TipoProduto { Id = 1, Descricao = "Brinco", Ativo = true },
+            new TipoProduto { Id = 2, Descricao = "Anel", Ativo = true },
+            new TipoProduto { Id = 3, Descricao = "Gargantilha", Ativo = true },
+            new TipoProduto { Id = 4, Descricao = "Pulseira", Ativo = true }
+        );
     }
 }

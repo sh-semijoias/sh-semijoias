@@ -1,0 +1,202 @@
+<div class="p-4 sm:p-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-xl font-semibold">Vendas</h2>
+    <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+      <div class="sm:hidden">
+        <button mat-stroked-button (click)="filtrosAbertos.set(!filtrosAbertos())">
+          <mat-icon>filter_list</mat-icon>
+          Filtros
+          @if (filtrosAtivosCount > 0) {
+            <span class="ml-1 text-primary font-semibold">({{ filtrosAtivosCount }})</span>
+          }
+          <mat-icon>{{ filtrosAbertos() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
+      <a mat-flat-button routerLink="/vendas/nova">
+        <mat-icon>add</mat-icon>
+        Nova venda
+      </a>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <mat-button-toggle-group
+      [value]="statusFiltro()"
+      (change)="statusFiltro.set($event.value); pagina.set(1); carregar()">
+      <mat-button-toggle [value]="false">Ativas</mat-button-toggle>
+      <mat-button-toggle [value]="null">Todas</mat-button-toggle>
+      <mat-button-toggle [value]="true">Canceladas</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4 mb-4 items-start" [class.hidden]="!filtrosAbertos()">
+    <app-autocomplete-paginado
+      label="Cliente" placeholder="Buscar cliente..."
+      fieldClass="w-full"
+      subscriptSizing="dynamic"
+      [control]="clienteControl"
+      [loadFn]="loadClientesFn"
+      [displayFn]="displayCliente"
+      (selecionado)="onClienteAlterado()"
+      (limpo)="onClienteAlterado()"
+    />
+
+    <app-autocomplete-paginado
+      label="Produto" placeholder="Buscar produto..."
+      fieldClass="w-full"
+      subscriptSizing="dynamic"
+      [control]="produtoControl"
+      [loadFn]="loadProdutosFn"
+      [displayFn]="displayProduto"
+      (selecionado)="onProdutoAlterado()"
+      (limpo)="onProdutoAlterado()"
+    />
+
+    @if (isAdmin()) {
+      <app-autocomplete-paginado
+        label="Revendedor" placeholder="Buscar revendedor..."
+        fieldClass="w-full"
+        subscriptSizing="dynamic"
+        [control]="revendedorControl"
+        [loadFn]="loadRevendedoresFn"
+        [displayFn]="displayRevendedor"
+        (selecionado)="onRevendedorAlterado()"
+        (limpo)="onRevendedorAlterado()"
+      />
+    }
+
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+      <mat-label>Período</mat-label>
+      <mat-date-range-input [rangePicker]="pickerPeriodo">
+        <input matStartDate [formControl]="dataInicioControl" placeholder="Início" />
+        <input matEndDate [formControl]="dataFimControl" placeholder="Fim" />
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="pickerPeriodo" />
+      <mat-date-range-picker #pickerPeriodo />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-500/15 dark:bg-violet-900/40">
+            <mat-icon class="text-violet-700! dark:text-violet-400!">shopping_cart</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm text-secondary">Vendas no período</p>
+            <p class="text-xl font-semibold">{{ total() }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/15 dark:bg-teal-900/40">
+            <mat-icon class="text-teal-700! dark:text-teal-400!">payments</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm text-secondary">Total vendido</p>
+            <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="relative overflow-hidden">
+    <mat-card-content>
+      @if (carregando()) {
+        <div class="absolute inset-0 z-10 flex items-center justify-center bg-overlay-loading">
+          <mat-spinner diameter="40" />
+        </div>
+      }
+
+      @if (erroCarregamento() && itens().length === 0) {
+        <div class="text-center py-8">
+          <p class="text-red-600 mb-3">Não foi possível carregar as vendas.</p>
+          <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+        </div>
+      } @else {
+        <div class="min-h-24">
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="itens()" matSort (matSortChange)="aoOrdenar($event)" class="w-full">
+              <ng-container matColumnDef="dataVenda">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Data</th>
+                <td mat-cell *matCellDef="let item">{{ item.dataVenda | date:'dd/MM/yyyy':'':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="nomeCliente">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Cliente</th>
+                <td mat-cell *matCellDef="let item">{{ item.nomeCliente }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="nomeRevendedora">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revendedor</th>
+                <td mat-cell *matCellDef="let item">{{ item.nomeRevendedora }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="totalItens">
+                <th mat-header-cell *matHeaderCellDef>Itens</th>
+                <td mat-cell *matCellDef="let item">{{ item.totalItens }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="valorTotal">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Valor Total</th>
+                <td mat-cell *matCellDef="let item">{{ item.valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="formaPagamento">
+                <th mat-header-cell *matHeaderCellDef>Pagamento</th>
+                <td mat-cell *matCellDef="let item">{{ item.formaPagamento }}{{ item.totalParcelas > 1 ? ' (' + item.totalParcelas + 'x)' : '' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  @if (item.dataCancelamento) {
+                    <mat-chip color="warn" highlighted [title]="item.nomeMotivoCancelamento ?? ''">Cancelada</mat-chip>
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acoes" stickyEnd>
+                <th mat-header-cell *matHeaderCellDef>Ações</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações"
+                    [disabled]="!podeCancelar(item)">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    @if (podeCancelar(item)) {
+                      <button mat-menu-item (click)="cancelarVenda(item)">
+                        <mat-icon>cancel</mat-icon>
+                        Cancelar venda
+                      </button>
+                    }
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+              <tr mat-row *matRowDef="let row; columns: colunas;"></tr>
+            </table>
+          </div>
+
+          @if (!carregando() && itens().length === 0) {
+            <p class="text-center py-8 text-gray-500">Nenhuma venda encontrada.</p>
+          }
+        </div>
+      }
+
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="tamanhoPagina()"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPaginaChange($event)"
+        showFirstLastButtons />
+    </mat-card-content>
+  </mat-card>
+</div>

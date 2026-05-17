@@ -91,7 +91,8 @@ builder.Services.AddScoped<IEstoqueRepository, EstoqueRepository>();
 builder.Services.AddScoped<IEstoqueService, EstoqueService>();
 builder.Services.AddScoped<IMaletaRepository, MaletaRepository>();
 builder.Services.AddScoped<IMaletaService, MaletaService>();
-
+builder.Services.AddScoped<IVendaRepository, VendaRepository>();
+builder.Services.AddScoped<IVendaService, VendaService>();
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 

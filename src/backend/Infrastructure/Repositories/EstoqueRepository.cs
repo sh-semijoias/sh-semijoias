@@ -11,7 +11,7 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
     public async Task<(IList<Estoque> Items, int Total)> ListarAsync(ListarEstoqueConsulta query)
     {
         var dbQuery = context.Estoques
-            .Where(e => e.IdMaleta == null)
+            .Where(e => e.IdMaleta == query.IdMaleta)
             .Include(e => e.Produto)
                 .ThenInclude(p => p.TipoProduto)
             .AsQueryable();
@@ -69,6 +69,12 @@ public class EstoqueRepository(ApplicationDbContext context) : IEstoqueRepositor
         await context.Estoques
             .Where(e => idsProdutos.Contains(e.IdProduto) && e.IdMaleta == idMaleta)
             .ToDictionaryAsync(e => e.IdProduto);
+
+    public async Task<Dictionary<int, Estoque>> BuscarPorIdsAsync(IList<int> ids, int? idMaleta = null) =>
+        await context.Estoques
+            .Include(e => e.Produto)
+            .Where(e => ids.Contains(e.Id) && e.IdMaleta == idMaleta)
+            .ToDictionaryAsync(e => e.Id);
 
     public async Task AdicionarAsync(Estoque estoque) =>
         await context.Estoques.AddAsync(estoque);

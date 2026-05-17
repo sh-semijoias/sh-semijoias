@@ -11,18 +11,17 @@ import { FormClienteComponent } from './pages/clientes/form-clientes/form-client
 import { ListaMaletasComponent } from './pages/estoque/maletas/lista-maletas/lista-maletas';
 import { FormMaletaComponent } from './pages/estoque/maletas/form-maleta/form-maleta';
 import { FormProdutoComponent } from './pages/produtos/form-produto/form-produto';
+import { ListaVendasComponent } from './pages/vendas/lista-vendas/lista-vendas';
+import { FormVendaComponent } from './pages/vendas/form-venda/form-venda';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard()] },
-  { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard()] },
-  { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard()] },
+  { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard(Perfil.Administrador)] },
+  { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard(Perfil.Administrador)] },
+  { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'estoque/entrada', component: NovaEntradaEstoqueComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'estoque', component: ListaEstoqueComponent, canActivate: [authGuard(Perfil.Administrador)] },
-  { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard] },
-  { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard] },
-  { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard] },
   { path: 'maletas', component: ListaMaletasComponent, canActivate: [authGuard()] },
   { path: 'maletas/nova', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'maletas/:id/editar', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
@@ -32,4 +31,6 @@ export const routes: Routes = [
   { path: 'produtos', component: ListaEstoqueComponent, canActivate: [authGuard()] },
   { path: 'produtos/novo', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
+  { path: 'vendas', component: ListaVendasComponent, canActivate: [authGuard()] },
+  { path: 'vendas/nova', component: FormVendaComponent, canActivate: [authGuard()] },
 ];

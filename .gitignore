@@ -1,2 +1,5 @@
 # Local overrides (not versioned)
 .local/
+
+# Chrome debug profile (preserves cookies/session entre sessões de debug)
+.vscode/.chrome-profile/

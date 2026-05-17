@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Cancelar venda</h2>
+
+<mat-dialog-content>
+  <p class="mb-4">Tem certeza que deseja cancelar a venda de <strong>{{ data.nomeCliente }}</strong>? O estoque dos produtos será restaurado.</p>
+
+  @if (carregandoMotivos()) {
+    <div class="flex justify-center py-4">
+      <mat-spinner diameter="32" />
+    </div>n
+  } @else {
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Motivo do cancelamento</mat-label>
+      <mat-select [formControl]="motivoControl" required>
+        @for (motivo of motivos(); track motivo.id) {
+          <mat-option [value]="motivo.id">{{ motivo.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close>Voltar</button>
+  <button mat-flat-button color="warn" (click)="confirmar()" [disabled]="motivoControl.invalid || carregandoMotivos()">
+    Confirmar cancelamento
+  </button>
+</mat-dialog-actions>

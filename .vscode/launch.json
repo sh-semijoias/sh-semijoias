@@ -6,12 +6,27 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet: build",
-      "postDebugTask": "docker: down",
+      "postDebugTask": "stop: all",
       "program": "${workspaceFolder}/src/backend/Api/bin/Debug/net10.0/Api.dll",
       "cwd": "${workspaceFolder}/src/backend/Api",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5224"
+      },
+      "serverReadyAction": {
+        "action": "startDebugging",
+        "name": "Frontend: chrome",
+        "pattern": "Now listening on"
+      }
+    },
+    {
+      "name": "Frontend: chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4200/",
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-profile",
+      "presentation": {
+        "hidden": true
       }
     },
     {
@@ -33,8 +48,8 @@
   "compounds": [
     {
       "name": "Start all",
-      "configurations": ["Backend: dotnet run", "Frontend: ng serve"],
-      "preLaunchTask": "docker: up",
+      "configurations": ["Backend: dotnet run"],
+      "preLaunchTask": "start: dependencies",
       "stopAll": true,
       "presentation": {
         "default": true

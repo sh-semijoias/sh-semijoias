@@ -20,7 +20,7 @@ public interface IClienteRepository
 */
 public interface IClienteRepository
 {
-    Task<(IList<Cliente> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina);
+    Task<(IList<Cliente> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? busca = null);
     Task<Cliente?> ObterPorIdAsync(int id);
     Task<Cliente?> ObterPorEmailAsync(string email);
     Task<Cliente?> ObterPorTelefoneAsync(string telefone);

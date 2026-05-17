@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@variant dark (&:where(.dark-mode, .dark-mode *));
+
 @theme {
   --color-row-border:       light-dark(#d1d5db, #4b5563);
   --color-row-text:         light-dark(#6b7280, #9ca3af);

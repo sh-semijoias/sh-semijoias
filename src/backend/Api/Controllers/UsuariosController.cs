@@ -3,21 +3,23 @@ using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Usuarios;
 using ShSemijoias.Application.Interfaces;
+using ShSemijoias.Domain.Enums;
 
 namespace ShSemijoias.Api.Controllers;
 
 [ApiController]
 [Route("api/usuarios")]
-[Authorize]
+[Authorize(Roles = Perfis.Administrador)]
 public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Listar(
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanhoPagina = 10,
-        [FromQuery] string? perfil = null)
+        [FromQuery] string? perfil = null,
+        [FromQuery] string? busca = null)
     {
-        var result = await usuarioService.ListarAsync(pagina, tamanhoPagina, perfil);
+        var result = await usuarioService.ListarAsync(pagina, tamanhoPagina, perfil, busca);
         if (!result.Sucesso) return result.ToActionResult(this);
         return Ok(result.Valor);
     }

@@ -10,6 +10,7 @@ public static class ResultExtensions
         {
             TipoErro.Conflito      => controller.Conflict(new { Erros = result.Erros }),
             TipoErro.NaoEncontrado => controller.NotFound(),
+            TipoErro.NaoAutorizado => controller.Forbid(),
             _                      => controller.BadRequest(new { Erros = result.Erros }),
         };
 }

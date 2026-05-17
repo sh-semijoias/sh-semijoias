@@ -12,6 +12,8 @@ public class ItemVendaConfiguration : IEntityTypeConfiguration<ItemVenda>
 
         builder.HasKey(i => i.Id);
         builder.Property(i => i.PrecoVendaReal).HasPrecision(18, 2);
+        builder.Property(i => i.PrecoCompra).HasPrecision(18, 2);
+        builder.Property(i => i.PrecoVendaSugerido).HasPrecision(18, 2);
 
         builder.HasOne(i => i.Venda)
             .WithMany(v => v.Itens)

@@ -12,9 +12,9 @@ public class UsuarioService(
     IPerfilRepository perfilRepository,
     IEmailService emailService) : IUsuarioService
 {
-    public async Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null)
+    public async Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null, string? busca = null)
     {
-        var (usuarios, total) = await usuarioRepository.ListarAsync(pagina, tamanhoPagina, perfil);
+        var (usuarios, total) = await usuarioRepository.ListarAsync(pagina, tamanhoPagina, perfil, busca);
 
         var dtos = usuarios.Select(u => new UsuarioDto(
             u.Id, u.Nome, u.Email!,

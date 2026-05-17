@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { ListaPaginada } from './usuario.service';
 
 export enum OrdenacaoMaleta {
@@ -87,13 +86,4 @@ export class MaletaService {
     return this.http.put<MaletaDto>(`${this.baseUrl}/${id}`, dto);
   }
 
-  listarRevendedores(): Observable<{ id: string; nome: string }[]> {
-    const params = new HttpParams()
-      .set('perfil', 'Revendedor')
-      .set('tamanhoPagina', 100)
-      .set('pagina', 1);
-    return this.http.get<ListaPaginada<{ id: string; nome: string }>>('/api/usuarios', { params }).pipe(
-      map(res => res.items)
-    );
-  }
 }

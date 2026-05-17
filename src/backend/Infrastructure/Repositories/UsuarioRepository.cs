@@ -8,11 +8,12 @@ namespace ShSemijoias.Infrastructure.Repositories;
 
 public class UsuarioRepository(UserManager<Usuario> userManager, ApplicationDbContext context) : IUsuarioRepository
 {
-    public async Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null)
+    public async Task<(IList<Usuario> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null, string? busca = null)
     {
         var query = context.Users
             .Include(u => u.Perfis)
             .Where(u => perfil == null || u.Perfis.Any(p => p.NormalizedName == perfil.ToUpper()))
+            .Where(u => busca == null || u.Nome.Contains(busca))
             .OrderBy(u => u.Nome);
 
         var total = await query.CountAsync();

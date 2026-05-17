@@ -1,0 +1,25 @@
+<mat-form-field appearance="outline" class="w-full" [subscriptSizing]="subscriptSizing">
+  <mat-label>{{ label }}</mat-label>
+  <input matInput [formControl]="$any(effectiveControl)" [matAutocomplete]="auto" [placeholder]="placeholder" />
+  @if (effectiveControl.value) {
+    <button matSuffix mat-icon-button type="button" (click)="limpar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete #auto [displayWith]="displayFn" (opened)="onPanelAberto(auto)"
+    (optionSelected)="onOpcaoSelecionada($event.option.value)">
+    @if (carregando()) {
+      <mat-option disabled>Carregando...</mat-option>
+    } @else {
+      @for (opcao of opcoesFiltradas(); track opcao.id) {
+        <mat-option [value]="opcao">{{ displayFn(opcao) }}</mat-option>
+      }
+      @if (carregandoMais()) {
+        <mat-option disabled>Carregando mais...</mat-option>
+      }
+    }
+  </mat-autocomplete>
+  @if (hasError) {
+    <mat-error>{{ errorMessage }}</mat-error>
+  }
+</mat-form-field>
