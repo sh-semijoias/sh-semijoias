@@ -9,6 +9,7 @@ using ShSemijoias.Infrastructure.Email;
 using ShSemijoias.Infrastructure.Persistence;
 using ShSemijoias.Infrastructure.Repositories;
 using ShSemijoias.Api.Extensions;
+using ShSemijoias.Api.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +96,10 @@ builder.Services.AddScoped<IVendaRepository, VendaRepository>();
 builder.Services.AddScoped<IVendaService, VendaService>();
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
+
 
 var app = builder.Build();
 

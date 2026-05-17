@@ -8,4 +8,7 @@ public class Usuario : IdentityUser<Guid>
     public DateTime DataCadastro { get; set; }
     public DateTime DataAtualizacao { get; set; }
     public ICollection<Perfil> Perfis { get; set; } = [];
+
+    public ICollection<Cliente> Clientes { get; set; } = [];
+
 }

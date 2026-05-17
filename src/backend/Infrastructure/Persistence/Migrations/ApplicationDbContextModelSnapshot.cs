@@ -222,11 +222,18 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("telefone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
                     b.HasKey("Id")
                         .HasName("pk_cliente");
 
                     b.HasIndex("CPF")
                         .HasDatabaseName("ix_cliente_cpf");
+
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_cliente_usuario_id");
 
                     b.ToTable("cliente", (string)null);
                 });
@@ -833,6 +840,18 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                     b.Navigation("Venda");
                 });
 
+            modelBuilder.Entity("ShSemijoias.Domain.Entities.Cliente", b =>
+                {
+                    b.HasOne("ShSemijoias.Domain.Entities.Usuario", "Usuario")
+                        .WithMany("Clientes")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_cliente_asp_net_users_usuario_id");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Estoque", b =>
                 {
                     b.HasOne("ShSemijoias.Domain.Entities.Maleta", "Maleta")
@@ -960,6 +979,11 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ShSemijoias.Domain.Entities.TipoProduto", b =>
                 {
                     b.Navigation("Produtos");
+                });
+
+            modelBuilder.Entity("ShSemijoias.Domain.Entities.Usuario", b =>
+                {
+                    b.Navigation("Clientes");
                 });
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Venda", b =>

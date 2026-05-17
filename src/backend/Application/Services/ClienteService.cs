@@ -8,14 +8,37 @@ using ShSemijoias.Domain.Entities;
 namespace ShSemijoias.Application.Services;
 
 public class ClientesService(
-    IClienteRepository clienteRepository
+    IClienteRepository clienteRepository,
+    IUserContext userContext
+
    // IPerfilRepository perfilRepository,
     //IEmailService emailService
     ) : IClienteService
 {
-public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(int pagina, int tamanhoPagina, string? busca = null)
+public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(
+    int pagina,
+    int tamanhoPagina,
+    string? busca = null)
 {
-    var (clientes, total) = await clienteRepository.ListarAsync(pagina, tamanhoPagina, busca);
+    (IEnumerable<Cliente> clientes, int total) resultado;
+
+    if (userContext.IsAdmin)
+    {
+        resultado = await clienteRepository
+            .ListarAsync(pagina, tamanhoPagina, busca);
+    }
+    else
+    {
+        resultado = await clienteRepository
+            .ListarPorUsuarioAsync(
+                userContext.UsuarioId,
+                pagina,
+                tamanhoPagina,
+                busca
+            );
+    }
+
+    var (clientes, total) = resultado;
 
     var dtos = clientes.Select(u =>
         new ClientesDto(
@@ -23,12 +46,19 @@ public async Task<Result<ListaPaginada<ClientesDto>>> ListarAsync(int pagina, in
             u.Nome,
             u.Email ?? string.Empty,
             u.CPF ?? string.Empty,
-            u.Telefone ?? string.Empty
+            u.Telefone ?? string.Empty,
+            u.Usuario?.Nome ?? string.Empty
+
         )
     ).ToList();
 
     return Result<ListaPaginada<ClientesDto>>.Ok(
-        new ListaPaginada<ClientesDto>(dtos, total, pagina, tamanhoPagina)
+        new ListaPaginada<ClientesDto>(
+            dtos,
+            total,
+            pagina,
+            tamanhoPagina
+        )
     );
 }
 
@@ -42,7 +72,10 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
         cliente.Nome,
         cliente.Email ?? string.Empty,
         cliente.CPF ?? string.Empty,
-        cliente.Telefone ?? string.Empty
+        cliente.Telefone ?? string.Empty,
+            cliente.Usuario?.Nome ?? string.Empty
+
+
     );
 }
 
@@ -81,6 +114,9 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
         Email = dto.Email,
         CPF = dto.CPF,
         Telefone = dto.Telefone,
+            
+        UsuarioId = userContext.UsuarioId,
+
         DataCadastro = DateTime.UtcNow,
         DataAtualizacao = DateTime.UtcNow
     };
@@ -92,7 +128,10 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
         cliente.Nome,
         cliente.Email ?? string.Empty,
         string.Empty,
-        cliente.Telefone ?? string.Empty
+        cliente.Telefone ?? string.Empty,
+            cliente.Usuario?.Nome ?? string.Empty
+
+
     ));
 }
 
@@ -143,7 +182,10 @@ public async Task<ClientesDto?> ObterPorIdAsync(int id)
     
         cliente.Email ?? string.Empty,
         string.Empty,
-        cliente.Telefone ?? string.Empty
+        cliente.Telefone ?? string.Empty,
+        cliente.Usuario?.Nome ?? string.Empty
+
+
     ));
 }
 }

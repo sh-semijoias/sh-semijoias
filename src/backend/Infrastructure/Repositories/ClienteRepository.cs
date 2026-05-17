@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+
 using Microsoft.EntityFrameworkCore;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
+
 using ShSemijoias.Infrastructure.Persistence;
 
 namespace ShSemijoias.Infrastructure.Repositories;
@@ -9,7 +11,9 @@ public class ClienteRepository(ApplicationDbContext context) : IClienteRepositor
 {
     public async Task<(IList<Cliente> Items, int Total)> ListarAsync(int pagina, int tamanhoPagina, string? busca = null)
     {
-        var query = context.Clientes.AsQueryable();
+        var query = context.Clientes
+            .Include(x => x.Usuario)
+            .AsQueryable();
         if (!string.IsNullOrWhiteSpace(busca))
         {
             query = query.Where(c => EF.Functions.ILike(c.Nome, $"%{busca}%"));
@@ -27,7 +31,9 @@ public class ClienteRepository(ApplicationDbContext context) : IClienteRepositor
     }
 
     public Task<Cliente?> ObterPorIdAsync(int id) =>
-        context.Clientes.FindAsync(id).AsTask();
+    context.Clientes
+        .Include(x => x.Usuario)
+        .FirstOrDefaultAsync(x => x.Id == id);
 
     public Task<Cliente?> ObterPorEmailAsync(string email) =>
         context.Clientes.FirstOrDefaultAsync(c => c.Email == email);
@@ -46,4 +52,31 @@ public class ClienteRepository(ApplicationDbContext context) : IClienteRepositor
         context.Clientes.Update(cliente);
         await context.SaveChangesAsync();
     }
+
+    public async Task<(IEnumerable<Cliente>, int)> ListarPorUsuarioAsync(
+    Guid usuarioId,
+    int pagina,
+    int tamanhoPagina,
+    string? busca = null)
+{
+    var query = context.Clientes
+        .Include(x => x.Usuario)
+        .Where(x => x.UsuarioId == usuarioId);
+
+    if (!string.IsNullOrWhiteSpace(busca))
+    {
+        query = query.Where(x =>
+            x.Nome.Contains(busca));
+    }
+
+    var total = await query.CountAsync();
+
+    var clientes = await query
+        .OrderBy(x => x.Nome)
+        .Skip((pagina - 1) * tamanhoPagina)
+        .Take(tamanhoPagina)
+        .ToListAsync();
+
+    return (clientes, total);
+}
 }
