@@ -11,14 +11,6 @@
       } @else {
         <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4 pt-2">
           <mat-form-field appearance="outline">
-            <mat-label>Data</mat-label>
-            <input matInput formControlName="data" mask="d0/M0/0000" />
-            @if (form.get('data')?.invalid && form.get('data')?.touched) {
-              <mat-error>Data é obrigatória</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
             <mat-label>Descrição</mat-label>
             <input matInput formControlName="descricao" />
             @if (form.get('descricao')?.invalid && form.get('descricao')?.touched) {
