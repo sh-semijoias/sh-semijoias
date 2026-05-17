@@ -24,7 +24,6 @@ export interface CategoriaProdutoDto {
 }
 
 export interface CriarProdutoDto {
-  data: string;
   descricao: string;
   idCategoria: number;
   precoCompra: number;

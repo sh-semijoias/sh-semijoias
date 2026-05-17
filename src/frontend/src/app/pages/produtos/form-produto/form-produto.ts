@@ -39,7 +39,6 @@ export class FormProdutoComponent implements OnInit {
   private productId: string | null = null;
 
   readonly form = this.fb.group({
-    data: ['', Validators.required],
     descricao: ['', [Validators.required]],
     idCategoria: [null as number | null, Validators.required],
     precoCompra: ['', Validators.required],
@@ -52,7 +51,6 @@ export class FormProdutoComponent implements OnInit {
     this.loadCategories();
     if (this.productId) {
       this.modoEdicao.set(true);
-      this.form.get('data')!.disable();
       this.carregando.set(true);
       this.loadProduct(this.productId);
     }
@@ -73,7 +71,6 @@ export class FormProdutoComponent implements OnInit {
       next: (product) => {
         this.product.set(product);
         this.form.patchValue({
-          data: product.data,
           descricao: product.descricao,
           idCategoria: this.getCategoryId(product.categoria),
           precoCompra: this.formatMaskValue(product.precoCompra),
@@ -115,7 +112,7 @@ export class FormProdutoComponent implements OnInit {
   salvar(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
-    const { data, descricao, idCategoria, precoCompra, precoVendaSugerido } = this.form.getRawValue();
+    const {descricao, idCategoria, precoCompra, precoVendaSugerido } = this.form.getRawValue();
     const precoCompraValor = this.parseCurrency(precoCompra);
     const precoVendaValor = this.parseCurrency(precoVendaSugerido);
     if (precoCompraValor === null || precoVendaValor === null) {
@@ -159,7 +156,6 @@ export class FormProdutoComponent implements OnInit {
     });
   } else {
     this.service.criar({
-      data: data!,
       descricao: descricao!,
       idCategoria: idCategoria!,
       precoCompra: precoCompraValor!,

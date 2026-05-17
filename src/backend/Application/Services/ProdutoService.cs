@@ -7,7 +7,7 @@ using ShSemijoias.Domain.Entities;
 namespace ShSemijoias.Application.Services;
 
 public class ProdutoService(
-    IProdutoRepository produtoRepository) : IProdutoService
+    IProdutoRepository produtoRepository, IEstoqueRepository estoqueRepository) : IProdutoService
 {
     private static ProdutoDto ToDto(Produto produto) =>
         new(
@@ -40,8 +40,6 @@ public class ProdutoService(
     public async Task<Result<ProdutoDto>> CriarAsync(CriarProdutoDto dto, string baseUrl)
     {
         var erros = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(dto.Data)) erros.Add("Data é obrigatória.");
         if (string.IsNullOrWhiteSpace(dto.Descricao)) erros.Add("Descrição é obrigatória.");
         if (dto.IdCategoria <= 0) erros.Add("Categoria é obrigatória.");
 
@@ -62,6 +60,13 @@ public class ProdutoService(
         };
 
         await produtoRepository.CriarAsync(produto);
+        var estoque = new Estoque
+        {
+            IdProduto = produto.Id,
+            Quantidade = 0,
+        };
+        await estoqueRepository.AdicionarAsync(estoque);
+        await estoqueRepository.SalvarAsync();
 
         var atualizado = await produtoRepository.ObterPorIdAsync(produto.Id);
         return Result<ProdutoDto>.Ok(ToDto(atualizado!));
