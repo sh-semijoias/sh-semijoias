@@ -25,12 +25,10 @@
         fixedTopGap="56"
       >
         <mat-nav-list>
-          @if (authService.currentUser()?.role === 'Administrador') {
-            <a mat-list-item routerLink="/usuarios" routerLinkActive="active-link">
-              <mat-icon matListItemIcon>person</mat-icon>
-              Usuários
-            </a>
-          }
+          <a mat-list-item routerLink="/vendas" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>point_of_sale</mat-icon>
+            Vendas
+          </a>
           @if (authService.currentUser()?.role === 'Administrador') {
             <a mat-list-item routerLink="/estoque" routerLinkActive="active-link">
               <mat-icon matListItemIcon>inventory_2</mat-icon>
@@ -42,13 +40,15 @@
             Maletas
           </a>
           <a mat-list-item routerLink="/clientes" routerLinkActive="active-link">
-           <mat-icon matListItemIcon>groups</mat-icon>
-          Clientes
+            <mat-icon matListItemIcon>groups</mat-icon>
+            Clientes
           </a>
-          <a mat-list-item routerLink="/vendas" routerLinkActive="active-link">
-            <mat-icon matListItemIcon>point_of_sale</mat-icon>
-            Vendas
-          </a>
+          @if (authService.currentUser()?.role === 'Administrador') {
+            <a mat-list-item routerLink="/usuarios" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>person</mat-icon>
+              Usuários
+            </a>
+          }
         </mat-nav-list>
       </mat-sidenav>
 

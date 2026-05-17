@@ -15,7 +15,7 @@ import { ListaVendasComponent } from './pages/vendas/lista-vendas/lista-vendas';
 import { FormVendaComponent } from './pages/vendas/form-venda/form-venda';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', redirectTo: 'vendas', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard(Perfil.Administrador)] },

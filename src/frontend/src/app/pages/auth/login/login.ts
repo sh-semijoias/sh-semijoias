@@ -56,7 +56,7 @@ export class LoginComponent {
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigateByUrl('/usuarios');
+        this.router.navigateByUrl('/vendas');
       },
       error: () => {
         this.errorMessage.set('E-mail ou senha inválidos.');
