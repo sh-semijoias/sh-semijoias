@@ -11,20 +11,14 @@
       } @else {
         <form [formGroup]="form" (ngSubmit)="salvar()" class="flex flex-col gap-4 pt-2">
 
-          <mat-form-field appearance="outline">
-            <mat-label>Cliente</mat-label>
-            <input matInput placeholder="Buscar cliente..."
-              [formControl]="clienteControl"
-              [matAutocomplete]="autoCliente" />
-            <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
-              @for (c of clientesOpcoes(); track c.id) {
-                <mat-option [value]="c">{{ c.nome }}</mat-option>
-              }
-            </mat-autocomplete>
-            @if (clienteControl.touched && clienteControl.hasError('required')) {
-              <mat-error>Cliente é obrigatório.</mat-error>
-            }
-          </mat-form-field>
+          <app-autocomplete-paginado
+            label="Cliente" placeholder="Buscar cliente..."
+            [control]="clienteControl"
+            [loadFn]="loadClientesFn"
+            [displayFn]="displayCliente"
+            [hasError]="clienteControl.touched && clienteControl.hasError('required')"
+            errorMessage="Cliente é obrigatório."
+          />
 
           <div class="flex flex-col sm:flex-row gap-3">
             <mat-form-field appearance="outline" class="w-full sm:flex-1">
@@ -58,44 +52,27 @@
           <div formArrayName="itens" class="flex flex-col gap-4">
             @for (item of itens.controls; track $index) {
               <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-3 items-start">
-                <mat-form-field appearance="outline" class="w-full sm:flex-1">
-                  <mat-label>Produto</mat-label>
-                  <input matInput
-                    [value]="estadoLinhas()[$index]?.displayValue ?? ''"
-                    (input)="atualizarDisplay($index, $event)"
-                    [matAutocomplete]="autoProduto"
-                    placeholder="Digite para buscar..."
-                  />
-                  <mat-autocomplete #autoProduto="matAutocomplete"
-                    [displayWith]="displayProduto"
-                    (optionSelected)="selecionarProduto($index, $event.option.value)">
-                    @if (estadoLinhas()[$index]?.carregando) {
-                      <mat-option disabled>Carregando...</mat-option>
-                    } @else {
-                      @for (p of estadoLinhas()[$index]?.produtos ?? []; track p.id) {
-                        @if (!produtosSelecionadosExceto($index).includes(p.id)) {
-                          <mat-option [value]="p">{{ p.produto }}</mat-option>
-                        }
-                      }
-                      @if ((estadoLinhas()[$index]?.total ?? 0) > 10) {
-                        <mat-option disabled>Refine a busca para ver mais resultados</mat-option>
-                      }
-                    }
-                  </mat-autocomplete>
-                  @if (item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched) {
-                    <mat-error>Selecione um produto.</mat-error>
-                  }
-                </mat-form-field>
+                <app-autocomplete-paginado
+                  label="Produto" placeholder="Digite para buscar..."
+                  fieldClass="w-full sm:flex-1"
+                  [loadFn]="loadProdutosFn"
+                  [displayFn]="displayProduto"
+                  [excluirIds]="produtosSelecionadosExceto($index)"
+                  [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
+                  errorMessage="Selecione um produto."
+                  (selecionado)="selecionarProduto($index, $any($event))"
+                  (limpo)="limparProdutoLinha($index)"
+                />
 
                 <div class="flex gap-3 items-start w-full sm:w-auto">
                 <mat-form-field appearance="outline" class="flex-1 sm:flex-none sm:w-36">
                   <mat-label>Qtd.</mat-label>
                   <input matInput type="number" min="1" formControlName="quantidade" />
-                  @if (estadoLinhas()[$index]?.produtoSelecionado; as p) {
+                  @if (produtosSelecionados()[$index]; as p) {
                     <mat-hint>Disponível: {{ p.quantidade }}</mat-hint>
                   }
                   @if (item.get('quantidade')?.hasError('max') && item.get('quantidade')?.touched) {
-                    <mat-error>Máx: {{ estadoLinhas()[$index]?.produtoSelecionado?.quantidade }}.</mat-error>
+                    <mat-error>Máx: {{ produtosSelecionados()[$index]?.quantidade }}.</mat-error>
                   } @else if (item.get('quantidade')?.invalid && item.get('quantidade')?.touched) {
                     <mat-error>Mínimo 1.</mat-error>
                   }

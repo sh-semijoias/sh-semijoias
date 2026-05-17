@@ -13,14 +13,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { VendaListagemDto, VendaService, OrdenacaoVenda } from '../../../core/services/venda.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { ClientesService, ClientesDto } from '../../../core/services/clientes.service';
@@ -28,6 +27,7 @@ import { EstoqueService, ProdutoResumidoDto } from '../../../core/services/estoq
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
 import { DialogConfirmarCancelamentoComponent, DialogConfirmarCancelamentoResult } from '../dialog-confirmar-cancelamento/dialog-confirmar-cancelamento';
+import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 
 interface RevendedorOpcao { id: string; nome: string; }
 
@@ -48,10 +48,10 @@ interface RevendedorOpcao { id: string; nome: string; }
     MatSortModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatAutocompleteModule,
     MatButtonToggleModule,
     MatChipsModule,
     MatMenuModule,
+    AutocompletePaginadoComponent,
     CurrencyPipe,
     DatePipe,
   ],
@@ -99,24 +99,13 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly totalVendasPeriodo = signal(0);
   readonly filtrosAbertos = signal(false);
 
-  readonly revendedoras = signal<RevendedorOpcao[]>([]);
-  readonly clientesOpcoes = signal<ClientesDto[]>([]);
-  readonly produtosOpcoes = signal<ProdutoResumidoDto[]>([]);
-
-  readonly revendedorControl = new FormControl<RevendedorOpcao | string | null>(null);
+  readonly revendedorControl = new FormControl<RevendedorOpcao | null>(null);
   readonly clienteControl = new FormControl<ClientesDto | string | null>(null);
   readonly produtoControl = new FormControl<ProdutoResumidoDto | string | null>(null);
   readonly dataInicioControl = new FormControl<Date | null>(null);
   readonly dataFimControl = new FormControl<Date | null>(null);
 
-  readonly revendedoresOpcoes = computed(() => {
-    const valor = this.revendedorControl.value;
-    const termo = typeof valor === 'string' ? valor.toLowerCase() : '';
-    return this.revendedoras().filter(r => !termo || r.nome.toLowerCase().includes(termo));
-  });
-
-  readonly displayRevendedor = (r: RevendedorOpcao | string | null): string =>
-    r && typeof r === 'object' ? r.nome : '';
+  readonly displayRevendedor = (r: RevendedorOpcao | null): string => r?.nome ?? '';
   readonly displayCliente = (c: ClientesDto | string | null): string =>
     c && typeof c === 'object' ? c.nome : '';
   readonly displayProduto = (p: ProdutoResumidoDto | string | null): string =>
@@ -137,56 +126,26 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     ].filter(v => v != null && v !== '').length;
   }
 
+  readonly loadClientesFn = (pagina: number, busca: string) =>
+    this.clientesService.listar(pagina, 10, busca || undefined);
+  readonly loadProdutosFn = (pagina: number, busca: string) =>
+    this.estoqueService.listarProdutos(busca || undefined, pagina, 10);
+  readonly loadRevendedoresFn = (pagina: number, busca: string) =>
+    this.usuarioService.listarRevendedoresPaginado(pagina, busca);
+
   ngOnInit(): void {
-    if (this.isAdmin()) {
-      this.usuarioService.listarRevendedores().subscribe(lista => this.revendedoras.set(lista));
-    }
-
-    this.revendedorControl.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe(valor => {
-        if (typeof valor !== 'string') { this.pagina.set(1); this.carregar(); }
-        else if (valor === '') { this.pagina.set(1); this.carregar(); }
-      });
-
-    this.clienteControl.valueChanges.pipe(
-      debounceTime(300),
-      takeUntil(this.destroy$)
-    ).subscribe(valor => {
-      if (typeof valor === 'string') {
-        this.clientesService.listar(1, 10, valor || undefined)
-          .subscribe(res => this.clientesOpcoes.set(res.items));
-        if (valor === '') { this.pagina.set(1); this.carregar(); }
-      } else {
-        this.pagina.set(1);
-        this.carregar();
-      }
-    });
-
-    this.produtoControl.valueChanges.pipe(
-      debounceTime(300),
-      takeUntil(this.destroy$)
-    ).subscribe(valor => {
-      if (typeof valor === 'string') {
-        this.estoqueService.listarProdutos(valor || undefined, 1, 10)
-          .subscribe(res => this.produtosOpcoes.set(res.items));
-        if (valor === '') { this.pagina.set(1); this.carregar(); }
-      } else {
-        this.pagina.set(1);
-        this.carregar();
-      }
-    });
-
     this.dataInicioControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
 
     this.dataFimControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
 
-    this.clientesService.listar(1, 10).subscribe(res => this.clientesOpcoes.set(res.items));
-    this.estoqueService.listarProdutos(undefined, 1, 10).subscribe(res => this.produtosOpcoes.set(res.items));
-
     this.carregar();
   }
+
+  onClienteAlterado(): void { this.pagina.set(1); this.carregar(); }
+  onProdutoAlterado(): void { this.pagina.set(1); this.carregar(); }
+  onRevendedorAlterado(): void { this.pagina.set(1); this.carregar(); }
 
   ngOnDestroy(): void {
     this.destroy$.next();

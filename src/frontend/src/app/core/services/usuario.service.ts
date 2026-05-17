@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export interface ListaPaginada<T> {
   items: T[];
@@ -54,13 +53,12 @@ export class UsuarioService {
     return this.http.put<UsuarioDto>(`${this.baseUrl}/${id}`, dto);
   }
 
-  listarRevendedores(): Observable<{ id: string; nome: string }[]> {
+  listarRevendedoresPaginado(pagina: number, busca: string): Observable<{ items: { id: string; nome: string }[]; total: number }> {
     const params = new HttpParams()
       .set('perfil', 'Revendedor')
-      .set('tamanhoPagina', 100)
-      .set('pagina', 1);
-    return this.http.get<ListaPaginada<{ id: string; nome: string }>>(this.baseUrl, { params }).pipe(
-      map(res => res.items)
-    );
+      .set('pagina', pagina)
+      .set('tamanhoPagina', 10)
+      .set('busca', busca);
+    return this.http.get<{ items: { id: string; nome: string }[]; total: number }>(this.baseUrl, { params });
   }
 }

@@ -30,42 +30,39 @@
   </div>
 
   <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4 mb-4 items-start" [class.hidden]="!filtrosAbertos()">
-    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-      <mat-label>Cliente</mat-label>
-      <input matInput placeholder="Buscar cliente..."
-        [formControl]="clienteControl"
-        [matAutocomplete]="autoCliente" />
-      <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
-        @for (c of clientesOpcoes(); track c.id) {
-          <mat-option [value]="c">{{ c.nome }}</mat-option>
-        }
-      </mat-autocomplete>
-    </mat-form-field>
+    <app-autocomplete-paginado
+      label="Cliente" placeholder="Buscar cliente..."
+      fieldClass="w-full"
+      subscriptSizing="dynamic"
+      [control]="clienteControl"
+      [loadFn]="loadClientesFn"
+      [displayFn]="displayCliente"
+      (selecionado)="onClienteAlterado()"
+      (limpo)="onClienteAlterado()"
+    />
 
-    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-      <mat-label>Produto</mat-label>
-      <input matInput placeholder="Buscar produto..."
-        [formControl]="produtoControl"
-        [matAutocomplete]="autoProduto" />
-      <mat-autocomplete #autoProduto="matAutocomplete" [displayWith]="displayProduto">
-        @for (p of produtosOpcoes(); track p.id) {
-          <mat-option [value]="p">{{ p.descricao }}</mat-option>
-        }
-      </mat-autocomplete>
-    </mat-form-field>
+    <app-autocomplete-paginado
+      label="Produto" placeholder="Buscar produto..."
+      fieldClass="w-full"
+      subscriptSizing="dynamic"
+      [control]="produtoControl"
+      [loadFn]="loadProdutosFn"
+      [displayFn]="displayProduto"
+      (selecionado)="onProdutoAlterado()"
+      (limpo)="onProdutoAlterado()"
+    />
 
     @if (isAdmin()) {
-      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-        <mat-label>Revendedor</mat-label>
-        <input matInput placeholder="Buscar revendedor..."
-          [formControl]="revendedorControl"
-          [matAutocomplete]="autoRevendedor" />
-        <mat-autocomplete #autoRevendedor="matAutocomplete" [displayWith]="displayRevendedor">
-          @for (r of revendedoresOpcoes(); track r.id) {
-            <mat-option [value]="r">{{ r.nome }}</mat-option>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
+      <app-autocomplete-paginado
+        label="Revendedor" placeholder="Buscar revendedor..."
+        fieldClass="w-full"
+        subscriptSizing="dynamic"
+        [control]="revendedorControl"
+        [loadFn]="loadRevendedoresFn"
+        [displayFn]="displayRevendedor"
+        (selecionado)="onRevendedorAlterado()"
+        (limpo)="onRevendedorAlterado()"
+      />
     }
 
     <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">

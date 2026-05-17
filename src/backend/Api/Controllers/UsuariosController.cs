@@ -16,9 +16,10 @@ public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
     public async Task<IActionResult> Listar(
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanhoPagina = 10,
-        [FromQuery] string? perfil = null)
+        [FromQuery] string? perfil = null,
+        [FromQuery] string? busca = null)
     {
-        var result = await usuarioService.ListarAsync(pagina, tamanhoPagina, perfil);
+        var result = await usuarioService.ListarAsync(pagina, tamanhoPagina, perfil, busca);
         if (!result.Sucesso) return result.ToActionResult(this);
         return Ok(result.Valor);
     }

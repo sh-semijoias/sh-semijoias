@@ -6,7 +6,6 @@ import {
   Validators, AbstractControl, ValidationErrors,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,23 +16,16 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NgxMaskDirective } from 'ngx-mask';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { VendaService, FormaPagamentoDto, CriarVendaDto } from '../../../core/services/venda.service';
 import { EstoqueService, EstoqueDto } from '../../../core/services/estoque.service';
 import { ClientesService, ClientesDto } from '../../../core/services/clientes.service';
 import { AddRowButtonComponent } from '../../../shared/components/add-row-button/add-row-button';
+import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 
 function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
   const array = control as FormArray;
   return array.length > 0 ? null : { semItens: true };
-}
-
-interface EstadoLinha {
-  displayValue: string;
-  total: number;
-  produtos: EstoqueDto[];
-  carregando: boolean;
-  produtoSelecionado: EstoqueDto | null;
 }
 
 @Component({
@@ -43,7 +35,6 @@ interface EstadoLinha {
     RouterLink,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatAutocompleteModule,
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
@@ -53,6 +44,7 @@ interface EstadoLinha {
     MatDividerModule,
     NgxMaskDirective,
     AddRowButtonComponent,
+    AutocompletePaginadoComponent,
     CurrencyPipe,
   ],
   templateUrl: './form-venda.html',
@@ -65,16 +57,19 @@ export class FormVendaComponent implements OnInit, OnDestroy {
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
-  private readonly busca$ = new Subject<{ index: number; busca: string }>();
 
   readonly carregando = signal(true);
   readonly salvando = signal(false);
-  readonly clientesOpcoes = signal<ClientesDto[]>([]);
   readonly formasPagamento = signal<FormaPagamentoDto[]>([]);
-  readonly estadoLinhas = signal<EstadoLinha[]>([]);
+  readonly produtosSelecionados = signal<(EstoqueDto | null)[]>([]);
   readonly total = signal(0);
 
   readonly clienteControl = new FormControl<ClientesDto | string | null>(null, Validators.required);
+
+  readonly loadClientesFn = (pagina: number, busca: string) =>
+    this.clientesService.listar(pagina, 10, busca || undefined);
+  readonly loadProdutosFn = (pagina: number, busca: string) =>
+    this.estoqueService.listar({ pagina, tamanhoPagina: 10, busca: busca || undefined, emEstoque: true });
 
   readonly form = this.fb.group({
     idTipoPagamento: [null as number | null, Validators.required],
@@ -97,29 +92,11 @@ export class FormVendaComponent implements OnInit, OnDestroy {
     p ? p.produto : '';
 
   ngOnInit(): void {
-    this.clienteControl.valueChanges.pipe(
-      debounceTime(300),
-      takeUntil(this.destroy$)
-    ).subscribe(valor => {
-      if (typeof valor === 'string') {
-        this.clientesService.listar(1, 10, valor || undefined)
-          .subscribe(res => this.clientesOpcoes.set(res.items));
-      }
-    });
-
-    this.busca$.pipe(
-      debounceTime(300),
-      distinctUntilChanged((a, b) => a.index === b.index && a.busca === b.busca),
-      takeUntil(this.destroy$)
-    ).subscribe(({ index, busca }) => this.carregarProdutosLinha(index, busca));
-
     this.itens.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => this.recalcularTotal());
 
     this.form.get('idTipoPagamento')!.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(id => this.aplicarRegraParcelamento(id));
-
-    this.clientesService.listar(1, 10).subscribe(res => this.clientesOpcoes.set(res.items));
 
     this.service.listarFormasPagamento().subscribe({
       next: (formas) => {
@@ -137,8 +114,17 @@ export class FormVendaComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  limparProdutoLinha(index: number): void {
+    const grupo = this.itens.at(index);
+    grupo.get('idEstoque')?.setValue(null);
+    grupo.get('idProduto')?.setValue(null);
+    const qtdCtrl = grupo.get('quantidade');
+    qtdCtrl?.setValidators([Validators.required, Validators.min(1)]);
+    qtdCtrl?.updateValueAndValidity();
+    this.produtosSelecionados.update(arr => arr.map((e, i) => i === index ? null : e));
+  }
+
   adicionarItem(): void {
-    const index = this.itens.length;
     this.itens.push(
       this.fb.group({
         idEstoque: [null as number | null, Validators.required],
@@ -147,65 +133,20 @@ export class FormVendaComponent implements OnInit, OnDestroy {
         precoVendaReal: ['', Validators.required],
       })
     );
-    this.estadoLinhas.update(arr => [
-      ...arr,
-      { displayValue: '', total: 0, produtos: [], carregando: false, produtoSelecionado: null },
-    ]);
-    this.carregarProdutosLinha(index, '');
+    this.produtosSelecionados.update(arr => [...arr, null]);
   }
 
   removerItem(index: number): void {
     if (this.itens.length > 1) {
       this.itens.removeAt(index);
-      this.estadoLinhas.update(arr => arr.filter((_, i) => i !== index));
+      this.produtosSelecionados.update(arr => arr.filter((_, i) => i !== index));
       this.recalcularTotal();
     }
   }
 
-  carregarProdutosLinha(index: number, busca: string): void {
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, carregando: true } : e)
-    );
-    this.estoqueService.listar({ pagina: 1, tamanhoPagina: 10, busca: busca || undefined, emEstoque: true })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.estadoLinhas.update(arr =>
-            arr.map((e, i) => i === index
-              ? { ...e, carregando: false, produtos: res.items, total: res.total }
-              : e)
-          );
-        },
-        error: () => {
-          this.estadoLinhas.update(arr =>
-            arr.map((e, i) => i === index ? { ...e, carregando: false } : e)
-          );
-        },
-      });
-  }
-
-  atualizarDisplay(index: number, evento: Event): void {
-    const valor = (evento.target as HTMLInputElement).value;
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, displayValue: valor } : e)
-    );
-    if (!valor) {
-      const grupo = this.itens.at(index);
-      grupo.get('idEstoque')?.setValue(null);
-      grupo.get('idProduto')?.setValue(null);
-      const qtdCtrl = grupo.get('quantidade');
-      qtdCtrl?.setValidators([Validators.required, Validators.min(1)]);
-      qtdCtrl?.updateValueAndValidity();
-      this.estadoLinhas.update(arr =>
-        arr.map((e, i) => i === index ? { ...e, produtoSelecionado: null } : e)
-      );
-    }
-    this.busca$.next({ index, busca: valor });
-  }
-
   produtosSelecionadosExceto(index: number): number[] {
-    return this.itens.controls
-      .map((c, i) => i !== index ? c.get('idEstoque')?.value as number | null : null)
+    return this.produtosSelecionados()
+      .map((p, i) => i !== index ? (p?.id as number | null) ?? null : null)
       .filter((id): id is number => id !== null);
   }
 
@@ -217,9 +158,7 @@ export class FormVendaComponent implements OnInit, OnDestroy {
     const qtdCtrl = grupo.get('quantidade');
     qtdCtrl?.setValidators([Validators.required, Validators.min(1), Validators.max(produto.quantidade)]);
     qtdCtrl?.updateValueAndValidity();
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, displayValue: produto.produto, produtoSelecionado: produto } : e)
-    );
+    this.produtosSelecionados.update(arr => arr.map((e, i) => i === index ? produto : e));
   }
 
   get parcelamentoHabilitado(): boolean {

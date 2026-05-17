@@ -1,36 +1,25 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormArray, FormControl, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { MaletaService } from '../../../../core/services/maleta.service';
 import { UsuarioService } from '../../../../core/services/usuario.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { EstoqueService, ProdutoResumidoDto } from '../../../../core/services/estoque.service';
 import { AddRowButtonComponent } from '../../../../shared/components/add-row-button/add-row-button';
+import { AutocompletePaginadoComponent } from '../../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 import { Perfil } from '../../../../core/enums/perfil.enum';
 
 function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
   const array = control as FormArray;
   return array.length > 0 ? null : { semItens: true };
-}
-
-interface EstadoLinha {
-  displayValue: string;
-  total: number;
-  produtos: ProdutoResumidoDto[];
-  carregando: boolean;
-  produtoSelecionado: ProdutoResumidoDto | null;
 }
 
 @Component({
@@ -40,19 +29,18 @@ interface EstadoLinha {
     RouterLink,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatAutocompleteModule,
     MatInputModule,
-    MatSelectModule,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
     MatProgressSpinnerModule,
     MatDividerModule,
     AddRowButtonComponent,
+    AutocompletePaginadoComponent,
   ],
   templateUrl: './form-maleta.html',
 })
-export class FormMaletaComponent implements OnInit, OnDestroy {
+export class FormMaletaComponent implements OnInit {
   private readonly service = inject(MaletaService);
   private readonly usuarioService = inject(UsuarioService);
   private readonly estoqueService = inject(EstoqueService);
@@ -67,16 +55,20 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   readonly modoEdicao = signal(false);
   readonly carregando = signal(false);
   readonly salvando = signal(false);
-  readonly revendedores = signal<{ id: string; nome: string }[]>([]);
-  readonly estadoLinhas = signal<EstadoLinha[]>([]);
+  readonly produtosOriginaisDisplay = signal<string[]>([]);
+  readonly produtosSelecionados = signal<(ProdutoResumidoDto | null)[]>([]);
   readonly itensOriginaisCount = signal(0);
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
+  readonly revendedorControl = new FormControl<{ id: string; nome: string } | null>(null);
+
   readonly displayProduto = (produto: ProdutoResumidoDto | null): string =>
     produto ? produto.descricao : '';
-
-  private readonly busca$ = new Subject<{ index: number; busca: string }>();
-  private readonly destroy$ = new Subject<void>();
+  readonly displayRevendedor = (r: { id: string; nome: string } | null): string => r?.nome ?? '';
+  readonly loadProdutosFn = (pagina: number, busca: string) =>
+    this.estoqueService.listarProdutos(busca || undefined, pagina, 10);
+  readonly loadRevendedoresFn = (pagina: number, busca: string) =>
+    this.usuarioService.listarRevendedoresPaginado(pagina, busca);
 
   readonly form = this.fb.group({
     descricao: ['', [Validators.required, Validators.maxLength(200)]],
@@ -89,16 +81,6 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.busca$.pipe(
-      debounceTime(300),
-      distinctUntilChanged((a, b) => a.index === b.index && a.busca === b.busca),
-      takeUntil(this.destroy$)
-    ).subscribe(({ index, busca }) => this.carregarProdutosLinha(index, busca));
-
-    this.usuarioService.listarRevendedores().subscribe({
-      next: (lista) => this.revendedores.set(lista),
-    });
-
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.maletaId = Number(idParam);
@@ -106,6 +88,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
       this.carregando.set(true);
       this.service.obterPorId(this.maletaId).subscribe({
         next: (maleta) => {
+          this.revendedorControl.setValue({ id: maleta.idUsuario, nome: maleta.nomeUsuario });
           this.form.patchValue({ descricao: maleta.descricao, idUsuario: maleta.idUsuario });
           this.itensOriginaisCount.set(maleta.itens.length);
           maleta.itens.forEach(item => {
@@ -116,15 +99,10 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
             });
             group.get('idProduto')?.disable();
             this.itens.push(group);
-            this.estadoLinhas.update(arr => [
+            this.produtosOriginaisDisplay.update(arr => [...arr, item.descricao]);
+            this.produtosSelecionados.update(arr => [
               ...arr,
-              {
-                displayValue: item.descricao,
-                total: 1,
-                produtos: [{ id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal }],
-                carregando: false,
-                produtoSelecionado: { id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal },
-              },
+              { id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal },
             ]);
           });
           if (maleta.itens.length === 0) this.adicionarItem();
@@ -137,76 +115,45 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  onRevendedorSelecionado(r: { id: string }): void {
+    this.form.get('idUsuario')?.setValue(r.id);
+  }
+
+  onRevendedorLimpo(): void {
+    this.form.get('idUsuario')?.setValue('');
   }
 
   adicionarItem(): void {
-    const index = this.itens.length;
     this.itens.push(
       this.fb.group({
         idProduto: [null, Validators.required],
         quantidade: [null, [Validators.required, Validators.min(1)]],
       })
     );
-    this.estadoLinhas.update(arr => [
-      ...arr,
-      { displayValue: '', total: 0, produtos: [], carregando: false, produtoSelecionado: null },
-    ]);
-    this.carregarProdutosLinha(index, '');
+    this.produtosOriginaisDisplay.update(arr => [...arr, '']);
+    this.produtosSelecionados.update(arr => [...arr, null]);
   }
 
   removerItem(index: number): void {
     if (this.modoEdicao() && index < this.itensOriginaisCount()) return;
     if (this.itens.length > 1) {
       this.itens.removeAt(index);
-      this.estadoLinhas.update(arr => arr.filter((_, i) => i !== index));
+      this.produtosOriginaisDisplay.update(arr => arr.filter((_, i) => i !== index));
+      this.produtosSelecionados.update(arr => arr.filter((_, i) => i !== index));
     }
   }
 
-  carregarProdutosLinha(index: number, busca: string): void {
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, carregando: true } : e)
-    );
-    this.estoqueService.listarProdutos(busca || undefined, 1, 10)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.estadoLinhas.update(arr =>
-            arr.map((e, i) => i === index
-              ? { ...e, carregando: false, produtos: res.items, total: res.total }
-              : e)
-          );
-        },
-        error: () => {
-          this.estadoLinhas.update(arr =>
-            arr.map((e, i) => i === index ? { ...e, carregando: false } : e)
-          );
-        },
-      });
-  }
-
-  atualizarDisplay(index: number, evento: Event): void {
-    const valor = (evento.target as HTMLInputElement).value;
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, displayValue: valor } : e)
-    );
-    if (!valor) {
-      this.itens.at(index).get('idProduto')?.setValue(null);
-      const qtdCtrl = this.itens.at(index).get('quantidade');
-      qtdCtrl?.setValidators([Validators.required, Validators.min(1)]);
-      qtdCtrl?.updateValueAndValidity();
-      this.estadoLinhas.update(arr =>
-        arr.map((e, i) => i === index ? { ...e, produtoSelecionado: null } : e)
-      );
-    }
-    this.busca$.next({ index, busca: valor });
+  limparProdutoLinha(index: number): void {
+    this.itens.at(index).get('idProduto')?.setValue(null);
+    const qtdCtrl = this.itens.at(index).get('quantidade');
+    qtdCtrl?.setValidators([Validators.required, Validators.min(1)]);
+    qtdCtrl?.updateValueAndValidity();
+    this.produtosSelecionados.update(arr => arr.map((e, i) => i === index ? null : e));
   }
 
   produtosSelecionadosExceto(index: number): number[] {
-    return this.itens.controls
-      .map((c, i) => i !== index ? c.get('idProduto')?.value as number | null : null)
+    return this.produtosSelecionados()
+      .map((p, i) => i !== index ? (p?.id as number | null) ?? null : null)
       .filter((id): id is number => id !== null);
   }
 
@@ -215,9 +162,7 @@ export class FormMaletaComponent implements OnInit, OnDestroy {
     const qtdCtrl = this.itens.at(index).get('quantidade');
     qtdCtrl?.setValidators([Validators.required, Validators.min(1), Validators.max(produto.quantidade)]);
     qtdCtrl?.updateValueAndValidity();
-    this.estadoLinhas.update(arr =>
-      arr.map((e, i) => i === index ? { ...e, displayValue: produto.descricao, produtoSelecionado: produto } : e)
-    );
+    this.produtosSelecionados.update(arr => arr.map((e, i) => i === index ? produto : e));
   }
 
   confirmar(): void {
