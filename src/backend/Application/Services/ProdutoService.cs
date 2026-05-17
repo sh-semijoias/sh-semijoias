@@ -40,8 +40,6 @@ public class ProdutoService(
     public async Task<Result<ProdutoDto>> CriarAsync(CriarProdutoDto dto, string baseUrl)
     {
         var erros = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(dto.Data)) erros.Add("Data é obrigatória.");
         if (string.IsNullOrWhiteSpace(dto.Descricao)) erros.Add("Descrição é obrigatória.");
         if (dto.IdCategoria <= 0) erros.Add("Categoria é obrigatória.");
 
