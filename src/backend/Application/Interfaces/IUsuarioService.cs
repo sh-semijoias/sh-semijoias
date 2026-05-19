@@ -8,6 +8,7 @@ public interface IUsuarioService
 {
     Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null, string? busca = null);
     Task<UsuarioDto?> ObterPorIdAsync(Guid id);
-    Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl);
+    Task<Result<CriarUsuarioResponseDto>> CriarAsync(CriarUsuarioDto dto);
     Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto);
+    Task<Result<ResetarSenhaProvisoriaResponseDto>> ResetarSenhaProvisoriaAsync(Guid id);
 }

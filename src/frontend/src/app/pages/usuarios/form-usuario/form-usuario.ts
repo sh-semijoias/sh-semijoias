@@ -9,9 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { NgxMaskDirective } from 'ngx-mask';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { PerfilDto, PerfilService } from '../../../core/services/perfil.service';
+import { DialogSenhaProvisoriaComponent } from '../dialog-senha-provisoria/dialog-senha-provisoria';
 
 @Component({
   selector: 'app-form-usuario',
@@ -31,13 +33,17 @@ export class FormUsuarioComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   readonly perfis = signal<PerfilDto[]>([]);
   readonly modoEdicao = signal(false);
   readonly carregando = signal(false);
   readonly salvando = signal(false);
+  readonly resetando = signal(false);
+  readonly senhaProvisoriaAtiva = signal(false);
 
   private usuarioId: string | null = null;
+  private nomeUsuario = '';
 
   readonly form = this.fb.group({
     nome: ['', Validators.required],
@@ -56,6 +62,8 @@ export class FormUsuarioComponent implements OnInit {
       this.carregando.set(true);
       this.service.obterPorId(this.usuarioId).subscribe({
         next: (u) => {
+          this.nomeUsuario = u.nome;
+          this.senhaProvisoriaAtiva.set(u.senhaProvisoriaAtiva);
           this.form.patchValue({ nome: u.nome, email: u.email, perfil: u.perfil, telefone: u.telefone });
           this.carregando.set(false);
         },
@@ -85,9 +93,32 @@ export class FormUsuarioComponent implements OnInit {
       });
     } else {
       this.service.criar({ nome: nome!, email: email!, perfil: perfil!, telefone: telefone! }).subscribe({
-        next: () => this.router.navigate(['/usuarios']),
+        next: (res) => {
+          this.salvando.set(false);
+          this.dialog.open(DialogSenhaProvisoriaComponent, {
+            data: { nomeUsuario: res.nome, senhaProvisoria: res.senhaProvisoria },
+            disableClose: true,
+            width: '420px',
+          }).afterClosed().subscribe(() => this.router.navigate(['/usuarios']));
+        },
         error: onError
       });
     }
+  }
+
+  resetarSenhaProvisoria(): void {
+    if (!this.usuarioId) return;
+    this.resetando.set(true);
+    this.service.resetarSenhaProvisoria(this.usuarioId).subscribe({
+      next: (res) => {
+        this.resetando.set(false);
+        this.dialog.open(DialogSenhaProvisoriaComponent, {
+          data: { nomeUsuario: this.nomeUsuario, senhaProvisoria: res.senhaProvisoria },
+          disableClose: true,
+          width: '420px',
+        });
+      },
+      error: () => this.resetando.set(false)
+    });
   }
 }

@@ -5,12 +5,15 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatDialog} from '@angular/material/dialog';
 import { NavigationEnd, Router, RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { DialogTrocarSenhaComponent } from './pages/auth/dialog-trocar-senha/dialog-trocar-senha';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatToolbarModule, MatListModule, MatSidenavModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatToolbarModule, MatListModule, MatSidenavModule, MatMenuModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -27,6 +30,7 @@ export class App implements OnDestroy {
 
   protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   constructor() {
     const media = inject(MediaMatcher);
@@ -60,6 +64,10 @@ export class App implements OnDestroy {
 
   protected isLoginRoute(): boolean {
     return this.isLogin();
+  }
+
+  protected alterarSenha(): void {
+    this.dialog.open(DialogTrocarSenhaComponent, { data: { exigirSenhaAtual: true }, width: '420px' });
   }
 
   protected sair(): void {

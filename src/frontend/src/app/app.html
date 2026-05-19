@@ -6,9 +6,17 @@
       }
       <h1 class="ml-2">SH Semijoias</h1>
       <span class="flex-1"></span>
-      <button matIconButton (click)="sair()" aria-label="Sair">
-        <mat-icon>logout</mat-icon>
+      <button matIconButton [matMenuTriggerFor]="userMenu" aria-label="Menu do usuário">
+        <mat-icon>account_circle</mat-icon>
       </button>
+      <mat-menu #userMenu>
+        <button mat-menu-item (click)="alterarSenha()">
+          <mat-icon>lock</mat-icon> Alterar senha
+        </button>
+        <button mat-menu-item (click)="sair()">
+          <mat-icon>logout</mat-icon> Sair
+        </button>
+      </mat-menu>
       <button matIconButton (click)="toggleDarkMode()">
         <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>

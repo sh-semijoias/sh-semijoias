@@ -43,6 +43,18 @@ public class AuthController(IAuthService authService, UserManager<Usuario> userM
         var roles = await userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? string.Empty;
 
-        return Ok(new LoginResponseDto(parsedId, user.Email ?? string.Empty, user.Nome, role));
+        return Ok(new LoginResponseDto(parsedId, user.Email ?? string.Empty, user.Nome, role, user.SenhaProvisoriaAtiva));
+    }
+
+    [HttpPost("trocar-senha")]
+    [Authorize]
+    public async Task<IActionResult> TrocarSenha([FromBody] TrocarSenhaDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var parsedId))
+            return Unauthorized();
+
+        var result = await authService.TrocarSenhaAsync(parsedId, dto);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
 }

@@ -13,6 +13,13 @@ export interface LoginResponseDto {
   email: string;
   name: string;
   role: string;
+  precisaTrocarSenha: boolean;
+}
+
+export interface TrocarSenhaDto {
+  senhaAtual?: string;
+  novaSenha: string;
+  confirmacaoNovaSenha: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +43,12 @@ export class AuthService {
 
   me(): Observable<LoginResponseDto> {
     return this.http.get<LoginResponseDto>(`${this.baseUrl}/me`).pipe(
+      tap(user => this.currentUser.set(user))
+    );
+  }
+
+  trocarSenha(dto: TrocarSenhaDto): Observable<LoginResponseDto> {
+    return this.http.post<LoginResponseDto>(`${this.baseUrl}/trocar-senha`, dto).pipe(
       tap(user => this.currentUser.set(user))
     );
   }

@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Usuário criado</h2>
+
+<mat-dialog-content>
+  <p class="mb-4">
+    Compartilhe a senha provisória abaixo com <strong>{{ data.nomeUsuario }}</strong>.
+    No primeiro acesso, o sistema pedirá para cadastrar uma nova senha.
+  </p>
+
+  <div class="flex items-center gap-2 rounded border p-3 font-mono text-lg">
+    <span class="flex-1 select-all tracking-widest">{{ data.senhaProvisoria }}</span>
+    <button mat-icon-button [matTooltip]="copiado() ? 'Copiado!' : 'Copiar'" (click)="copiar()">
+      <mat-icon>{{ copiado() ? 'check' : 'content_copy' }}</mat-icon>
+    </button>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button mat-dialog-close>Fechar</button>
+</mat-dialog-actions>
