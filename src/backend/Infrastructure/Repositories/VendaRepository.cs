@@ -37,7 +37,7 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 FormaPagamento = tipoPagamento.Descricao,
                 DataCancelamento = venda.Cancelamento == null ? (DateTime?)null : venda.Cancelamento.DataCancelamento,
                 NomeMotivoCancelamento = venda.Cancelamento == null ? null : venda.Cancelamento.MotivoCancelamentoVenda.Nome,
-                EhRevendedor = perfil.Name == Perfis.Revendedor
+                FlagRevendedor = perfil.Name == Perfis.Revendedor
             } into g
             select new
             {
@@ -55,8 +55,8 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 ValorRecebido = context.RecebimentosParcela
                     .Where(r => r.Parcela.IdVenda == g.Key.Id)
                     .Sum(r => (decimal?)r.ValorRecebido) ?? 0m,
-                Lucro = g.Sum(x => ((g.Key.EhRevendedor ? x.item.PrecoVendaSugerido : x.item.PrecoVendaReal) - x.item.PrecoCompra) * x.item.Quantidade),
-                Repasse = g.Sum(x => g.Key.EhRevendedor ? (x.item.PrecoVendaReal - x.item.PrecoVendaSugerido) * x.item.Quantidade : 0m)
+                Lucro = g.Sum(x => ((g.Key.FlagRevendedor ? x.item.PrecoVendaSugerido : x.item.PrecoVendaReal) - x.item.PrecoCompra) * x.item.Quantidade),
+                Repasse = g.Sum(x => g.Key.FlagRevendedor ? (x.item.PrecoVendaReal - x.item.PrecoVendaSugerido) * x.item.Quantidade : 0m)
             };
 
         if (query.Cancelada == true)
