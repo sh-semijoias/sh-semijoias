@@ -1,5 +1,6 @@
 using ShSemijoias.Application.Common;
 using ShSemijoias.Application.DTOs.Vendas;
+using ShSemijoias.Domain.Entities;
 
 namespace ShSemijoias.Application.Interfaces;
 

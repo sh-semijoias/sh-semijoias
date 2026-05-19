@@ -16,6 +16,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
@@ -52,6 +53,7 @@ interface RevendedorOpcao { id: string; nome: string; }
     MatButtonToggleModule,
     MatChipsModule,
     MatMenuModule,
+    MatTooltipModule,
     AutocompletePaginadoComponent,
     CurrencyPipe,
     DatePipe,
@@ -111,6 +113,10 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly ordemDecrescente = signal(true);
   readonly totalVendasPeriodo = signal(0);
   readonly totalRecebidoPeriodo = signal(0);
+  readonly totalLucroPrevistoPeriodo = signal(0);
+  readonly totalLucroRealizadoPeriodo = signal(0);
+  readonly totalRepassePrevistoPeriodo = signal(0);
+  readonly totalRepasseRealizadoPeriodo = signal(0);
   readonly filtrosAbertos = signal(false);
 
   readonly revendedorControl = new FormControl<RevendedorOpcao | null>(null);
@@ -190,6 +196,10 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
         this.total.set(resultado.total);
         this.totalVendasPeriodo.set(resultado.totalVendasPeriodo);
         this.totalRecebidoPeriodo.set(resultado.totalRecebidoPeriodo);
+        this.totalLucroPrevistoPeriodo.set(resultado.totalLucroPrevistoPeriodo);
+        this.totalLucroRealizadoPeriodo.set(resultado.totalLucroRealizadoPeriodo);
+        this.totalRepassePrevistoPeriodo.set(resultado.totalRepassePrevistoPeriodo);
+        this.totalRepasseRealizadoPeriodo.set(resultado.totalRepasseRealizadoPeriodo);
         this.carregando.set(false);
       },
       error: () => {

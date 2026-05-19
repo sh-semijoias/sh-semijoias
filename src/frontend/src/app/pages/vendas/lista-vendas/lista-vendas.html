@@ -80,25 +80,15 @@
     <mat-card appearance="outlined">
       <mat-card-content class="py-2!">
         <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-500/15 dark:bg-violet-900/40">
-            <mat-icon class="text-violet-700! dark:text-violet-400!">shopping_cart</mat-icon>
-          </div>
-          <div>
-            <p class="text-sm text-secondary">Total de vendas</p>
-            <p class="text-xl font-semibold">{{ total() }}</p>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card appearance="outlined">
-      <mat-card-content class="py-2!">
-        <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-sky-500/15 dark:bg-sky-900/40">
             <mat-icon class="text-sky-700! dark:text-sky-400!">payments</mat-icon>
           </div>
           <div>
-            <p class="text-sm text-secondary">Total vendido</p>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">Total vendido</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        matTooltip="Soma do valor de todas as vendas do período (preço de venda × quantidade).">info</mat-icon>
+            </div>
             <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
           </div>
         </div>
@@ -112,8 +102,86 @@
             <mat-icon class="text-emerald-700! dark:text-emerald-400!">savings</mat-icon>
           </div>
           <div>
-            <p class="text-sm text-secondary">Total recebido</p>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">Total recebido</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        matTooltip="Soma dos pagamentos de parcelas efetivamente recebidos no período.">info</mat-icon>
+            </div>
             <p class="text-xl font-semibold">{{ totalRecebidoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (isAdmin()) {
+      <mat-card appearance="outlined">
+        <mat-card-content class="py-2!">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 dark:bg-indigo-900/40">
+              <mat-icon class="text-indigo-700! dark:text-indigo-400!">trending_up</mat-icon>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="text-sm text-secondary">Lucro previsto</p>
+                <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                          matTooltip="Lucro estimado se todas as vendas forem totalmente pagas: (preço de venda − preço de compra) × quantidade.">info</mat-icon>
+              </div>
+              <p class="text-xl font-semibold">{{ totalLucroPrevistoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-content class="py-2!">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/15 dark:bg-teal-900/40">
+              <mat-icon class="text-teal-700! dark:text-teal-400!">paid</mat-icon>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="text-sm text-secondary">Lucro realizado</p>
+                <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                          matTooltip="Parte do lucro previsto proporcional ao quanto já foi recebido das vendas.">info</mat-icon>
+              </div>
+              <p class="text-xl font-semibold">{{ totalLucroRealizadoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 dark:bg-indigo-900/40">
+            <mat-icon class="text-indigo-700! dark:text-indigo-400!">groups</mat-icon>
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">{{ isAdmin() ? 'Repasse previsto' : 'Seu resultado previsto' }}</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        [matTooltip]="isAdmin() ? 'Valor previsto a repassar aos revendedores (diferença entre preço de venda real e sugerido) caso todas as vendas sejam pagas.' : 'Seu ganho previsto nas vendas do período caso sejam totalmente pagas.'">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalRepassePrevistoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/15 dark:bg-teal-900/40">
+            <mat-icon class="text-teal-700! dark:text-teal-400!">redeem</mat-icon>
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">{{ isAdmin() ? 'Repasse realizado' : 'Seu resultado realizado' }}</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        [matTooltip]="isAdmin() ? 'Repasse proporcional ao quanto já foi recebido das vendas.' : 'Seu ganho proporcional ao quanto já foi recebido das vendas.'">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalRepasseRealizadoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
           </div>
         </div>
       </mat-card-content>

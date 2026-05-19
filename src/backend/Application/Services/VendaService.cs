@@ -13,9 +13,13 @@ public class VendaService(
 {
     public async Task<Result<ListarVendasResultado>> ListarAsync(ListarVendasConsulta query)
     {
-        var (items, total, totalVendasPeriodo, totalRecebidoPeriodo) = await vendaRepository.ListarAsync(query);
-        return Result<ListarVendasResultado>.Ok(
-            new ListarVendasResultado(items, total, query.Pagina, query.TamanhoPagina, totalVendasPeriodo, totalRecebidoPeriodo));
+        var resultado = await vendaRepository.ListarAsync(query);
+
+        var isAdmin = query.IdUsuario == null;
+        if (!isAdmin)
+            resultado = resultado with { TotalLucroPrevistoPeriodo = 0m, TotalLucroRealizadoPeriodo = 0m };
+
+        return Result<ListarVendasResultado>.Ok(resultado);
     }
 
     public async Task<Result<IReadOnlyList<FormaPagamentoDto>>> ListarFormasPagamentoAsync()

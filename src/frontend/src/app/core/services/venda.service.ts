@@ -53,6 +53,10 @@ export interface ListarVendasResultado {
   tamanhoPagina: number;
   totalVendasPeriodo: number;
   totalRecebidoPeriodo: number;
+  totalLucroPrevistoPeriodo: number;
+  totalLucroRealizadoPeriodo: number;
+  totalRepassePrevistoPeriodo: number;
+  totalRepasseRealizadoPeriodo: number;
 }
 
 export interface ParcelaVendaDto {

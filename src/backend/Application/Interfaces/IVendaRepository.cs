@@ -6,7 +6,7 @@ namespace ShSemijoias.Application.Interfaces;
 
 public interface IVendaRepository
 {
-    Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo, decimal TotalRecebidoPeriodo)> ListarAsync(ListarVendasConsulta query);
+    Task<ListarVendasResultado> ListarAsync(ListarVendasConsulta query);
     Task<IReadOnlyList<TipoPagamento>> ListarFormasPagamentoAtivasAsync();
     Task<TipoPagamento?> ObterTipoPagamentoAsync(int idTipoPagamento);
     Task<Venda?> ObterPorIdAsync(int id);
