@@ -6,12 +6,15 @@ namespace ShSemijoias.Application.Interfaces;
 
 public interface IVendaRepository
 {
-    Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query);
+    Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo, decimal TotalRecebidoPeriodo)> ListarAsync(ListarVendasConsulta query);
     Task<IReadOnlyList<TipoPagamento>> ListarFormasPagamentoAtivasAsync();
     Task<TipoPagamento?> ObterTipoPagamentoAsync(int idTipoPagamento);
     Task<Venda?> ObterPorIdAsync(int id);
     Task<IReadOnlyList<MotivoCancelamentoVenda>> ListarMotivosCancelamentoAsync();
     Task AdicionarCancelamentoAsync(CancelamentoVenda cancelamento);
+    Task<IReadOnlyList<Parcela>> ListarParcelasComRecebimentoAsync(int idVenda);
+    Task<Parcela?> ObterParcelaParaPagamentoAsync(int idParcela);
+    Task AdicionarRecebimentoAsync(RecebimentoParcela recebimento);
     Task<Venda> CriarAsync(Venda venda);
     Task SalvarAsync();
     Task<IDbContextTransaction> BeginTransacaoAsync();

@@ -18,6 +18,7 @@ export interface VendaListagemDto {
   totalItens: number;
   totalParcelas: number;
   valorTotal: number;
+  valorRecebido: number;
   formaPagamento: string;
   dataCancelamento: string | null;
   nomeMotivoCancelamento: string | null;
@@ -51,6 +52,21 @@ export interface ListarVendasResultado {
   pagina: number;
   tamanhoPagina: number;
   totalVendasPeriodo: number;
+  totalRecebidoPeriodo: number;
+}
+
+export interface ParcelaVendaDto {
+  id: number;
+  numeroParcela: number;
+  valor: number;
+  dataVencimento: string;
+  paga: boolean;
+  dataRecebimento: string | null;
+}
+
+export interface RegistrarPagamentoDto {
+  idParcela: number;
+  dataPagamento: string;
 }
 
 export interface FormaPagamentoDto {
@@ -117,5 +133,13 @@ export class VendaService {
 
   cancelar(id: number, dto: CancelarVendaDto): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { body: dto });
+  }
+
+  listarParcelas(idVenda: number): Observable<ParcelaVendaDto[]> {
+    return this.http.get<ParcelaVendaDto[]>(`${this.baseUrl}/${idVenda}/parcelas`);
+  }
+
+  registrarPagamento(idVenda: number, dto: RegistrarPagamentoDto): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${idVenda}/parcelas/pagamento`, dto);
   }
 }

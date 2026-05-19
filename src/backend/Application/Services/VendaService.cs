@@ -13,9 +13,9 @@ public class VendaService(
 {
     public async Task<Result<ListarVendasResultado>> ListarAsync(ListarVendasConsulta query)
     {
-        var (items, total, totalVendasPeriodo) = await vendaRepository.ListarAsync(query);
+        var (items, total, totalVendasPeriodo, totalRecebidoPeriodo) = await vendaRepository.ListarAsync(query);
         return Result<ListarVendasResultado>.Ok(
-            new ListarVendasResultado(items, total, query.Pagina, query.TamanhoPagina, totalVendasPeriodo));
+            new ListarVendasResultado(items, total, query.Pagina, query.TamanhoPagina, totalVendasPeriodo, totalRecebidoPeriodo));
     }
 
     public async Task<Result<IReadOnlyList<FormaPagamentoDto>>> ListarFormasPagamentoAsync()
@@ -191,6 +191,76 @@ public class VendaService(
             .Select(m => new MotivoCancelamentoDto(m.Id, m.Nome))
             .ToList();
         return Result<IReadOnlyList<MotivoCancelamentoDto>>.Ok(dtos);
+    }
+
+    public async Task<Result<IReadOnlyList<ParcelaVendaDto>>> ListarParcelasAsync(int idVenda, bool isAdmin)
+    {
+        if (!isAdmin)
+            return Result<IReadOnlyList<ParcelaVendaDto>>.Falha(
+                "Sem permissão para consultar as parcelas.", TipoErro.NaoAutorizado);
+
+        var venda = await vendaRepository.ObterPorIdAsync(idVenda);
+        if (venda is null)
+            return Result<IReadOnlyList<ParcelaVendaDto>>.Falha("Venda não encontrada.", TipoErro.NaoEncontrado);
+
+        var parcelas = await vendaRepository.ListarParcelasComRecebimentoAsync(idVenda);
+        var dtos = parcelas
+            .Select(p => new ParcelaVendaDto(
+                p.Id,
+                p.NumeroParcela,
+                p.Valor,
+                p.DataVencimento,
+                p.Recebimento is not null,
+                p.Recebimento?.DataRecebimento))
+            .ToList();
+
+        return Result<IReadOnlyList<ParcelaVendaDto>>.Ok(dtos);
+    }
+
+    public async Task<Result<bool>> RegistrarPagamentoAsync(int idVenda, RegistrarPagamentoDto dto, bool isAdmin)
+    {
+        if (!isAdmin)
+            return Result<bool>.Falha("Sem permissão para registrar pagamento.", TipoErro.NaoAutorizado);
+
+        var parcela = await vendaRepository.ObterParcelaParaPagamentoAsync(dto.IdParcela);
+        if (parcela is null || parcela.IdVenda != idVenda)
+            return Result<bool>.Falha("Parcela não encontrada.", TipoErro.NaoEncontrado);
+
+        var erros = new List<string>();
+
+        if (parcela.Venda.Cancelamento is not null)
+            erros.Add("Não é possível registrar pagamento de uma venda cancelada.");
+
+        if (parcela.Recebimento is not null)
+            erros.Add("Parcela já recebida.");
+
+        if (dto.DataPagamento > DateTime.UtcNow)
+            erros.Add("A data de pagamento não pode ser futura.");
+
+        if (erros.Count > 0)
+            return Result<bool>.Falha(erros);
+
+        await using var transacao = await vendaRepository.BeginTransacaoAsync();
+        try
+        {
+            await vendaRepository.AdicionarRecebimentoAsync(new RecebimentoParcela
+            {
+                IdParcela = parcela.Id,
+                ValorRecebido = parcela.Valor,
+                DataRecebimento = dto.DataPagamento,
+            });
+
+            parcela.Venda.DataAtualizacao = DateTime.UtcNow;
+            await vendaRepository.SalvarAsync();
+            await transacao.CommitAsync();
+        }
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
+
+        return Result<bool>.Ok(true);
     }
 
     private static List<Parcela> GerarParcelas(int total, decimal valorTotal, DateTime dataVenda)

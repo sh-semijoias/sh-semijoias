@@ -74,6 +74,24 @@ public class VendasController(IVendaService vendaService) : ControllerBase
             : result.ToActionResult(this);
     }
 
+    [HttpGet("{id:int}/parcelas")]
+    public async Task<IActionResult> ListarParcelas(int id)
+    {
+        var isAdmin = User.IsInRole("Administrador");
+
+        var result = await vendaService.ListarParcelasAsync(id, isAdmin);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
+    }
+
+    [HttpPost("{id:int}/parcelas/pagamento")]
+    public async Task<IActionResult> RegistrarPagamento(int id, [FromBody] RegistrarPagamentoDto dto)
+    {
+        var isAdmin = User.IsInRole("Administrador");
+
+        var result = await vendaService.RegistrarPagamentoAsync(id, dto, isAdmin);
+        return result.Sucesso ? NoContent() : result.ToActionResult(this);
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Cancelar(int id, [FromBody] CancelarVendaDto dto)
     {

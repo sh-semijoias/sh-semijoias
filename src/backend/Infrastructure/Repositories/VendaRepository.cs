@@ -9,7 +9,7 @@ namespace ShSemijoias.Infrastructure.Repositories;
 
 public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 {
-    public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query)
+    public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo, decimal TotalRecebidoPeriodo)> ListarAsync(ListarVendasConsulta query)
     {
         var grouped =
             from venda in context.Vendas.AsNoTracking()
@@ -47,7 +47,10 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 g.Key.DataCancelamento,
                 g.Key.NomeMotivoCancelamento,
                 TotalItens = g.Sum(x => x.item.Quantidade),
-                ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade)
+                ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade),
+                ValorRecebido = context.RecebimentosParcela
+                    .Where(r => r.Parcela.IdVenda == g.Key.Id)
+                    .Sum(r => (decimal?)r.ValorRecebido) ?? 0m
             };
 
         if (query.Cancelada == true)
@@ -57,6 +60,7 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 
         var total = await grouped.CountAsync();
         var totalVendasPeriodo = await grouped.SumAsync(x => (decimal?)x.ValorTotal) ?? 0m;
+        var totalRecebidoPeriodo = await grouped.SumAsync(x => (decimal?)x.ValorRecebido) ?? 0m;
 
         var ordenado = query.OrdenarPor switch
         {
@@ -91,12 +95,31 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 x.ValorTotal,
                 x.FormaPagamento,
                 x.DataCancelamento,
-                x.NomeMotivoCancelamento
+                x.NomeMotivoCancelamento,
+                x.ValorRecebido
             )).ToList(),
             total,
-            totalVendasPeriodo
+            totalVendasPeriodo,
+            totalRecebidoPeriodo
         );
     }
+
+    public async Task<IReadOnlyList<Parcela>> ListarParcelasComRecebimentoAsync(int idVenda) =>
+        await context.Parcelas
+            .AsNoTracking()
+            .Include(p => p.Recebimento)
+            .Where(p => p.IdVenda == idVenda)
+            .OrderBy(p => p.NumeroParcela)
+            .ToListAsync();
+
+    public Task<Parcela?> ObterParcelaParaPagamentoAsync(int idParcela) =>
+        context.Parcelas
+            .Include(p => p.Venda).ThenInclude(v => v.Cancelamento)
+            .Include(p => p.Recebimento)
+            .FirstOrDefaultAsync(p => p.Id == idParcela);
+
+    public async Task AdicionarRecebimentoAsync(RecebimentoParcela recebimento) =>
+        await context.RecebimentosParcela.AddAsync(recebimento);
 
     public async Task<IReadOnlyList<TipoPagamento>> ListarFormasPagamentoAtivasAsync() =>
         await context.TiposPagamento

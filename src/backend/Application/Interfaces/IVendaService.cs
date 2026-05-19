@@ -10,4 +10,6 @@ public interface IVendaService
     Task<Result<VendaCriadaDto>> CriarAsync(CriarVendaDto dto, Guid idUsuario, bool isAdmin);
     Task<Result<bool>> CancelarAsync(int idVenda, CancelarVendaDto dto, Guid idUsuario, bool isAdmin);
     Task<Result<IReadOnlyList<MotivoCancelamentoDto>>> ListarMotivosCancelamentoAsync();
+    Task<Result<IReadOnlyList<ParcelaVendaDto>>> ListarParcelasAsync(int idVenda, bool isAdmin);
+    Task<Result<bool>> RegistrarPagamentoAsync(int idVenda, RegistrarPagamentoDto dto, bool isAdmin);
 }

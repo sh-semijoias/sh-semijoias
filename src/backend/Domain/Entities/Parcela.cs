@@ -8,5 +8,5 @@ public class Parcela
     public int NumeroParcela { get; set; }
     public decimal Valor { get; set; }
     public DateTime DataVencimento { get; set; }
-    public ICollection<RecebimentoParcela> Recebimentos { get; set; } = [];
+    public RecebimentoParcela? Recebimento { get; set; }
 }

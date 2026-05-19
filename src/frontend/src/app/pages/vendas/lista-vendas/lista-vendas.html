@@ -76,7 +76,7 @@
     </mat-form-field>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 mb-4">
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
     <mat-card appearance="outlined">
       <mat-card-content class="py-2!">
         <div class="flex items-center gap-3">
@@ -100,6 +100,20 @@
           <div>
             <p class="text-sm text-secondary">Total vendido</p>
             <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/15 dark:bg-emerald-900/40">
+            <mat-icon class="text-emerald-700! dark:text-emerald-400!">savings</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm text-secondary">Total recebido</p>
+            <p class="text-xl font-semibold">{{ totalRecebidoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
           </div>
         </div>
       </mat-card-content>
@@ -148,6 +162,11 @@
                 <td mat-cell *matCellDef="let item">{{ item.valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
               </ng-container>
 
+              <ng-container matColumnDef="valorRecebido">
+                <th mat-header-cell *matHeaderCellDef>Valor Recebido</th>
+                <td mat-cell *matCellDef="let item">{{ item.valorRecebido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
               <ng-container matColumnDef="formaPagamento">
                 <th mat-header-cell *matHeaderCellDef>Pagamento</th>
                 <td mat-cell *matCellDef="let item">{{ item.formaPagamento }}{{ item.totalParcelas > 1 ? ' (' + item.totalParcelas + 'x)' : '' }}</td>
@@ -166,10 +185,16 @@
                 <th mat-header-cell *matHeaderCellDef>Ações</th>
                 <td mat-cell *matCellDef="let item">
                   <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações"
-                    [disabled]="!podeCancelar(item)">
+                    [disabled]="!temAcoes(item)">
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
+                    @if (podeRegistrarPagamento(item)) {
+                      <button mat-menu-item (click)="registrarPagamento(item)">
+                        <mat-icon>payments</mat-icon>
+                        Registrar pagamento
+                      </button>
+                    }
                     @if (podeCancelar(item)) {
                       <button mat-menu-item (click)="cancelarVenda(item)">
                         <mat-icon>cancel</mat-icon>

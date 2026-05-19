@@ -14,10 +14,10 @@ public class RecebimentoParcelaConfiguration : IEntityTypeConfiguration<Recebime
         builder.Property(r => r.ValorRecebido).HasPrecision(18, 2);
 
         builder.HasOne(r => r.Parcela)
-            .WithMany(p => p.Recebimentos)
-            .HasForeignKey(r => r.IdParcela)
+            .WithOne(p => p.Recebimento)
+            .HasForeignKey<RecebimentoParcela>(r => r.IdParcela)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(r => r.IdParcela).HasDatabaseName("ix_recebimento_parcela_id_parcela");
+        builder.HasIndex(r => r.IdParcela).IsUnique().HasDatabaseName("ix_recebimento_parcela_id_parcela");
     }
 }

@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>Registrar pagamento</h2>
+
+<mat-dialog-content>
+  <p class="mb-4">Venda de <strong>{{ data.nomeCliente }}</strong>.</p>
+
+  @if (carregando()) {
+    <div class="flex justify-center py-4">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Parcela</mat-label>
+      <mat-select [formControl]="parcelaControl" required>
+        @for (parcela of parcelas(); track parcela.id) {
+          <mat-option [value]="parcela.id" [disabled]="parcela.paga">
+            Parcela {{ parcela.numeroParcela }} —
+            {{ parcela.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+            (vence {{ parcela.dataVencimento | date:'dd/MM/yyyy':'':'pt-BR' }})
+            @if (parcela.paga) {
+              — paga em {{ parcela.dataRecebimento | date:'dd/MM/yyyy':'':'pt-BR' }}
+            }
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Data de pagamento</mat-label>
+      <input matInput [matDatepicker]="picker" [formControl]="dataPagamentoControl" required />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+    </mat-form-field>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close>Voltar</button>
+  <button mat-flat-button color="primary" (click)="confirmar()"
+    [disabled]="parcelaControl.invalid || dataPagamentoControl.invalid || carregando()">
+    Confirmar pagamento
+  </button>
+</mat-dialog-actions>

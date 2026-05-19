@@ -7,5 +7,6 @@ public record ListarVendasResultado(
     int Total,
     int Pagina,
     int TamanhoPagina,
-    decimal TotalVendasPeriodo
+    decimal TotalVendasPeriodo,
+    decimal TotalRecebidoPeriodo
 );

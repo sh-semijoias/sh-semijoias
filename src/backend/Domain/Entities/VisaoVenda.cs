@@ -11,5 +11,6 @@ public record VisaoVenda(
     decimal ValorTotal,
     string FormaPagamento,
     DateTime? DataCancelamento,
-    string? NomeMotivoCancelamento
+    string? NomeMotivoCancelamento,
+    decimal ValorRecebido
 );
