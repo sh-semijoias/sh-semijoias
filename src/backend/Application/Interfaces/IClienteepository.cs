@@ -26,4 +26,10 @@ public interface IClienteRepository
     Task<Cliente?> ObterPorTelefoneAsync(string telefone);
     Task CriarAsync(Cliente cliente);
     Task AtualizarAsync(Cliente cliente);
+    Task<(IEnumerable<Cliente>, int)> ListarPorUsuarioAsync(
+    Guid usuarioId,
+    int pagina,
+    int tamanhoPagina,
+    string? busca = null
+);
 }

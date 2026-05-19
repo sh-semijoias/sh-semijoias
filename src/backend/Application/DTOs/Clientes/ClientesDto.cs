@@ -5,5 +5,6 @@ public record ClientesDto(
     string Nome,
     string Email,
     string CPF,
-    string Telefone 
+    string Telefone,
+    string UsuarioNome
 );

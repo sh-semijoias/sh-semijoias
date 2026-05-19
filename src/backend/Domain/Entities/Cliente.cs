@@ -9,4 +9,9 @@ public class Cliente
     public string? CPF { get; set; }
     public DateTime DataCadastro { get; set; }
     public DateTime DataAtualizacao { get; set; }
+    // FK
+    public Guid UsuarioId { get; set; }
+
+    // Navegação
+    public Usuario Usuario { get; set; } = null!;
 }

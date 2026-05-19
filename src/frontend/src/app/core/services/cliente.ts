@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root',
-})
-export class Cliente {}
+export class Cliente {
+  id!: number;
+  nome!: string;
+  email!: string;
+  cpf!: string;
+  telefone!: string;
+  usuarioNome!: string;
+}

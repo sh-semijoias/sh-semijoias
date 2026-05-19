@@ -18,7 +18,7 @@ import { ClientesDto, ClientesService } from '../../../core/services/clientes.se
 export class ListaClientesComponent implements OnInit {
   private readonly service = inject(ClientesService);
 
-  readonly colunas = ['nome', 'email','cpf', 'telefone', 'acoes'];
+  readonly colunas = ['nome', 'email','cpf', 'telefone', 'usuarioNome', 'acoes'];
   readonly clientes = signal<ClientesDto[]>([]);
   readonly carregando = signal(true);
   readonly erroCarregamento = signal(false);
