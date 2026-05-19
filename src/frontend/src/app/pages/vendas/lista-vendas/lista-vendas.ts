@@ -90,11 +90,15 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   }
 
   podeRegistrarPagamento(item: VendaListagemDto): boolean {
-    return this.isAdmin() && !item.dataCancelamento;
+    return this.isAdmin() && !item.dataCancelamento && !this.vendaQuitada(item);
   }
 
   temAcoes(item: VendaListagemDto): boolean {
     return this.podeCancelar(item) || this.podeRegistrarPagamento(item);
+  }
+
+  vendaQuitada(item: VendaListagemDto): boolean {
+    return item.valorRecebido >= item.valorTotal;
   }
 
   readonly itens = signal<VendaListagemDto[]>([]);
