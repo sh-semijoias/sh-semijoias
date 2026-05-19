@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -15,8 +14,24 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                 name: "usuario_id",
                 table: "cliente",
                 type: "uuid",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+                nullable: true);
+
+            // Backfill: vincula clientes já existentes ao usuário admin.
+            // O id do admin é gerado em runtime, então buscamos pelo e-mail
+            // normalizado (Identity grava normalized_email em maiúsculas).
+            migrationBuilder.Sql("""
+                UPDATE cliente
+                SET usuario_id = (
+                    SELECT id FROM usuario
+                    WHERE normalized_email = 'ADMIN@SHSEMIJOIAS.COM.BR'
+                    LIMIT 1
+                )
+                WHERE usuario_id IS NULL
+                  AND EXISTS (
+                    SELECT 1 FROM usuario
+                    WHERE normalized_email = 'ADMIN@SHSEMIJOIAS.COM.BR'
+                  );
+                """);
 
             migrationBuilder.CreateIndex(
                 name: "ix_cliente_usuario_id",
@@ -29,7 +44,7 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                 column: "usuario_id",
                 principalTable: "usuario",
                 principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />

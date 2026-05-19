@@ -15,5 +15,10 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(c => c.CPF).HasMaxLength(11);
 
         builder.HasIndex(c => c.CPF).HasDatabaseName("ix_cliente_cpf");
+
+        builder.HasOne(c => c.Usuario)
+            .WithMany(u => u.Clientes)
+            .HasForeignKey(c => c.UsuarioId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -845,7 +845,7 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                     b.HasOne("ShSemijoias.Domain.Entities.Usuario", "Usuario")
                         .WithMany("Clientes")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_cliente_asp_net_users_usuario_id");
 

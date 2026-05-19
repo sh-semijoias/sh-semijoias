@@ -12,8 +12,8 @@ using ShSemijoias.Infrastructure.Persistence;
 namespace ShSemijoias.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260517225317_AddUsuarioIdCliente")]
-    partial class AddUsuarioIdCliente
+    [Migration("20260519012404_ClienteUsuarioObrigatorio")]
+    partial class ClienteUsuarioObrigatorio
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -848,7 +848,7 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                     b.HasOne("ShSemijoias.Domain.Entities.Usuario", "Usuario")
                         .WithMany("Clientes")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_cliente_asp_net_users_usuario_id");
 
