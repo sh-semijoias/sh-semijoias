@@ -39,10 +39,20 @@ public class AuthService(
         if (user is null)
             return Result<LoginResponseDto>.Falha("Usuário não encontrado.", TipoErro.NaoEncontrado);
 
-        var token = await userManager.GeneratePasswordResetTokenAsync(user);
-        var resultado = await userManager.ResetPasswordAsync(user, token, dto.NovaSenha);
-        if (!resultado.Succeeded)
-            return Result<LoginResponseDto>.Falha(resultado.Errors.Select(e => e.Description).ToList());
+        IdentityResult resultado;
+        if (!string.IsNullOrEmpty(dto.SenhaAtual))
+        {
+            resultado = await userManager.ChangePasswordAsync(user, dto.SenhaAtual, dto.NovaSenha);
+            if (!resultado.Succeeded)
+                return Result<LoginResponseDto>.Falha("Senha atual incorreta.");
+        }
+        else
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            resultado = await userManager.ResetPasswordAsync(user, token, dto.NovaSenha);
+            if (!resultado.Succeeded)
+                return Result<LoginResponseDto>.Falha(resultado.Errors.Select(e => e.Description).ToList());
+        }
 
         user.SenhaProvisoriaAtiva = false;
         user.DataAtualizacao = DateTime.UtcNow;

@@ -15,6 +15,7 @@ export interface UsuarioDto {
   email: string;
   perfil: string;
   telefone: string | null;
+  senhaProvisoriaAtiva: boolean;
 }
 
 export interface CriarUsuarioResponseDto extends UsuarioDto {

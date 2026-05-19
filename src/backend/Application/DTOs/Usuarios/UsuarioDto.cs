@@ -5,5 +5,6 @@ public record UsuarioDto(
     string Nome,
     string Email,
     string Perfil,
-    string? Telefone  // nullable: usuários existentes no banco podem não ter telefone
+    string? Telefone,
+    bool SenhaProvisoriaAtiva
 );

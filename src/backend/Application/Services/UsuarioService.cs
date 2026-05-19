@@ -19,7 +19,7 @@ public class UsuarioService(
         var dtos = usuarios.Select(u => new UsuarioDto(
             u.Id, u.Nome, u.Email!,
             u.Perfis.FirstOrDefault()?.Name ?? string.Empty,
-            u.PhoneNumber
+            u.PhoneNumber, u.SenhaProvisoriaAtiva
         )).ToList();
 
         return Result<ListaPaginada<UsuarioDto>>.Ok(new ListaPaginada<UsuarioDto>(dtos, total, pagina, tamanhoPagina));
@@ -31,7 +31,7 @@ public class UsuarioService(
         if (usuario is null) return null;
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber);
+        return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber, usuario.SenhaProvisoriaAtiva);
     }
 
     public async Task<Result<CriarUsuarioResponseDto>> CriarAsync(CriarUsuarioDto dto)
@@ -125,7 +125,7 @@ public class UsuarioService(
         await usuarioRepository.AtualizarAsync(usuario);
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber));
+        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber, usuario.SenhaProvisoriaAtiva));
     }
 
     public async Task<Result<ResetarSenhaProvisoriaResponseDto>> ResetarSenhaProvisoriaAsync(Guid id)

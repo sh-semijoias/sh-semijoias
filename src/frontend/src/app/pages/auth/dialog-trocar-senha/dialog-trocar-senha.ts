@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,10 @@ function senhasIguaisValidator(control: AbstractControl): ValidationErrors | nul
   const nova = control.get('novaSenha')?.value;
   const confirmacao = control.get('confirmacaoNovaSenha')?.value;
   return nova && confirmacao && nova !== confirmacao ? { senhasDivergentes: true } : null;
+}
+
+export interface DialogTrocarSenhaData {
+  exigirSenhaAtual: boolean;
 }
 
 @Component({
@@ -32,13 +36,16 @@ export class DialogTrocarSenhaComponent {
   private readonly dialogRef = inject(MatDialogRef<DialogTrocarSenhaComponent>);
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  readonly data: DialogTrocarSenhaData = inject(MAT_DIALOG_DATA);
 
   readonly salvando = signal(false);
   readonly erroServidor = signal('');
+  readonly showAtual = signal(false);
   readonly showNova = signal(false);
   readonly showConfirmacao = signal(false);
 
   readonly form = this.fb.group({
+    senhaAtual: ['', this.data.exigirSenhaAtual ? Validators.required : []],
     novaSenha: ['', [Validators.required, Validators.minLength(8)]],
     confirmacaoNovaSenha: ['', Validators.required],
   }, { validators: senhasIguaisValidator });
@@ -50,8 +57,12 @@ export class DialogTrocarSenhaComponent {
     this.salvando.set(true);
     this.erroServidor.set('');
 
-    const { novaSenha, confirmacaoNovaSenha } = this.form.getRawValue();
-    this.authService.trocarSenha({ novaSenha: novaSenha!, confirmacaoNovaSenha: confirmacaoNovaSenha! }).subscribe({
+    const { senhaAtual, novaSenha, confirmacaoNovaSenha } = this.form.getRawValue();
+    this.authService.trocarSenha({
+      senhaAtual: this.data.exigirSenhaAtual ? senhaAtual! : undefined,
+      novaSenha: novaSenha!,
+      confirmacaoNovaSenha: confirmacaoNovaSenha!
+    }).subscribe({
       next: () => {
         this.salvando.set(false);
         this.dialogRef.close(true);

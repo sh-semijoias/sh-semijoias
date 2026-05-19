@@ -40,6 +40,7 @@ export class FormUsuarioComponent implements OnInit {
   readonly carregando = signal(false);
   readonly salvando = signal(false);
   readonly resetando = signal(false);
+  readonly senhaProvisoriaAtiva = signal(false);
 
   private usuarioId: string | null = null;
   private nomeUsuario = '';
@@ -62,6 +63,7 @@ export class FormUsuarioComponent implements OnInit {
       this.service.obterPorId(this.usuarioId).subscribe({
         next: (u) => {
           this.nomeUsuario = u.nome;
+          this.senhaProvisoriaAtiva.set(u.senhaProvisoriaAtiva);
           this.form.patchValue({ nome: u.nome, email: u.email, perfil: u.perfil, telefone: u.telefone });
           this.carregando.set(false);
         },

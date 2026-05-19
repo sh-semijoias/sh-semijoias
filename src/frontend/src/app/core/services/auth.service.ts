@@ -17,6 +17,7 @@ export interface LoginResponseDto {
 }
 
 export interface TrocarSenhaDto {
+  senhaAtual?: string;
   novaSenha: string;
   confirmacaoNovaSenha: string;
 }

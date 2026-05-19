@@ -1,11 +1,23 @@
 <h2 mat-dialog-title>Cadastre uma nova senha</h2>
 
 <mat-dialog-content>
-  <p class="mb-4 text-sm text-gray-600">
-    Este é seu primeiro acesso. Por segurança, defina uma senha pessoal.
-  </p>
+  @if (!data.exigirSenhaAtual) {
+    <p class="mb-4 text-sm text-gray-600">Este é seu primeiro acesso. Por segurança, defina uma senha pessoal.</p>
+  }
 
   <form [formGroup]="form" class="flex flex-col gap-4 pt-1">
+    @if (data.exigirSenhaAtual) {
+      <mat-form-field appearance="outline">
+        <mat-label>Senha atual</mat-label>
+        <input matInput [type]="showAtual() ? 'text' : 'password'" formControlName="senhaAtual" autocomplete="current-password" />
+        <button mat-icon-button matSuffix type="button" (click)="showAtual.set(!showAtual())">
+          <mat-icon>{{ showAtual() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.get('senhaAtual')?.invalid && form.get('senhaAtual')?.touched) {
+          <mat-error>Informe a senha atual.</mat-error>
+        }
+      </mat-form-field>
+    }
     <mat-form-field appearance="outline">
       <mat-label>Nova senha</mat-label>
       <input matInput [type]="showNova() ? 'text' : 'password'" formControlName="novaSenha" autocomplete="new-password" />

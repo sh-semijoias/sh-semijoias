@@ -61,6 +61,7 @@ export class LoginComponent {
         this.isLoading.set(false);
         if (user.precisaTrocarSenha) {
           this.dialog.open(DialogTrocarSenhaComponent, {
+            data: { exigirSenhaAtual: false },
             disableClose: true,
             width: '420px',
           }).afterClosed().subscribe(() => this.router.navigateByUrl('/vendas'));

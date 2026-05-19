@@ -60,7 +60,7 @@
             <button mat-flat-button type="submit" [disabled]="salvando()">
               @if (salvando()) { <mat-spinner diameter="20" /> } @else { Salvar }
             </button>
-            @if (modoEdicao()) {
+            @if (modoEdicao() && senhaProvisoriaAtiva()) {
               <button mat-stroked-button type="button" (click)="resetarSenhaProvisoria()" [disabled]="resetando()">
                 @if (resetando()) { <mat-spinner diameter="20" /> } @else { Redefinir senha provisória }
               </button>
