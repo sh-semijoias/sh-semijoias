@@ -16,6 +16,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
@@ -27,6 +28,7 @@ import { EstoqueService, ProdutoResumidoDto } from '../../../core/services/estoq
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
 import { DialogConfirmarCancelamentoComponent, DialogConfirmarCancelamentoResult } from '../dialog-confirmar-cancelamento/dialog-confirmar-cancelamento';
+import { DialogRegistrarPagamentoComponent, DialogRegistrarPagamentoResult } from '../dialog-registrar-pagamento/dialog-registrar-pagamento';
 import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 
 interface RevendedorOpcao { id: string; nome: string; }
@@ -51,6 +53,7 @@ interface RevendedorOpcao { id: string; nome: string; }
     MatButtonToggleModule,
     MatChipsModule,
     MatMenuModule,
+    MatTooltipModule,
     AutocompletePaginadoComponent,
     CurrencyPipe,
     DatePipe,
@@ -79,13 +82,25 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly statusFiltro = signal<boolean | null>(false);
 
   get colunas(): string[] {
-    const base = ['dataVenda', 'nomeCliente', 'totalItens', 'valorTotal', 'formaPagamento', 'status', 'acoes'];
+    const base = ['dataVenda', 'nomeCliente', 'totalItens', 'valorTotal', 'valorRecebido', 'formaPagamento', 'status', 'acoes'];
     return this.isAdmin() ? [...base.slice(0, 2), 'nomeRevendedora', ...base.slice(2)] : base;
   }
 
   podeCancelar(item: VendaListagemDto): boolean {
     const uid = this.auth.currentUser()?.userId;
     return !item.dataCancelamento && (this.isAdmin() || item.idUsuario === uid);
+  }
+
+  podeRegistrarPagamento(item: VendaListagemDto): boolean {
+    return this.isAdmin() && !item.dataCancelamento && !this.vendaQuitada(item);
+  }
+
+  temAcoes(item: VendaListagemDto): boolean {
+    return this.podeCancelar(item) || this.podeRegistrarPagamento(item);
+  }
+
+  vendaQuitada(item: VendaListagemDto): boolean {
+    return item.valorRecebido >= item.valorTotal;
   }
 
   readonly itens = signal<VendaListagemDto[]>([]);
@@ -97,6 +112,11 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly ordenarPor = signal<OrdenacaoVenda | null>(null);
   readonly ordemDecrescente = signal(true);
   readonly totalVendasPeriodo = signal(0);
+  readonly totalRecebidoPeriodo = signal(0);
+  readonly totalLucroPrevistoPeriodo = signal(0);
+  readonly totalLucroRealizadoPeriodo = signal(0);
+  readonly totalRepassePrevistoPeriodo = signal(0);
+  readonly totalRepasseRealizadoPeriodo = signal(0);
   readonly filtrosAbertos = signal(false);
 
   readonly revendedorControl = new FormControl<RevendedorOpcao | null>(null);
@@ -175,6 +195,11 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
         this.itens.set(resultado.items);
         this.total.set(resultado.total);
         this.totalVendasPeriodo.set(resultado.totalVendasPeriodo);
+        this.totalRecebidoPeriodo.set(resultado.totalRecebidoPeriodo);
+        this.totalLucroPrevistoPeriodo.set(resultado.totalLucroPrevistoPeriodo);
+        this.totalLucroRealizadoPeriodo.set(resultado.totalLucroRealizadoPeriodo);
+        this.totalRepassePrevistoPeriodo.set(resultado.totalRepassePrevistoPeriodo);
+        this.totalRepasseRealizadoPeriodo.set(resultado.totalRepasseRealizadoPeriodo);
         this.carregando.set(false);
       },
       error: () => {
@@ -201,6 +226,24 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
       this.service.cancelar(item.id, { idMotivoCancelamentoVenda: resultado.idMotivoCancelamentoVenda }).subscribe({
         next: () => this.carregar(),
         error: () => this.snackBar.open('Não foi possível cancelar a venda.', 'Fechar', { duration: 4000 }),
+      });
+    });
+  }
+
+  registrarPagamento(item: VendaListagemDto): void {
+    const ref = this.dialog.open(DialogRegistrarPagamentoComponent, {
+      data: { idVenda: item.id, nomeCliente: item.nomeCliente },
+      width: '440px',
+    });
+
+    ref.afterClosed().subscribe((resultado: DialogRegistrarPagamentoResult | undefined) => {
+      if (!resultado) return;
+      this.service.registrarPagamento(item.id, resultado).subscribe({
+        next: () => this.carregar(),
+        error: (err) => {
+          const mensagem = err?.error?.erros?.[0] ?? 'Não foi possível registrar o pagamento.';
+          this.snackBar.open(mensagem, 'Fechar', { duration: 4000 });
+        },
       });
     });
   }

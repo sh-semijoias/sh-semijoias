@@ -3,19 +3,22 @@ using Microsoft.EntityFrameworkCore.Storage;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
+using ShSemijoias.Domain.Enums;
 using ShSemijoias.Infrastructure.Persistence;
 
 namespace ShSemijoias.Infrastructure.Repositories;
 
 public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 {
-    public async Task<(IList<VisaoVenda> Items, int Total, decimal TotalVendasPeriodo)> ListarAsync(ListarVendasConsulta query)
+    public async Task<ListarVendasResultado> ListarAsync(ListarVendasConsulta query)
     {
         var grouped =
             from venda in context.Vendas.AsNoTracking()
             join cliente in context.Clientes.AsNoTracking() on venda.IdCliente equals cliente.Id
             join usuario in context.Users.AsNoTracking() on venda.IdUsuario equals usuario.Id
             join tipoPagamento in context.TiposPagamento.AsNoTracking() on venda.IdTipoPagamento equals tipoPagamento.Id
+            join usuarioPerfil in context.UserRoles on venda.IdUsuario equals usuarioPerfil.UserId
+            join perfil in context.Roles on usuarioPerfil.RoleId equals perfil.Id
             join item in context.ItensVenda on venda.Id equals item.IdVenda
             where query.IdUsuario == null || venda.IdUsuario == query.IdUsuario
             where query.IdRevendedora == null || venda.IdUsuario == query.IdRevendedora
@@ -33,7 +36,8 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 NomeRevendedora = usuario.Nome,
                 FormaPagamento = tipoPagamento.Descricao,
                 DataCancelamento = venda.Cancelamento == null ? (DateTime?)null : venda.Cancelamento.DataCancelamento,
-                NomeMotivoCancelamento = venda.Cancelamento == null ? null : venda.Cancelamento.MotivoCancelamentoVenda.Nome
+                NomeMotivoCancelamento = venda.Cancelamento == null ? null : venda.Cancelamento.MotivoCancelamentoVenda.Nome,
+                FlagRevendedor = perfil.Name == Perfis.Revendedor
             } into g
             select new
             {
@@ -47,7 +51,12 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 g.Key.DataCancelamento,
                 g.Key.NomeMotivoCancelamento,
                 TotalItens = g.Sum(x => x.item.Quantidade),
-                ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade)
+                ValorTotal = g.Sum(x => x.item.PrecoVendaReal * x.item.Quantidade),
+                ValorRecebido = context.RecebimentosParcela
+                    .Where(r => r.Parcela.IdVenda == g.Key.Id)
+                    .Sum(r => (decimal?)r.ValorRecebido) ?? 0m,
+                Lucro = g.Sum(x => ((g.Key.FlagRevendedor ? x.item.PrecoVendaSugerido : x.item.PrecoVendaReal) - x.item.PrecoCompra) * x.item.Quantidade),
+                Repasse = g.Sum(x => g.Key.FlagRevendedor ? (x.item.PrecoVendaReal - x.item.PrecoVendaSugerido) * x.item.Quantidade : 0m)
             };
 
         if (query.Cancelada == true)
@@ -57,6 +66,13 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
 
         var total = await grouped.CountAsync();
         var totalVendasPeriodo = await grouped.SumAsync(x => (decimal?)x.ValorTotal) ?? 0m;
+        var totalRecebidoPeriodo = await grouped.SumAsync(x => (decimal?)x.ValorRecebido) ?? 0m;
+        var totalLucroPrevistoPeriodo = await grouped.SumAsync(x => (decimal?)x.Lucro) ?? 0m;
+        var totalLucroRealizadoPeriodo = await grouped.SumAsync(x => (decimal?)(
+            x.ValorTotal == 0m ? 0m : x.Lucro * x.ValorRecebido / x.ValorTotal)) ?? 0m;
+        var totalRepassePrevistoPeriodo = await grouped.SumAsync(x => (decimal?)x.Repasse) ?? 0m;
+        var totalRepasseRealizadoPeriodo = await grouped.SumAsync(x => (decimal?)(
+            x.ValorTotal == 0m ? 0m : x.Repasse * x.ValorRecebido / x.ValorTotal)) ?? 0m;
 
         var ordenado = query.OrdenarPor switch
         {
@@ -79,7 +95,7 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
             .Take(query.TamanhoPagina)
             .ToListAsync();
 
-        return (
+        return new ListarVendasResultado(
             items.Select(x => new VisaoVenda(
                 x.Id,
                 x.DataVenda,
@@ -91,12 +107,37 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
                 x.ValorTotal,
                 x.FormaPagamento,
                 x.DataCancelamento,
-                x.NomeMotivoCancelamento
+                x.NomeMotivoCancelamento,
+                x.ValorRecebido
             )).ToList(),
             total,
-            totalVendasPeriodo
+            query.Pagina,
+            query.TamanhoPagina,
+            totalVendasPeriodo,
+            totalRecebidoPeriodo,
+            totalLucroPrevistoPeriodo,
+            totalLucroRealizadoPeriodo,
+            totalRepassePrevistoPeriodo,
+            totalRepasseRealizadoPeriodo
         );
     }
+
+    public async Task<IReadOnlyList<Parcela>> ListarParcelasComRecebimentoAsync(int idVenda) =>
+        await context.Parcelas
+            .AsNoTracking()
+            .Include(p => p.Recebimento)
+            .Where(p => p.IdVenda == idVenda)
+            .OrderBy(p => p.NumeroParcela)
+            .ToListAsync();
+
+    public Task<Parcela?> ObterParcelaParaPagamentoAsync(int idParcela) =>
+        context.Parcelas
+            .Include(p => p.Venda).ThenInclude(v => v.Cancelamento)
+            .Include(p => p.Recebimento)
+            .FirstOrDefaultAsync(p => p.Id == idParcela);
+
+    public async Task AdicionarRecebimentoAsync(RecebimentoParcela recebimento) =>
+        await context.RecebimentosParcela.AddAsync(recebimento);
 
     public async Task<IReadOnlyList<TipoPagamento>> ListarFormasPagamentoAtivasAsync() =>
         await context.TiposPagamento

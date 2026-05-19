@@ -76,16 +76,20 @@
     </mat-form-field>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 mb-4">
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
     <mat-card appearance="outlined">
       <mat-card-content class="py-2!">
         <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-500/15 dark:bg-violet-900/40">
-            <mat-icon class="text-violet-700! dark:text-violet-400!">shopping_cart</mat-icon>
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 dark:bg-indigo-900/40">
+            <mat-icon class="text-indigo-700! dark:text-indigo-400!">payments</mat-icon>
           </div>
           <div>
-            <p class="text-sm text-secondary">Vendas no período</p>
-            <p class="text-xl font-semibold">{{ total() }}</p>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">Total vendido</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        matTooltip="Soma do valor de todas as vendas do período (preço de venda × quantidade).">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
           </div>
         </div>
       </mat-card-content>
@@ -98,8 +102,86 @@
             <mat-icon class="text-teal-700! dark:text-teal-400!">payments</mat-icon>
           </div>
           <div>
-            <p class="text-sm text-secondary">Total vendido</p>
-            <p class="text-xl font-semibold">{{ totalVendasPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">Total recebido</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        matTooltip="Soma dos pagamentos de parcelas efetivamente recebidos no período.">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalRecebidoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (isAdmin()) {
+      <mat-card appearance="outlined">
+        <mat-card-content class="py-2!">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 dark:bg-indigo-900/40">
+              <mat-icon class="text-indigo-700! dark:text-indigo-400!">trending_up</mat-icon>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="text-sm text-secondary">Lucro previsto</p>
+                <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                          matTooltip="Lucro estimado se todas as vendas forem totalmente pagas: (preço de venda − preço de compra) × quantidade.">info</mat-icon>
+              </div>
+              <p class="text-xl font-semibold">{{ totalLucroPrevistoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-content class="py-2!">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/15 dark:bg-teal-900/40">
+              <mat-icon class="text-teal-700! dark:text-teal-400!">trending_up</mat-icon>
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="text-sm text-secondary">Lucro realizado</p>
+                <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                          matTooltip="Parte do lucro previsto proporcional ao quanto já foi recebido das vendas.">info</mat-icon>
+              </div>
+              <p class="text-xl font-semibold">{{ totalLucroRealizadoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 dark:bg-indigo-900/40">
+            <mat-icon class="text-indigo-700! dark:text-indigo-400!">handshake</mat-icon>
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">{{ isAdmin() ? 'Repasse previsto' : 'Seu resultado previsto' }}</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        [matTooltip]="isAdmin() ? 'Valor previsto a repassar aos revendedores (diferença entre preço de venda real e sugerido) caso todas as vendas sejam pagas.' : 'Seu ganho previsto nas vendas do período caso sejam totalmente pagas.'">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalRepassePrevistoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-content class="py-2!">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/15 dark:bg-teal-900/40">
+            <mat-icon class="text-teal-700! dark:text-teal-400!">handshake</mat-icon>
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <p class="text-sm text-secondary">{{ isAdmin() ? 'Repasse realizado' : 'Seu resultado realizado' }}</p>
+              <mat-icon class="text-base! w-4! h-4! leading-4! text-gray-400! dark:text-gray-500! cursor-help"
+                        [matTooltip]="isAdmin() ? 'Repasse proporcional ao quanto já foi recebido das vendas.' : 'Seu ganho proporcional ao quanto já foi recebido das vendas.'">info</mat-icon>
+            </div>
+            <p class="text-xl font-semibold">{{ totalRepasseRealizadoPeriodo() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</p>
           </div>
         </div>
       </mat-card-content>
@@ -148,6 +230,11 @@
                 <td mat-cell *matCellDef="let item">{{ item.valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
               </ng-container>
 
+              <ng-container matColumnDef="valorRecebido">
+                <th mat-header-cell *matHeaderCellDef>Valor Recebido</th>
+                <td mat-cell *matCellDef="let item">{{ item.valorRecebido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              </ng-container>
+
               <ng-container matColumnDef="formaPagamento">
                 <th mat-header-cell *matHeaderCellDef>Pagamento</th>
                 <td mat-cell *matCellDef="let item">{{ item.formaPagamento }}{{ item.totalParcelas > 1 ? ' (' + item.totalParcelas + 'x)' : '' }}</td>
@@ -158,6 +245,10 @@
                 <td mat-cell *matCellDef="let item">
                   @if (item.dataCancelamento) {
                     <mat-chip color="warn" highlighted [title]="item.nomeMotivoCancelamento ?? ''">Cancelada</mat-chip>
+                  } @else if (vendaQuitada(item)) {
+                    <mat-chip color="primary" highlighted>Paga</mat-chip>
+                  } @else {
+                    <mat-chip color="accent" highlighted>Em aberto</mat-chip>
                   }
                 </td>
               </ng-container>
@@ -166,10 +257,16 @@
                 <th mat-header-cell *matHeaderCellDef>Ações</th>
                 <td mat-cell *matCellDef="let item">
                   <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações"
-                    [disabled]="!podeCancelar(item)">
+                    [disabled]="!temAcoes(item)">
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
+                    @if (podeRegistrarPagamento(item)) {
+                      <button mat-menu-item (click)="registrarPagamento(item)">
+                        <mat-icon>payments</mat-icon>
+                        Registrar pagamento
+                      </button>
+                    }
                     @if (podeCancelar(item)) {
                       <button mat-menu-item (click)="cancelarVenda(item)">
                         <mat-icon>cancel</mat-icon>

@@ -526,6 +526,7 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasName("pk_recebimento_parcela");
 
                     b.HasIndex("IdParcela")
+                        .IsUnique()
                         .HasDatabaseName("ix_recebimento_parcela_id_parcela");
 
                     b.ToTable("recebimento_parcela", (string)null);
@@ -936,8 +937,8 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ShSemijoias.Domain.Entities.RecebimentoParcela", b =>
                 {
                     b.HasOne("ShSemijoias.Domain.Entities.Parcela", "Parcela")
-                        .WithMany("Recebimentos")
-                        .HasForeignKey("IdParcela")
+                        .WithOne("Recebimento")
+                        .HasForeignKey("ShSemijoias.Domain.Entities.RecebimentoParcela", "IdParcela")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_recebimento_parcela_parcela_id_parcela");
@@ -977,7 +978,7 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.Parcela", b =>
                 {
-                    b.Navigation("Recebimentos");
+                    b.Navigation("Recebimento");
                 });
 
             modelBuilder.Entity("ShSemijoias.Domain.Entities.TipoProduto", b =>
