@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Cadastre uma nova senha</h2>
+
+<mat-dialog-content>
+  <p class="mb-4 text-sm text-gray-600">
+    Este é seu primeiro acesso. Por segurança, defina uma senha pessoal.
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-4 pt-1">
+    <mat-form-field appearance="outline">
+      <mat-label>Nova senha</mat-label>
+      <input matInput [type]="showNova() ? 'text' : 'password'" formControlName="novaSenha" autocomplete="new-password" />
+      <button mat-icon-button matSuffix type="button" (click)="showNova.set(!showNova())">
+        <mat-icon>{{ showNova() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (form.get('novaSenha')?.hasError('required') && form.get('novaSenha')?.touched) {
+        <mat-error>Informe a nova senha.</mat-error>
+      }
+      @if (form.get('novaSenha')?.hasError('minlength') && form.get('novaSenha')?.touched) {
+        <mat-error>A senha deve ter pelo menos 8 caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Confirmar nova senha</mat-label>
+      <input matInput [type]="showConfirmacao() ? 'text' : 'password'" formControlName="confirmacaoNovaSenha" autocomplete="new-password" />
+      <button mat-icon-button matSuffix type="button" (click)="showConfirmacao.set(!showConfirmacao())">
+        <mat-icon>{{ showConfirmacao() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (form.get('confirmacaoNovaSenha')?.touched && form.hasError('senhasDivergentes') ) {
+        <mat-error>As senhas não coincidem.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (erroServidor()) {
+      <p class="text-red-600 text-sm">{{ erroServidor() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button (click)="confirmar()" [disabled]="salvando()">
+    @if (salvando()) { <mat-spinner diameter="18" /> } @else { Salvar senha }
+  </button>
+</mat-dialog-actions>

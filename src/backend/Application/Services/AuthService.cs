@@ -24,14 +24,34 @@ public class AuthService(
 
         await signInManager.SignInAsync(user, isPersistent: true);
         var roles = await userManager.GetRolesAsync(user);
-        var role = roles.FirstOrDefault() ?? string.Empty;
 
-        return Result<LoginResponseDto>.Ok(new LoginResponseDto(
-            user.Id,
-            user.Email ?? string.Empty,
-            user.Nome,
-            role));
+        return Result<LoginResponseDto>.Ok(ToDto(user, roles));
     }
 
     public Task LogoutAsync() => signInManager.SignOutAsync();
+
+    public async Task<Result<LoginResponseDto>> TrocarSenhaAsync(Guid userId, TrocarSenhaDto dto)
+    {
+        if (dto.NovaSenha != dto.ConfirmacaoNovaSenha)
+            return Result<LoginResponseDto>.Falha("A nova senha e a confirmação não coincidem.");
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return Result<LoginResponseDto>.Falha("Usuário não encontrado.", TipoErro.NaoEncontrado);
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var resultado = await userManager.ResetPasswordAsync(user, token, dto.NovaSenha);
+        if (!resultado.Succeeded)
+            return Result<LoginResponseDto>.Falha(resultado.Errors.Select(e => e.Description).ToList());
+
+        user.SenhaProvisoriaAtiva = false;
+        user.DataAtualizacao = DateTime.UtcNow;
+        await userManager.UpdateAsync(user);
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Result<LoginResponseDto>.Ok(ToDto(user, roles));
+    }
+
+    private static LoginResponseDto ToDto(Usuario user, IList<string> roles) =>
+        new(user.Id, user.Email ?? string.Empty, user.Nome, roles.FirstOrDefault() ?? string.Empty, user.SenhaProvisoriaAtiva);
 }

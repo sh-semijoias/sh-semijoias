@@ -17,6 +17,10 @@ export interface UsuarioDto {
   telefone: string | null;
 }
 
+export interface CriarUsuarioResponseDto extends UsuarioDto {
+  senhaProvisoria: string;
+}
+
 export interface CriarUsuarioDto {
   nome: string;
   email: string;
@@ -45,8 +49,12 @@ export class UsuarioService {
     return this.http.get<UsuarioDto>(`${this.baseUrl}/${id}`);
   }
 
-  criar(dto: CriarUsuarioDto): Observable<UsuarioDto> {
-    return this.http.post<UsuarioDto>(this.baseUrl, dto);
+  criar(dto: CriarUsuarioDto): Observable<CriarUsuarioResponseDto> {
+    return this.http.post<CriarUsuarioResponseDto>(this.baseUrl, dto);
+  }
+
+  resetarSenhaProvisoria(id: string): Observable<{ senhaProvisoria: string }> {
+    return this.http.post<{ senhaProvisoria: string }>(`${this.baseUrl}/${id}/resetar-senha-provisoria`, {});
   }
 
   editar(id: string, dto: EditarUsuarioDto): Observable<UsuarioDto> {

@@ -34,8 +34,7 @@ public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarUsuarioDto dto)
     {
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var result = await usuarioService.CriarAsync(dto, baseUrl);
+        var result = await usuarioService.CriarAsync(dto);
         if (!result.Sucesso) return result.ToActionResult(this);
         return CreatedAtAction(nameof(ObterPorId), new { id = result.Valor!.Id }, result.Valor);
     }
@@ -44,6 +43,13 @@ public class UsuariosController(IUsuarioService usuarioService) : ControllerBase
     public async Task<IActionResult> Editar(Guid id, [FromBody] EditarUsuarioDto dto)
     {
         var result = await usuarioService.EditarAsync(id, dto);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
+    }
+
+    [HttpPost("{id:guid}/resetar-senha-provisoria")]
+    public async Task<IActionResult> ResetarSenhaProvisoria(Guid id)
+    {
+        var result = await usuarioService.ResetarSenhaProvisoriaAsync(id);
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
 }

@@ -68,6 +68,14 @@ public class UsuarioRepository(UserManager<Usuario> userManager, ApplicationDbCo
     public Task<string> GerarTokenResetSenhaAsync(Usuario usuario) =>
         userManager.GeneratePasswordResetTokenAsync(usuario);
 
+    public async Task DefinirSenhaAsync(Usuario usuario, string senha)
+    {
+        var token = await userManager.GeneratePasswordResetTokenAsync(usuario);
+        var resultado = await userManager.ResetPasswordAsync(usuario, token, senha);
+        if (!resultado.Succeeded)
+            throw new InvalidOperationException(string.Join(", ", resultado.Errors.Select(e => e.Description)));
+    }
+
     public async Task<IList<Usuario>> ListarPorPerfilAsync(string perfil) =>
         await userManager.GetUsersInRoleAsync(perfil);
 }

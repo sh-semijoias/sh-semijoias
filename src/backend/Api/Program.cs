@@ -7,6 +7,7 @@ using ShSemijoias.Application.Services;
 using ShSemijoias.Domain.Entities;
 using ShSemijoias.Infrastructure.Email;
 using ShSemijoias.Infrastructure.Persistence;
+using ShSemijoias.Infrastructure.Identity;
 using ShSemijoias.Infrastructure.Repositories;
 using ShSemijoias.Api.Extensions;
 
@@ -40,7 +41,8 @@ builder.Services.AddIdentity<Usuario, Perfil>(options =>
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<PortugueseIdentityErrorDescriber>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

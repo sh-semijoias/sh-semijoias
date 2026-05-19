@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ShSemijoias.Application.Common;
 using ShSemijoias.Application.Common.Validators;
 using ShSemijoias.Application.DTOs;
@@ -9,8 +10,7 @@ namespace ShSemijoias.Application.Services;
 
 public class UsuarioService(
     IUsuarioRepository usuarioRepository,
-    IPerfilRepository perfilRepository,
-    IEmailService emailService) : IUsuarioService
+    IPerfilRepository perfilRepository) : IUsuarioService
 {
     public async Task<Result<ListaPaginada<UsuarioDto>>> ListarAsync(int pagina, int tamanhoPagina, string? perfil = null, string? busca = null)
     {
@@ -34,14 +34,14 @@ public class UsuarioService(
         return new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber);
     }
 
-    public async Task<Result<UsuarioDto>> CriarAsync(CriarUsuarioDto dto, string baseUrl)
+    public async Task<Result<CriarUsuarioResponseDto>> CriarAsync(CriarUsuarioDto dto)
     {
         var erros = new List<string>();
 
         if (string.IsNullOrWhiteSpace(dto.Nome)) erros.Add("Nome é obrigatório.");
         if (string.IsNullOrWhiteSpace(dto.Telefone)) erros.Add("Telefone é obrigatório.");
 
-        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros);
+        if (erros.Count > 0) return Result<CriarUsuarioResponseDto>.Falha(erros);
 
         dto = dto with { Nome = dto.Nome.Trim(), Email = dto.Email.Trim(), Telefone = dto.Telefone.Trim() };
 
@@ -57,7 +57,9 @@ public class UsuarioService(
         if (telefoneValido && await usuarioRepository.ObterPorTelefoneAsync(dto.Telefone) is not null)
             erros.Add("Já existe um usuário cadastrado com este telefone.");
 
-        if (erros.Count > 0) return Result<UsuarioDto>.Falha(erros, TipoErro.Conflito);
+        if (erros.Count > 0) return Result<CriarUsuarioResponseDto>.Falha(erros, TipoErro.Conflito);
+
+        var senhaProvisoria = GerarSenhaProvisoria();
 
         var usuario = new Usuario
         {
@@ -65,19 +67,19 @@ public class UsuarioService(
             Email = dto.Email,
             Nome = dto.Nome,
             PhoneNumber = dto.Telefone,
+            SenhaProvisoriaAtiva = true,
             DataCadastro = DateTime.UtcNow,
             DataAtualizacao = DateTime.UtcNow
         };
 
         await usuarioRepository.CriarAsync(usuario);
+        await usuarioRepository.DefinirSenhaAsync(usuario, senhaProvisoria);
         await usuarioRepository.AdicionarPerfilAsync(usuario, dto.Perfil);
 
-        var token = await usuarioRepository.GerarTokenResetSenhaAsync(usuario);
-        var link = $"{baseUrl}/definir-senha?email={Uri.EscapeDataString(dto.Email)}&token={Uri.EscapeDataString(token)}";
-        await emailService.EnviarConviteAsync(dto.Email, link);
-
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
-        return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber));
+        return Result<CriarUsuarioResponseDto>.Ok(new CriarUsuarioResponseDto(
+            usuario.Id, usuario.Nome, usuario.Email ?? string.Empty,
+            roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber, senhaProvisoria));
     }
 
     public async Task<Result<UsuarioDto>> EditarAsync(Guid id, EditarUsuarioDto dto)
@@ -124,5 +126,48 @@ public class UsuarioService(
 
         var roles = await usuarioRepository.ObterPerfisAsync(usuario);
         return Result<UsuarioDto>.Ok(new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email ?? string.Empty, roles.FirstOrDefault() ?? string.Empty, usuario.PhoneNumber));
+    }
+
+    public async Task<Result<ResetarSenhaProvisoriaResponseDto>> ResetarSenhaProvisoriaAsync(Guid id)
+    {
+        var usuario = await usuarioRepository.ObterPorIdAsync(id);
+        if (usuario is null)
+            return Result<ResetarSenhaProvisoriaResponseDto>.Falha("Usuário não encontrado.", TipoErro.NaoEncontrado);
+
+        var novaSenha = GerarSenhaProvisoria();
+        await usuarioRepository.DefinirSenhaAsync(usuario, novaSenha);
+
+        usuario.SenhaProvisoriaAtiva = true;
+        usuario.DataAtualizacao = DateTime.UtcNow;
+        await usuarioRepository.AtualizarAsync(usuario);
+
+        return Result<ResetarSenhaProvisoriaResponseDto>.Ok(new ResetarSenhaProvisoriaResponseDto(novaSenha));
+    }
+
+    private static string GerarSenhaProvisoria()
+    {
+        const string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string digits = "0123456789";
+        const string lowercase = "abcdefghijklmnopqrstuvwxyz";
+        const string all = uppercase + digits + lowercase;
+
+        var chars = new List<char>
+        {
+            uppercase[RandomNumberGenerator.GetInt32(uppercase.Length)],
+            uppercase[RandomNumberGenerator.GetInt32(uppercase.Length)],
+            digits[RandomNumberGenerator.GetInt32(digits.Length)],
+            digits[RandomNumberGenerator.GetInt32(digits.Length)],
+        };
+
+        for (int i = 0; i < 12; i++)
+            chars.Add(all[RandomNumberGenerator.GetInt32(all.Length)]);
+
+        for (int i = chars.Count - 1; i > 0; i--)
+        {
+            int j = RandomNumberGenerator.GetInt32(i + 1);
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        return new string([.. chars]);
     }
 }

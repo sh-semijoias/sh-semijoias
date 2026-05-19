@@ -678,6 +678,10 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
 
+                    b.Property<bool>("SenhaProvisoriaAtiva")
+                        .HasColumnType("boolean")
+                        .HasColumnName("senha_provisoria_ativa");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("two_factor_enabled");

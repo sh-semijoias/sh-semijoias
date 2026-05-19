@@ -8,7 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../../core/services/auth.service';
+import { DialogTrocarSenhaComponent } from '../dialog-trocar-senha/dialog-trocar-senha';
 
 @Component({
   selector: 'app-login',
@@ -30,6 +32,7 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
@@ -54,9 +57,16 @@ export class LoginComponent {
     this.errorMessage.set('');
 
     this.authService.login(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (user) => {
         this.isLoading.set(false);
-        this.router.navigateByUrl('/vendas');
+        if (user.precisaTrocarSenha) {
+          this.dialog.open(DialogTrocarSenhaComponent, {
+            disableClose: true,
+            width: '420px',
+          }).afterClosed().subscribe(() => this.router.navigateByUrl('/vendas'));
+        } else {
+          this.router.navigateByUrl('/vendas');
+        }
       },
       error: () => {
         this.errorMessage.set('E-mail ou senha inválidos.');
