@@ -66,9 +66,15 @@ export class DialogRegistrarPagamentoComponent implements OnInit {
   confirmar(): void {
     if (this.parcelaControl.invalid || this.parcelaControl.value == null) return;
     if (this.dataPagamentoControl.invalid) return;
+
+          console.log(this.dataPagamentoControl.value);
+
     this.dialogRef.close({
       idParcela: this.parcelaControl.value,
       dataPagamento: this.dataPagamentoControl.value.toISOString(),
+
     });
   }
+
 }
+
