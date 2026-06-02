@@ -47,14 +47,14 @@ Depois pressione `F5` e selecione **"Start all"**. Isso irá:
 # 1. Banco de dados
 docker compose up -d
 
-# 2. Backend (em outro terminal)
-cd src/backend
-dotnet run --project Api
-
-# 3. Frontend (em outro terminal)
+# 2. Frontend (em outro terminal)
 cd src/frontend
 npm install
 npm start
+
+# 3. Backend (em outro terminal)
+cd src/backend
+dotnet run --project Api
 ```
 
 ## Estrutura do repositório

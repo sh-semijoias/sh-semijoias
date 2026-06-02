@@ -57,7 +57,10 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 Common/
  Result.cs
  TipoErro.cs
+<<<<<<< Updated upstream
  UserContext.cs
+=======
+>>>>>>> Stashed changes
  Validators/TelefoneValidator.cs
 DTOs/Auth/
  LoginRequestDto.cs
@@ -117,7 +120,10 @@ Interfaces/
  IPerfilService.cs
  IProdutoRepository.cs
  IProdutoService.cs
+<<<<<<< Updated upstream
  IUserContext.cs
+=======
+>>>>>>> Stashed changes
  IUsuarioRepository.cs
  IUsuarioService.cs
  IVendaRepository.cs
@@ -138,7 +144,11 @@ Services/
 
 [metadataReferences]
 ../Domain/obj/Debug/net10.0/ref/Domain.dll
+<<<<<<< Updated upstream
 <DOTNET>/packs/Microsoft.AspNetCore.App.Ref/10.0.7/ref/net10.0/
+=======
+<DOTNET>/packs/Microsoft.AspNetCore.App.Ref/10.0.5/ref/net10.0/
+>>>>>>> Stashed changes
  Microsoft.AspNetCore.Antiforgery.dll
  Microsoft.AspNetCore.Authentication.Abstractions.dll
  Microsoft.AspNetCore.Authentication.BearerToken.dll
@@ -279,7 +289,11 @@ Services/
  System.Formats.Cbor.dll
  System.Security.Cryptography.Xml.dll
  System.Threading.RateLimiting.dll
+<<<<<<< Updated upstream
 <DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/ref/net10.0/
+=======
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.5/ref/net10.0/
+>>>>>>> Stashed changes
  Microsoft.CSharp.dll
  Microsoft.VisualBasic.Core.dll
  Microsoft.VisualBasic.dll
@@ -454,7 +468,11 @@ Services/
  microsoft.entityframeworkcore/10.0.4/lib/net10.0/Microsoft.EntityFrameworkCore.dll
 
 [analyzerReferences]
+<<<<<<< Updated upstream
 <DOTNET>/packs/Microsoft.AspNetCore.App.Ref/10.0.7/analyzers/dotnet/cs/
+=======
+<DOTNET>/packs/Microsoft.AspNetCore.App.Ref/10.0.5/analyzers/dotnet/cs/
+>>>>>>> Stashed changes
  Microsoft.AspNetCore.App.Analyzers.dll
  Microsoft.AspNetCore.App.CodeFixes.dll
  Microsoft.AspNetCore.App.SourceGenerators.dll
@@ -462,18 +480,30 @@ Services/
  Microsoft.Extensions.Logging.Generators.dll
  Microsoft.Extensions.Options.SourceGeneration.dll
  Microsoft.Extensions.Validation.ValidationsGenerator.dll
+<<<<<<< Updated upstream
 <DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/analyzers/dotnet/cs/
+=======
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.5/analyzers/dotnet/cs/
+>>>>>>> Stashed changes
  Microsoft.Interop.ComInterfaceGenerator.dll
  Microsoft.Interop.JavaScript.JSImportGenerator.dll
  Microsoft.Interop.LibraryImportGenerator.dll
  Microsoft.Interop.SourceGeneration.dll
  System.Text.Json.SourceGeneration.dll
  System.Text.RegularExpressions.Generator.dll
+<<<<<<< Updated upstream
 <DOTNET>/sdk/10.0.203/Sdks/Microsoft.NET.Sdk/analyzers/
+=======
+<DOTNET>/sdk/10.0.201/Sdks/Microsoft.NET.Sdk/analyzers/
+>>>>>>> Stashed changes
  Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
  Microsoft.CodeAnalysis.NetAnalyzers.dll
 <NUGET>/microsoft.entityframeworkcore.analyzers/10.0.4/analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll
 
 [analyzerConfigFiles]
+<<<<<<< Updated upstream
 <DOTNET>/sdk/10.0.203/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_default.globalconfig
+=======
+<DOTNET>/sdk/10.0.201/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_default.globalconfig
+>>>>>>> Stashed changes
 obj/Debug/net10.0/Application.GeneratedMSBuildEditorConfig.editorconfig
