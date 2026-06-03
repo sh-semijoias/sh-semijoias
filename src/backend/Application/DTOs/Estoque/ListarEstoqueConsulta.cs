@@ -8,5 +8,6 @@ public record ListarEstoqueConsulta(
     string? Busca,
     OrdenacaoEstoque OrdenarPor = OrdenacaoEstoque.Produto,
     bool OrdemDecrescente = false,
-    int? IdMaleta = null
+    int? IdMaleta = null,
+    Guid? IdUsuario = null
 );

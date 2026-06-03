@@ -70,7 +70,7 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.carregarPagina(1, '');
+    //this.carregarPagina(1, '');
   }
 
   ngOnDestroy(): void {
@@ -79,20 +79,27 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onPanelAberto(auto: MatAutocomplete): void {
-    this.panelAberto$.next();
-    setTimeout(() => {
-      const panel = auto.panel?.nativeElement;
-      if (!panel) return;
-      fromEvent(panel, 'scroll').pipe(
-        takeUntil(merge(this.panelAberto$, this.destroy$))
-      ).subscribe(() => {
-        if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 50) {
-          this.carregarMais();
-        }
-      });
-    });
+onPanelAberto(auto: MatAutocomplete): void {
+
+  if (this.opcoes().length === 0) {
+    this.carregarPagina(1, '');
   }
+
+  this.panelAberto$.next();
+
+  setTimeout(() => {
+    const panel = auto.panel?.nativeElement;
+    if (!panel) return;
+
+    fromEvent(panel, 'scroll').pipe(
+      takeUntil(merge(this.panelAberto$, this.destroy$))
+    ).subscribe(() => {
+      if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 50) {
+        this.carregarMais();
+      }
+    });
+  });
+}
 
   carregarMais(): void {
     if (this.carregandoMais() || this.opcoes().length >= this.total()) return;

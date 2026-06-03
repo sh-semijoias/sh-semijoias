@@ -15,14 +15,33 @@ public class EstoqueService(
         // Escopo derivado do usuário logado: admin vê o estoque central;
         // revendedor vê apenas a própria maleta. Qualquer IdMaleta vindo do
         // cliente é ignorado.
-        int? idMaleta = null;
-        if (!isAdmin)
-        {
-            var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
-            if (maleta is null)
-                return Result<ListaPaginada<EstoqueDto>>.Falha("Revendedor não possui maleta ativa.");
-            idMaleta = maleta.Id;
-        }
+int? idMaleta = null;
+
+if (isAdmin)
+{
+    if (query.IdUsuario.HasValue)
+    {
+        var maleta = await maletaRepository.ObterPorUsuarioAsync(
+            query.IdUsuario.Value
+        );
+
+        if (maleta is null)
+            return Result<ListaPaginada<EstoqueDto>>
+                .Falha("Revendedor não possui maleta ativa.");
+
+        idMaleta = maleta.Id;
+    }
+}
+else
+{
+    var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
+
+    if (maleta is null)
+        return Result<ListaPaginada<EstoqueDto>>
+            .Falha("Revendedor não possui maleta ativa.");
+
+    idMaleta = maleta.Id;
+}
 
         query = query with { IdMaleta = idMaleta };
 
@@ -60,6 +79,11 @@ public class EstoqueService(
         foreach (var item in dto.Itens)
         {
             var estoque = await estoqueRepository.BuscarPorProdutoAsync(item.IdProduto);
+
+            Console.WriteLine($"ID ESTOQUE: {estoque.Id}");
+Console.WriteLine($"ID MALETA: {estoque.IdMaleta}");
+Console.WriteLine($"ID PRODUTO: {estoque.IdProduto}");
+
             if (estoque is not null)
             {
                 estoque.Quantidade += item.Quantidade;

@@ -14,22 +14,43 @@ public class EstoqueController(IEstoqueService estoqueService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Listar(
-        [FromQuery] int pagina = 1,
-        [FromQuery] int tamanhoPagina = 10,
-        [FromQuery] int? idProduto = null,
-        [FromQuery] bool? emEstoque = null,
-        [FromQuery] string? busca = null,
-        [FromQuery] OrdenacaoEstoque ordenarPor = OrdenacaoEstoque.Produto,
-        [FromQuery] bool ordemDecrescente = false)
-    {
-        var isAdmin = User.IsInRole("Administrador");
-        var idUsuario = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    [FromQuery] int pagina = 1,
+    [FromQuery] int tamanhoPagina = 10,
+    [FromQuery] int? idProduto = null,
+    [FromQuery] bool? emEstoque = null,
+    [FromQuery] string? busca = null,
+    [FromQuery] OrdenacaoEstoque ordenarPor = OrdenacaoEstoque.Produto,
+    [FromQuery] bool ordemDecrescente = false,
+    [FromQuery] Guid? idUsuario = null)
+{
+    var isAdmin = User.IsInRole("Administrador");
+    var usuarioLogado = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var query = new ListarEstoqueConsulta(pagina, tamanhoPagina, idProduto, emEstoque, busca, ordenarPor, ordemDecrescente);
-        var result = await estoqueService.ListarAsync(query, idUsuario, isAdmin);
-        if (!result.Sucesso) return result.ToActionResult(this);
-        return Ok(result.Valor);
-    }
+    var query = new ListarEstoqueConsulta(
+        pagina,
+        tamanhoPagina,
+        idProduto,
+        emEstoque,
+        busca,
+        ordenarPor,
+        ordemDecrescente,
+        null,
+        idUsuario);
+
+    var result = await estoqueService.ListarAsync(
+        query,
+        usuarioLogado,
+        isAdmin);
+
+        Console.WriteLine($"isAdmin: {isAdmin}");
+Console.WriteLine($"query.IdUsuario: {query.IdUsuario}");
+
+
+    if (!result.Sucesso)
+        return result.ToActionResult(this);
+
+    return Ok(result.Valor);
+}
 
     [HttpGet("produtos")]
     [Authorize(Roles = "Administrador")]

@@ -26,6 +26,8 @@ import { UsuarioService } from '../../../core/services/usuario.service';
 import { computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
+import { ViewChild } from '@angular/core';
+
 
 function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
   const array = control as FormArray;
@@ -50,10 +52,15 @@ function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
     AddRowButtonComponent,
     AutocompletePaginadoComponent,
     CurrencyPipe,
+
   ],
   templateUrl: './form-venda.html',
 })
+
+
 export class FormVendaComponent implements OnInit, OnDestroy {
+
+
   private readonly service = inject(VendaService);
   private readonly estoqueService = inject(EstoqueService);
   private readonly clientesService = inject(ClientesService);
@@ -75,8 +82,21 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 
   readonly loadClientesFn = (pagina: number, busca: string) =>
     this.clientesService.listar(pagina, 10, busca || undefined);
-  readonly loadProdutosFn = (pagina: number, busca: string) =>
-    this.estoqueService.listar({ pagina, tamanhoPagina: 10, busca: busca || undefined, emEstoque: true });
+readonly loadProdutosFn = (pagina: number, busca: string) => {
+
+  console.log(
+    'ID USUARIO NO LOADPRODUTOS:',
+    this.form.get('idUsuario')?.value
+  );
+
+  return this.estoqueService.listar({
+    pagina,
+    tamanhoPagina: 10,
+    busca: busca || undefined,
+    emEstoque: true,
+    idUsuario: this.form.get('idUsuario')?.value || undefined
+  });
+};
 
 readonly revendedorControl =
   new FormControl<{ id: string; nome: string } | null>(null);
@@ -114,11 +134,25 @@ readonly loadRevendedoresFn = (
   readonly displayProduto = (p: EstoqueDto | null): string =>
     p ? p.produto : '';
 
-onRevendedorSelecionado(  r: { id: string | number }): void {  this.form.get('idUsuario')?.setValue(r.id.toString());}
+onRevendedorSelecionado(r: { id: string | number }): void {
+
+  this.form.get('idUsuario')?.setValue(r.id.toString());
+
+  this.produtosSelecionados.set([]);
+
+  // força os autocompletes a limparem os produtos selecionados
+  this.itens.controls.forEach(grupo => {
+    grupo.get('idEstoque')?.setValue(null);
+    grupo.get('idProduto')?.setValue(null);
+  });
+
+  console.log('Revendedor selecionado:', r.id);
+}
 
 onRevendedorLimpo(): void {
   this.form.get('idUsuario')?.setValue('');
 }
+
 
   ngOnInit(): void {
     this.itens.valueChanges.pipe(takeUntil(this.destroy$))

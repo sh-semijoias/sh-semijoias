@@ -67,29 +67,32 @@ public class VendaService(
         if (erros.Count > 0)
             return Result<VendaCriadaDto>.Falha(erros);
 
-    Guid usuarioVenda;
+Guid usuarioVenda;
 
-    if (isAdmin)
-    {
-        if (!Guid.TryParse(dto.IdUsuario, out usuarioVenda))
-            return Result<VendaCriadaDto>.Falha("Revendedor inválido.");
-    }
-    else
-    {
-        usuarioVenda = idUsuario;
-    }
-
-int? idMaleta = null;
-if (!isAdmin)
+if (isAdmin)
 {
-    var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
-    if (maleta is null)
-        return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
-    idMaleta = maleta.Id;
+    if (!Guid.TryParse(dto.IdUsuario, out usuarioVenda))
+        return Result<VendaCriadaDto>.Falha("Revendedor inválido.");
 }
+else
+{
+    usuarioVenda = idUsuario;
+}
+
+var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
+
+if (maleta is null)
+    return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+
+var idMaleta = maleta.Id;
+
+Console.WriteLine($"USUARIO VENDA: {usuarioVenda}");
+Console.WriteLine($"MALETA ENCONTRADA: {idMaleta}");
 
         var idsEstoque = dto.Itens!.Select(i => i.IdEstoque).ToList();
         var estoques = await estoqueRepository.BuscarPorIdsAsync(idsEstoque, idMaleta);
+
+        Console.WriteLine($"ESTOQUES ENCONTRADOS: {estoques.Count}");
 
         foreach (var item in dto.Itens!)
         {
@@ -104,6 +107,11 @@ if (!isAdmin)
 
         var agora = DateTime.UtcNow;
         var valorTotal = dto.Itens!.Sum(i => i.PrecoVendaReal * i.Quantidade);
+
+foreach (var item in dto.Itens)
+{
+    Console.WriteLine($"ID ESTOQUE RECEBIDO: {item.IdEstoque}");
+}
 
         var venda = new Venda
         {
