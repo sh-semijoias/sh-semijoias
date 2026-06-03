@@ -7,6 +7,8 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import {  DateAdapter,  MAT_DATE_FORMATS} from '@angular/material/core';
 import { BrDateAdapter } from './shared/br-date-adapter';
+import { MatNativeDateModule } from '@angular/material/core';
+
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/services/auth.interceptor';

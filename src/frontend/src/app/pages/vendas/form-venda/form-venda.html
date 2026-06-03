@@ -20,6 +20,18 @@
             errorMessage="Cliente é obrigatório."
           />
 
+@if (isAdmin()) {
+  <app-autocomplete-paginado
+    label="Revendedor"
+    placeholder="Buscar revendedor..."
+    [control]="revendedorControl"
+    [loadFn]="loadRevendedoresFn"
+    [displayFn]="displayRevendedor"
+    (selecionado)="onRevendedorSelecionado($event)"
+    (limpo)="onRevendedorLimpo()"
+  />
+}
+
           <div class="flex flex-col sm:flex-row gap-3">
             <mat-form-field appearance="outline" class="w-full sm:flex-1">
               <mat-label>Forma de pagamento</mat-label>

@@ -87,6 +87,7 @@ export interface ItemVendaDto {
 
 export interface CriarVendaDto {
   idCliente: number;
+  idUsuario?: string;
   idTipoPagamento: number;
   totalParcelas: number;
   comentario?: string;

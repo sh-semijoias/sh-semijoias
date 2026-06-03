@@ -68,7 +68,7 @@
     <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
       <mat-label>Período</mat-label>
       <mat-date-range-input [rangePicker]="pickerPeriodo">
-        <input matStartDate [formControl]="dataInicioControl" placeholder="Início" />
+        <input matStartDate [formControl]="dataInicioControl" date placeholder="Início" />
         <input matEndDate [formControl]="dataFimControl" placeholder="Fim" />
       </mat-date-range-input>
       <mat-datepicker-toggle matIconSuffix [for]="pickerPeriodo" />

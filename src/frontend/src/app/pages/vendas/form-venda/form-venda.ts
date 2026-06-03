@@ -22,6 +22,10 @@ import { EstoqueService, EstoqueDto } from '../../../core/services/estoque.servi
 import { ClientesService, ClientesDto } from '../../../core/services/clientes.service';
 import { AddRowButtonComponent } from '../../../shared/components/add-row-button/add-row-button';
 import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
+import { UsuarioService } from '../../../core/services/usuario.service';
+import { computed } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
+import { Perfil } from '../../../core/enums/perfil.enum';
 
 function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
   const array = control as FormArray;
@@ -57,7 +61,8 @@ export class FormVendaComponent implements OnInit, OnDestroy {
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
-
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly auth = inject(AuthService);
   readonly carregando = signal(true);
   readonly salvando = signal(false);
   readonly formasPagamento = signal<FormaPagamentoDto[]>([]);
@@ -65,13 +70,31 @@ export class FormVendaComponent implements OnInit, OnDestroy {
   readonly total = signal(0);
 
   readonly clienteControl = new FormControl<ClientesDto | string | null>(null, Validators.required);
+  readonly isAdmin = computed(  () => this.auth.currentUser()?.role === Perfil.Administrador
+);
 
   readonly loadClientesFn = (pagina: number, busca: string) =>
     this.clientesService.listar(pagina, 10, busca || undefined);
   readonly loadProdutosFn = (pagina: number, busca: string) =>
     this.estoqueService.listar({ pagina, tamanhoPagina: 10, busca: busca || undefined, emEstoque: true });
 
+readonly revendedorControl =
+  new FormControl<{ id: string; nome: string } | null>(null);
+
+readonly displayRevendedor = (
+  r: { id: string; nome: string } | null
+): string => r?.nome ?? '';
+
+readonly loadRevendedoresFn = (
+  pagina: number,
+  busca: string
+) => this.usuarioService.listarRevendedoresPaginado(
+  pagina,
+  busca
+);
+
   readonly form = this.fb.group({
+      idUsuario: [''],
     idTipoPagamento: [null as number | null, Validators.required],
     totalParcelas: this.fb.control(
       { value: 1, disabled: true },
@@ -90,6 +113,12 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 
   readonly displayProduto = (p: EstoqueDto | null): string =>
     p ? p.produto : '';
+
+onRevendedorSelecionado(  r: { id: string | number }): void {  this.form.get('idUsuario')?.setValue(r.id.toString());}
+
+onRevendedorLimpo(): void {
+  this.form.get('idUsuario')?.setValue('');
+}
 
   ngOnInit(): void {
     this.itens.valueChanges.pipe(takeUntil(this.destroy$))
@@ -200,11 +229,12 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 
     const cliente = clienteSelecionado as ClientesDto;
     const raw = this.form.getRawValue();
-    const dto: CriarVendaDto = {
-      idCliente: Number(cliente.id),
-      idTipoPagamento: raw.idTipoPagamento!,
-      totalParcelas: raw.totalParcelas!,
-      comentario: raw.comentario?.trim() || undefined,
+const dto: CriarVendaDto = {
+  idCliente: Number(cliente.id),
+  idUsuario: raw.idUsuario || undefined,
+  idTipoPagamento: raw.idTipoPagamento!,
+  totalParcelas: raw.totalParcelas!,
+  comentario: raw.comentario?.trim() || undefined,
       itens: (this.itens.getRawValue() as { idEstoque: number; quantidade: number; precoVendaReal: string }[])
         .map(i => ({
           idEstoque: i.idEstoque,
@@ -212,7 +242,7 @@ export class FormVendaComponent implements OnInit, OnDestroy {
           precoVendaReal: this.parseMoeda(i.precoVendaReal) ?? 0,
         })),
     };
-
+console.log('DTO enviado', dto);
     this.service.criar(dto).subscribe({
       next: () => {
         this.snackBar.open('Venda registrada com sucesso!', 'Fechar', { duration: 3000 });
