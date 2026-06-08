@@ -36,6 +36,7 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   @Input() fieldClass = '';
   @Input() subscriptSizing: 'fixed' | 'dynamic' = 'fixed';
 
+
   @HostBinding('class') get hostClass(): string { return 'block ' + this.fieldClass; }
 
   @Output() readonly selecionado = new EventEmitter<{ id: string | number }>();

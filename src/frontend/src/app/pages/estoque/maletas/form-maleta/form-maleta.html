@@ -74,10 +74,14 @@
                 </mat-form-field>
 
                 @if (!(modoEdicao() && $index < itensOriginaisCount())) {
+
+                  @if (isAdmin()) {
                   <button mat-icon-button type="button" (click)="removerItem($index)"
                     [disabled]="itens.length === 1" class="mt-2">
                     <mat-icon>delete</mat-icon>
                   </button>
+                }
+
                 } @else {
                   <div class="w-10 mt-2"></div>
                 }
@@ -85,14 +89,21 @@
             }
           </div>
 
-          <app-add-row-button label="Adicionar produto" (clicked)="adicionarItem()" />
+   @if (isAdmin()) {
+  <app-add-row-button
+    label="Adicionar produto"
+    (clicked)="adicionarItem()" />
+
+}
 
           <mat-divider />
 
           <div class="flex gap-3">
+            @if (isAdmin()) {
             <button mat-flat-button type="submit" [disabled]="salvando()">
               @if (salvando()) { <mat-spinner diameter="20" /> } @else { Confirmar }
             </button>
+          }
             <a mat-button routerLink="/maletas">Cancelar</a>
           </div>
         </form>

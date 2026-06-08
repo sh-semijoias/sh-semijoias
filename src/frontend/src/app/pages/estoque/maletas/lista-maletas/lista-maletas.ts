@@ -49,6 +49,7 @@ export class ListaMaletasComponent implements OnInit, OnDestroy {
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
+
   private readonly colunaParaOrdenacao: Record<string, OrdenacaoMaleta> = {
     descricao:      OrdenacaoMaleta.Descricao,
     nomeUsuario:    OrdenacaoMaleta.NomeUsuario,
@@ -82,6 +83,16 @@ export class ListaMaletasComponent implements OnInit, OnDestroy {
 
     this.carregar();
   }
+
+visualizar(item: MaletaDto): void {
+  console.log('Antes da navegação');
+
+  this.router.navigate(['/maletas', item.id]);
+
+  console.log('Depois da navegação');
+}
+
+
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -135,4 +146,5 @@ export class ListaMaletasComponent implements OnInit, OnDestroy {
   editar(item: MaletaDto): void {
     this.router.navigate(['/maletas', item.id, 'editar']);
   }
+
 }

@@ -64,14 +64,22 @@
                   <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Mais ações">
                     <mat-icon>more_vert</mat-icon>
                   </button>
-                  <mat-menu #menu="matMenu">
-                    @if (isAdmin()) {
-                      <button mat-menu-item (click)="editar(item)">
-                        <mat-icon>edit</mat-icon>
-                        <span>Editar</span>
-                      </button>
-                    }
-                  </mat-menu>
+<mat-menu #menu="matMenu">
+
+@if (isAdmin()) {
+  <button mat-menu-item (click)="editar(item)">
+    <mat-icon>edit</mat-icon>
+    <span>Editar</span>
+  </button>
+} @else {
+  <button mat-menu-item (click)="visualizar(item)">
+    <mat-icon>visibility</mat-icon>
+    <span>Visualizar</span>
+  </button>
+}
+
+
+</mat-menu>
                 </td>
               </ng-container>
 

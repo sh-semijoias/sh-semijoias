@@ -81,7 +81,12 @@ export class FormMaletaComponent implements OnInit {
   }
 
   ngOnInit(): void {
+      console.log('Entrou no FormMaleta');
     const idParam = this.route.snapshot.paramMap.get('id');
+    if (!this.isAdmin() && !this.route.snapshot.paramMap.get('id')) {
+  this.router.navigate(['/maletas']);
+  return;
+}
     if (idParam) {
       this.maletaId = Number(idParam);
       this.modoEdicao.set(true);
@@ -105,15 +110,25 @@ export class FormMaletaComponent implements OnInit {
               { id: item.idProduto, descricao: item.descricao, quantidade: maxOriginal },
             ]);
           });
-          if (maleta.itens.length === 0) this.adicionarItem();
-          this.carregando.set(false);
+if (maleta.itens.length === 0) {
+  this.adicionarItem();
+}
+
+if (!this.isAdmin()) {
+  this.form.disable();
+  this.revendedorControl.disable();
+}
+
+this.carregando.set(false);
         },
+
         error: () => this.carregando.set(false),
       });
     } else {
       this.adicionarItem();
     }
   }
+
 
   onRevendedorSelecionado(r: { id: string }): void {
     this.form.get('idUsuario')?.setValue(r.id);
