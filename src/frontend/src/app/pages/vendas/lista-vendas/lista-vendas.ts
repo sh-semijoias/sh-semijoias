@@ -31,6 +31,7 @@ import { DialogConfirmarCancelamentoComponent, DialogConfirmarCancelamentoResult
 import { DialogRegistrarPagamentoComponent, DialogRegistrarPagamentoResult } from '../dialog-registrar-pagamento/dialog-registrar-pagamento';
 import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 import { BrDateAdapter } from '../../../shared/br-date-adapter';
+import { Router } from '@angular/router';
 
 interface RevendedorOpcao { id: string; nome: string; }
 
@@ -76,6 +77,7 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
+  private readonly router = inject(Router);
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
@@ -92,6 +94,10 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     const base = ['dataVenda', 'nomeCliente', 'totalItens', 'valorTotal', 'valorRecebido', 'formaPagamento', 'status', 'acoes'];
     return this.isAdmin() ? [...base.slice(0, 2), 'nomeRevendedora', ...base.slice(2)] : base;
   }
+
+  visualizar(item: VendaListagemDto): void {
+  this.router.navigate(['/vendas', item.id]);
+}
 
   podeCancelar(item: VendaListagemDto): boolean {
     const uid = this.auth.currentUser()?.userId;

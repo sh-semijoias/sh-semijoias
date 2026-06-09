@@ -305,4 +305,46 @@ foreach (var item in dto.Itens)
         }
         return parcelas;
     }
+
+   public async Task<Result<VendaDetalheDto>> ObterPorIdAsync(
+    int id,
+    bool isAdmin)
+{
+    var venda = await vendaRepository.ObterPorIdAsync(id);
+
+    if (venda is null)
+        return Result<VendaDetalheDto>.Falha("Venda não encontrada.");
+
+        Console.WriteLine($"Cliente null? {venda.Cliente == null}");
+Console.WriteLine($"Usuario null? {venda.Usuario == null}");
+
+foreach (var item in venda.Itens)
+{
+    Console.WriteLine($"Estoque null? {item.Estoque == null}");
+    Console.WriteLine($"Produto null? {item.Estoque?.Produto == null}");
+}
+
+var dto = new VendaDetalheDto(
+    venda.Id,
+    venda.IdCliente,
+    venda.Cliente?.Nome ?? "",
+    venda.IdUsuario,
+    venda.Usuario?.Nome ?? "",
+    venda.IdTipoPagamento,
+    venda.TotalParcelas,
+    venda.Comentario,
+    venda.Itens.Select(i =>
+        new ItemVendaDetalheDto(
+            i.IdEstoque,
+            i.Estoque.IdProduto,
+            i.Estoque.Produto?.Descricao ?? "",
+            i.Quantidade,
+            i.PrecoVendaReal
+        )
+    ).ToList()
+);
+
+    return Result<VendaDetalheDto>.Ok(dto);
+}
+
 }

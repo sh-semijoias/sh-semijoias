@@ -34,4 +34,5 @@ export const routes: Routes = [
   { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'vendas', component: ListaVendasComponent, canActivate: [authGuard()] },
   { path: 'vendas/nova', component: FormVendaComponent, canActivate: [authGuard()] },
+  {  path: 'vendas/:id',  component: FormVendaComponent,  canActivate: [authGuard()]},
 ];

@@ -149,11 +149,15 @@ public class VendaRepository(ApplicationDbContext context) : IVendaRepository
     public Task<TipoPagamento?> ObterTipoPagamentoAsync(int idTipoPagamento) =>
         context.TiposPagamento.FirstOrDefaultAsync(t => t.Id == idTipoPagamento);
 
-    public Task<Venda?> ObterPorIdAsync(int id) =>
-        context.Vendas
-            .Include(v => v.Itens).ThenInclude(i => i.Estoque)
-            .Include(v => v.Cancelamento)
-            .FirstOrDefaultAsync(v => v.Id == id);
+public Task<Venda?> ObterPorIdAsync(int id) =>
+    context.Vendas
+        .Include(v => v.Cliente)
+        .Include(v => v.Usuario)
+        .Include(v => v.Itens)
+            .ThenInclude(i => i.Estoque)
+                .ThenInclude(e => e.Produto)
+        .Include(v => v.Cancelamento)
+        .FirstOrDefaultAsync(v => v.Id == id);
 
     public async Task<IReadOnlyList<MotivoCancelamentoVenda>> ListarMotivosCancelamentoAsync() =>
         await context.MotivosCancelamentoVenda

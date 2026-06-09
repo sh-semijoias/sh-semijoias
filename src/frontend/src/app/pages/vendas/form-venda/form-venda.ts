@@ -27,6 +27,7 @@ import { computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
 import { ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 
 function aoMenosUmItem(control: AbstractControl): ValidationErrors | null {
@@ -75,8 +76,134 @@ export class FormVendaComponent implements OnInit, OnDestroy {
   readonly formasPagamento = signal<FormaPagamentoDto[]>([]);
   readonly produtosSelecionados = signal<(EstoqueDto | null)[]>([]);
   readonly total = signal(0);
+  private readonly route = inject(ActivatedRoute);
+  readonly produtoControls = signal<FormControl<EstoqueDto | null>[]>([]);
+
+  readonly modoVisualizacao = signal(false);
+private vendaId: number | null = null;
 
   readonly clienteControl = new FormControl<ClientesDto | string | null>(null, Validators.required);
+
+
+
+
+
+private carregarVenda(id: number): void {
+  this.service.obterPorId(id).subscribe({
+    next: venda => {
+
+      // Campos do FormGroup
+      this.form.patchValue({
+        idUsuario: venda.idUsuario,
+        idTipoPagamento: venda.idTipoPagamento,
+        totalParcelas: venda.totalParcelas,
+        comentario: venda.comentario ?? ''
+      });
+
+      // Cliente
+      this.clienteControl.setValue({
+        id: venda.idCliente.toString(),
+        nome: venda.nomeCliente,
+        email: '',
+        cpf: '',
+        telefone: null
+      });
+
+      // Revendedor
+this.revendedorControl.setValue({
+  id: venda.idUsuario!,
+  nome: venda.nomeRevendedora!
+});
+
+      // Limpa itens existentes
+this.itens.clear();
+this.produtosSelecionados.set([]);
+
+venda.itens.forEach(item => {
+
+  const grupo = this.fb.group({
+    idEstoque: [item.idEstoque],
+    idProduto: [item.idProduto],
+    quantidade: [item.quantidade],
+    precoVendaReal: [
+      this.formatarMoeda(item.precoVendaReal)
+    ]
+  });
+
+  this.itens.push(grupo);
+
+  this.produtosSelecionados.update(arr => [
+    ...arr,
+    {
+      id: item.idEstoque,
+      idProduto: item.idProduto,
+      produto: item.produto,
+      quantidade: item.quantidade,
+      precoCompra: 0,
+      precoVendaSugerido: item.precoVendaReal,
+      idTipoProduto: 0,
+      tipo: ''
+    } as EstoqueDto
+  ]);
+});
+
+this.recalcularTotal();
+
+      // modo somente leitura
+this.itens.clear();
+this.produtosSelecionados.set([]);
+this.produtoControls.set([]);
+
+venda.itens.forEach(item => {
+
+  this.adicionarItem();
+
+  const indice = this.itens.length - 1;
+
+  this.itens.at(indice).patchValue({
+    idEstoque: item.idEstoque,
+    idProduto: item.idProduto,
+    quantidade: item.quantidade,
+    precoVendaReal: this.formatarMoeda(item.precoVendaReal)
+  });
+
+  const produto: EstoqueDto = {
+    id: item.idEstoque,
+    idProduto: item.idProduto,
+    produto: item.produto,
+    quantidade: item.quantidade,
+    precoCompra: 0,
+    precoVendaSugerido: item.precoVendaReal,
+    idTipoProduto: 0,
+    tipo: ''
+  };
+
+  this.produtosSelecionados.update(arr => {
+    arr[indice] = produto;
+    return [...arr];
+  });
+
+  this.produtoControls()[indice].setValue(produto);
+
+  if (this.modoVisualizacao()) {
+  this.form.disable();
+  this.clienteControl.disable();
+  this.revendedorControl.disable();
+
+  this.produtoControls().forEach(c => c.disable());
+}
+});
+
+this.recalcularTotal();
+
+      console.log('VENDA RECEBIDA', venda);
+    },
+    error: erro => {
+      console.error('ERRO AO BUSCAR VENDA', erro);
+    }
+  });
+}
+
   readonly isAdmin = computed(  () => this.auth.currentUser()?.role === Perfil.Administrador
 );
 
@@ -169,7 +296,25 @@ onRevendedorLimpo(): void {
       error: () => this.carregando.set(false),
     });
 
+const idParam = this.route.snapshot.paramMap.get('id');
+
+console.log('ID PARAM', idParam);
+
+if (idParam) {
+  this.vendaId = Number(idParam);
+  this.modoVisualizacao.set(true);
+
+  this.carregarVenda(this.vendaId);
+
+  this.form.disable();
+  this.clienteControl.disable();
+  this.revendedorControl.disable();
+
+  return;
+}
+
     this.adicionarItem();
+
   }
 
   ngOnDestroy(): void {
@@ -187,25 +332,39 @@ onRevendedorLimpo(): void {
     this.produtosSelecionados.update(arr => arr.map((e, i) => i === index ? null : e));
   }
 
-  adicionarItem(): void {
-    this.itens.push(
-      this.fb.group({
-        idEstoque: [null as number | null, Validators.required],
-        idProduto: [null as number | null],
-        quantidade: [null as number | null, [Validators.required, Validators.min(1)]],
-        precoVendaReal: ['', Validators.required],
-      })
-    );
-    this.produtosSelecionados.update(arr => [...arr, null]);
-  }
+adicionarItem(): void {
 
-  removerItem(index: number): void {
-    if (this.itens.length > 1) {
-      this.itens.removeAt(index);
-      this.produtosSelecionados.update(arr => arr.filter((_, i) => i !== index));
-      this.recalcularTotal();
-    }
-  }
+  this.itens.push(
+    this.fb.group({
+      idEstoque: [null],
+      idProduto: [null],
+      quantidade: [null],
+      precoVendaReal: ['']
+    })
+  );
+
+  this.produtosSelecionados.update(arr => [...arr, null]);
+
+  this.produtoControls.update(arr => [
+    ...arr,
+    new FormControl<EstoqueDto | null>(null)
+  ]);
+}
+
+removerItem(index: number): void {
+
+  this.itens.removeAt(index);
+
+  this.produtosSelecionados.update(
+    arr => arr.filter((_, i) => i !== index)
+  );
+
+  this.produtoControls.update(
+    arr => arr.filter((_, i) => i !== index)
+  );
+
+  this.recalcularTotal();
+}
 
   produtosSelecionadosExceto(index: number): number[] {
     return this.produtosSelecionados()

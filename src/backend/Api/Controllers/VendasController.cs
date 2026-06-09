@@ -12,6 +12,18 @@ namespace ShSemijoias.Api.Controllers;
 [Authorize]
 public class VendasController(IVendaService vendaService) : ControllerBase
 {
+
+    [HttpGet("{id:int}")]
+public async Task<IActionResult> ObterPorId(int id)
+{
+    var isAdmin = User.IsInRole("Administrador");
+
+    var result = await vendaService.ObterPorIdAsync(id, isAdmin);
+
+    return result.Sucesso
+        ? Ok(result.Valor)
+        : result.ToActionResult(this);
+}
     [HttpGet]
     public async Task<IActionResult> Listar(
         [FromQuery] int pagina = 1,

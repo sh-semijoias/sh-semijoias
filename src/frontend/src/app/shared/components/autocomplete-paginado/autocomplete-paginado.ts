@@ -64,12 +64,16 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
     this.effectiveControl.valueChanges.pipe(
       debounceTime(300),
       takeUntil(this.destroy$)
-    ).subscribe(valor => {
-      if (typeof valor === 'string') {
-        this.buscaAtual = valor;
-        this.carregarPagina(1, valor);
-      }
-    });
+    )
+
+.subscribe(valor => {
+  if (typeof valor === 'string') {
+    this.buscaAtual = valor;
+    this.carregarPagina(1, valor);
+  } else if (valor) {
+    this.opcoes.set([valor as { id: string | number }]);
+  }
+});
 
     //this.carregarPagina(1, '');
   }
@@ -81,6 +85,10 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   }
 
 onPanelAberto(auto: MatAutocomplete): void {
+
+    if (this.effectiveControl.disabled) {
+    return;
+  }
 
   if (this.opcoes().length === 0) {
     this.carregarPagina(1, '');

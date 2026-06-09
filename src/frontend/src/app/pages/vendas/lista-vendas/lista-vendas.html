@@ -260,7 +260,13 @@
                     [disabled]="!temAcoes(item)">
                     <mat-icon>more_vert</mat-icon>
                   </button>
+
                   <mat-menu #menu="matMenu">
+                                      <button mat-menu-item (click)="visualizar(item)">
+  <mat-icon>visibility</mat-icon>
+  Visualizar
+</button>
+
                     @if (podeRegistrarPagamento(item)) {
                       <button mat-menu-item (click)="registrarPagamento(item)">
                         <mat-icon>payments</mat-icon>

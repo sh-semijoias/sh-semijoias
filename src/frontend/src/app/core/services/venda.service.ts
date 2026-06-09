@@ -101,6 +101,25 @@ export interface VendaCriadaDto {
   totalParcelas: number;
 }
 
+export interface VendaDetalheDto {
+  id: number;
+  idCliente: number;
+  nomeCliente: string;
+  idUsuario?: string;
+  nomeRevendedora?: string;
+  idTipoPagamento: number;
+  totalParcelas: number;
+  comentario?: string;
+
+  itens: {
+    idEstoque: number;
+    idProduto: number;
+    produto: string;
+    quantidade: number;
+    precoVendaReal: number;
+  }[];
+}
+
 
 @Injectable({ providedIn: 'root' })
 export class VendaService {
@@ -147,4 +166,10 @@ export class VendaService {
   registrarPagamento(idVenda: number, dto: RegistrarPagamentoDto): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${idVenda}/parcelas/pagamento`, dto);
   }
+
+obterPorId(id: number): Observable<VendaDetalheDto> {
+  return this.http.get<VendaDetalheDto>(
+    `${this.baseUrl}/${id}`
+  );
+}
 }
