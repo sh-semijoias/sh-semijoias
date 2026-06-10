@@ -24,6 +24,7 @@ export const routes: Routes = [
   { path: 'estoque', component: ListaEstoqueComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'maletas', component: ListaMaletasComponent, canActivate: [authGuard()] },
   { path: 'maletas/nova', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
+  {  path: 'maletas/:id',  component: FormMaletaComponent,  canActivate: [authGuard()]},
   { path: 'maletas/:id/editar', component: FormMaletaComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'clientes', component: ListaClientesComponent, canActivate: [authGuard] },
   { path: 'clientes/novo', component: FormClienteComponent, canActivate: [authGuard] },
@@ -33,4 +34,5 @@ export const routes: Routes = [
   { path: 'produtos/:id', component: FormProdutoComponent, canActivate: [authGuard()] },
   { path: 'vendas', component: ListaVendasComponent, canActivate: [authGuard()] },
   { path: 'vendas/nova', component: FormVendaComponent, canActivate: [authGuard()] },
+  {  path: 'vendas/:id',  component: FormVendaComponent,  canActivate: [authGuard()]},
 ];

@@ -36,6 +36,7 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   @Input() fieldClass = '';
   @Input() subscriptSizing: 'fixed' | 'dynamic' = 'fixed';
 
+
   @HostBinding('class') get hostClass(): string { return 'block ' + this.fieldClass; }
 
   @Output() readonly selecionado = new EventEmitter<{ id: string | number }>();
@@ -63,12 +64,16 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
     this.effectiveControl.valueChanges.pipe(
       debounceTime(300),
       takeUntil(this.destroy$)
-    ).subscribe(valor => {
-      if (typeof valor === 'string') {
-        this.buscaAtual = valor;
-        this.carregarPagina(1, valor);
-      }
-    });
+    )
+
+.subscribe(valor => {
+  if (typeof valor === 'string') {
+    this.buscaAtual = valor;
+    this.carregarPagina(1, valor);
+  } else if (valor) {
+    this.opcoes.set([valor as { id: string | number }]);
+  }
+});
 
     this.carregarPagina(1, '');
   }
@@ -79,20 +84,39 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onPanelAberto(auto: MatAutocomplete): void {
-    this.panelAberto$.next();
-    setTimeout(() => {
-      const panel = auto.panel?.nativeElement;
-      if (!panel) return;
-      fromEvent(panel, 'scroll').pipe(
-        takeUntil(merge(this.panelAberto$, this.destroy$))
-      ).subscribe(() => {
-        if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 50) {
-          this.carregarMais();
-        }
-      });
-    });
+
+  onFocus(): void {
+  if (this.opcoes().length === 0) {
+    this.buscaAtual = '';
+    this.carregarPagina(1, '');
   }
+}
+
+onPanelAberto(auto: MatAutocomplete): void {
+
+    if (this.effectiveControl.disabled) {
+    return;
+  }
+
+  if (this.opcoes().length === 0) {
+    this.carregarPagina(1, '');
+  }
+
+  this.panelAberto$.next();
+
+  setTimeout(() => {
+    const panel = auto.panel?.nativeElement;
+    if (!panel) return;
+
+    fromEvent(panel, 'scroll').pipe(
+      takeUntil(merge(this.panelAberto$, this.destroy$))
+    ).subscribe(() => {
+      if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 50) {
+        this.carregarMais();
+      }
+    });
+  });
+}
 
   carregarMais(): void {
     if (this.carregandoMais() || this.opcoes().length >= this.total()) return;

@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
@@ -30,6 +30,8 @@ import { Perfil } from '../../../core/enums/perfil.enum';
 import { DialogConfirmarCancelamentoComponent, DialogConfirmarCancelamentoResult } from '../dialog-confirmar-cancelamento/dialog-confirmar-cancelamento';
 import { DialogRegistrarPagamentoComponent, DialogRegistrarPagamentoResult } from '../dialog-registrar-pagamento/dialog-registrar-pagamento';
 import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
+import { BrDateAdapter } from '../../../shared/br-date-adapter';
+import { Router } from '@angular/router';
 
 interface RevendedorOpcao { id: string; nome: string; }
 
@@ -58,6 +60,12 @@ interface RevendedorOpcao { id: string; nome: string; }
     CurrencyPipe,
     DatePipe,
   ],
+  providers: [
+    {
+      provide: DateAdapter,
+      useClass: BrDateAdapter
+    }
+  ],
   templateUrl: './lista-vendas.html'
 })
 export class ListaVendasComponent implements OnInit, OnDestroy {
@@ -69,6 +77,7 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
+  private readonly router = inject(Router);
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === Perfil.Administrador);
 
@@ -85,6 +94,10 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     const base = ['dataVenda', 'nomeCliente', 'totalItens', 'valorTotal', 'valorRecebido', 'formaPagamento', 'status', 'acoes'];
     return this.isAdmin() ? [...base.slice(0, 2), 'nomeRevendedora', ...base.slice(2)] : base;
   }
+
+  visualizar(item: VendaListagemDto): void {
+  this.router.navigate(['/vendas', item.id]);
+}
 
   podeCancelar(item: VendaListagemDto): boolean {
     const uid = this.auth.currentUser()?.userId;
@@ -153,14 +166,23 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
   readonly loadRevendedoresFn = (pagina: number, busca: string) =>
     this.usuarioService.listarRevendedoresPaginado(pagina, busca);
 
-  ngOnInit(): void {
+private readonly dateAdapter = inject(DateAdapter);
+
+ngOnInit(): void {
+
+  console.log('Adapter usado:', this.dateAdapter.constructor.name);
     this.dataInicioControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
+
 
     this.dataFimControl.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => { this.pagina.set(1); this.carregar(); });
 
+
     this.carregar();
+
+
+
   }
 
   onClienteAlterado(): void { this.pagina.set(1); this.carregar(); }
@@ -259,4 +281,6 @@ export class ListaVendasComponent implements OnInit, OnDestroy {
     this.pagina.set(1);
     this.carregar();
   }
+
+
 }

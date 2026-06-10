@@ -1,7 +1,9 @@
 <div class="p-4 sm:p-6">
   <div class="flex items-center gap-2 mb-6">
     <a mat-icon-button routerLink="/vendas"><mat-icon>arrow_back</mat-icon></a>
-    <h2 class="text-xl font-semibold">Nova Venda</h2>
+<h2 class="text-xl font-semibold">
+  {{ modoVisualizacao() ? 'Visualizar Venda' : 'Nova Venda' }}
+</h2>
   </div>
 
   <mat-card>
@@ -19,6 +21,19 @@
             [hasError]="clienteControl.touched && clienteControl.hasError('required')"
             errorMessage="Cliente é obrigatório."
           />
+
+@if (isAdmin()) {
+  <app-autocomplete-paginado
+    #produtoAutocomplete
+    label="Revendedor"
+    placeholder="Buscar revendedor..."
+    [control]="revendedorControl"
+    [loadFn]="loadRevendedoresFn"
+    [displayFn]="displayRevendedor"
+    (selecionado)="onRevendedorSelecionado($event)"
+    (limpo)="onRevendedorLimpo()"
+  />
+}
 
           <div class="flex flex-col sm:flex-row gap-3">
             <mat-form-field appearance="outline" class="w-full sm:flex-1">
@@ -52,17 +67,17 @@
           <div formArrayName="itens" class="flex flex-col gap-4">
             @for (item of itens.controls; track $index) {
               <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-3 items-start">
-                <app-autocomplete-paginado
-                  label="Produto" placeholder="Digite para buscar..."
-                  fieldClass="w-full sm:flex-1"
-                  [loadFn]="loadProdutosFn"
-                  [displayFn]="displayProduto"
-                  [excluirIds]="produtosSelecionadosExceto($index)"
-                  [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
-                  errorMessage="Selecione um produto."
-                  (selecionado)="selecionarProduto($index, $any($event))"
-                  (limpo)="limparProdutoLinha($index)"
-                />
+<app-autocomplete-paginado
+    label="Produto"
+    [control]="produtoControls()[$index]"
+    [loadFn]="loadProdutosFn"
+    [displayFn]="displayProduto"
+    [excluirIds]="produtosSelecionadosExceto($index)"
+    [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
+    errorMessage="Selecione um produto."
+    (selecionado)="selecionarProduto($index, $any($event))"
+    (limpo)="limparProdutoLinha($index)"
+/>
 
                 <div class="flex gap-3 items-start w-full sm:w-auto">
                 <mat-form-field appearance="outline" class="flex-1 sm:flex-none sm:w-36">
@@ -87,16 +102,25 @@
                   }
                 </mat-form-field>
 
-                <button mat-icon-button type="button" (click)="removerItem($index)"
-                  [disabled]="itens.length === 1" class="mt-2">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                @if (!modoVisualizacao()) {
+  <button
+    mat-icon-button
+    type="button"
+    (click)="removerItem($index)"
+    [disabled]="itens.length === 1">
+    <mat-icon>delete</mat-icon>
+  </button>
+}
                 </div>
               </div>
             }
           </div>
 
-          <app-add-row-button label="Adicionar produto" (clicked)="adicionarItem()" />
+@if (!modoVisualizacao()) {
+  <app-add-row-button
+    label="Adicionar produto"
+    (clicked)="adicionarItem()" />
+}
 
           <mat-divider />
 
@@ -119,9 +143,11 @@
           }
 
           <div class="flex gap-3 mt-2">
-            <button mat-flat-button type="submit" [disabled]="salvando()">
-              {{ salvando() ? 'Salvando...' : 'Salvar' }}
-            </button>
+@if (!modoVisualizacao()) {
+  <button mat-flat-button type="submit" [disabled]="salvando()">
+    {{ salvando() ? 'Salvando...' : 'Salvar' }}
+  </button>
+}
             <a mat-button routerLink="/vendas">Cancelar</a>
           </div>
         </form>

@@ -1,11 +1,17 @@
 <mat-form-field appearance="outline" class="w-full" [subscriptSizing]="subscriptSizing">
   <mat-label>{{ label }}</mat-label>
-  <input matInput [formControl]="$any(effectiveControl)" [matAutocomplete]="auto" [placeholder]="placeholder" />
-  @if (effectiveControl.value) {
-    <button matSuffix mat-icon-button type="button" (click)="limpar()">
-      <mat-icon>close</mat-icon>
-    </button>
-  }
+<input
+  matInput
+  [formControl]="$any(effectiveControl)"
+  [matAutocomplete]="auto"
+  [placeholder]="placeholder"
+  (focus)="onFocus()" />
+
+@if (effectiveControl.value && !effectiveControl.disabled) {
+  <button matSuffix mat-icon-button type="button" (click)="limpar()">
+    <mat-icon>close</mat-icon>
+  </button>
+}
   <mat-autocomplete #auto [displayWith]="displayFn" (opened)="onPanelAberto(auto)"
     (optionSelected)="onOpcaoSelecionada($event.option.value)">
     @if (carregando()) {
@@ -17,6 +23,7 @@
       @if (carregandoMais()) {
         <mat-option disabled>Carregando mais...</mat-option>
       }
+
     }
   </mat-autocomplete>
   @if (hasError) {

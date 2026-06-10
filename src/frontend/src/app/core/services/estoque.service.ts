@@ -30,6 +30,7 @@ export interface ListarEstoqueFiltros {
   busca?: string;
   ordenarPor?: OrdenacaoEstoque;
   ordemDecrescente?: boolean;
+  idUsuario?: string;
 }
 
 export interface ItemEntradaDto { idProduto: number; quantidade: number; }
@@ -42,6 +43,9 @@ export class EstoqueService {
   private readonly baseUrl = '/api/estoque';
 
   listar(filtros: ListarEstoqueFiltros): Observable<ListaPaginada<EstoqueDto>> {
+
+    console.log('Filtros recebidos', filtros);
+
     let params = new HttpParams()
       .set('pagina', filtros.pagina)
       .set('tamanhoPagina', filtros.tamanhoPagina);
@@ -51,6 +55,7 @@ export class EstoqueService {
     if (filtros.busca != null && filtros.busca !== '') params = params.set('busca', filtros.busca);
     if (filtros.ordenarPor != null) params = params.set('ordenarPor', filtros.ordenarPor);
     if (filtros.ordemDecrescente) params = params.set('ordemDecrescente', true);
+   if (filtros.idUsuario)  params = params.set('idUsuario', filtros.idUsuario);
 
     return this.http.get<ListaPaginada<EstoqueDto>>(this.baseUrl, { params });
   }

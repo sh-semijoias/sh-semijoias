@@ -67,17 +67,62 @@ public class VendaService(
         if (erros.Count > 0)
             return Result<VendaCriadaDto>.Falha(erros);
 
-        int? idMaleta = null;
-        if (!isAdmin)
-        {
-            var maleta = await maletaRepository.ObterPorUsuarioAsync(idUsuario);
-            if (maleta is null)
-                return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
-            idMaleta = maleta.Id;
-        }
+Guid usuarioVenda = idUsuario;
+int? idMaleta = null;
 
-        var idsEstoque = dto.Itens!.Select(i => i.IdEstoque).ToList();
-        var estoques = await estoqueRepository.BuscarPorIdsAsync(idsEstoque, idMaleta);
+if (isAdmin)
+{
+    // Admin escolheu uma revendedora
+    if (!string.IsNullOrWhiteSpace(dto.IdUsuario))
+    {
+        if (!Guid.TryParse(dto.IdUsuario, out usuarioVenda))
+            return Result<VendaCriadaDto>.Falha("Revendedor inválido.");
+
+        var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
+
+        if (maleta is null)
+            return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+
+        idMaleta = maleta.Id;
+    }
+
+    // se dto.IdUsuario for vazio:
+    // usuarioVenda continua sendo o administrador
+    // idMaleta continua null
+}
+else
+{
+    var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
+
+    if (maleta is null)
+        return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+
+    idMaleta = maleta.Id;
+}
+
+Console.WriteLine($"USUARIO VENDA: {usuarioVenda}");
+Console.WriteLine($"MALETA ENCONTRADA: {idMaleta}");
+
+var idsEstoque = dto.Itens.Select(i => i.IdEstoque).ToList();
+
+Dictionary<int, Estoque> estoques;
+
+if (idMaleta.HasValue)
+{
+    estoques = await estoqueRepository.BuscarPorIdsAsync(
+        idsEstoque,
+        idMaleta.Value
+    );
+}
+else
+{
+    // venda do estoque geral
+    estoques = await estoqueRepository.BuscarPorIdsAsync(
+        idsEstoque
+    );
+}
+
+        Console.WriteLine($"ESTOQUES ENCONTRADOS: {estoques.Count}");
 
         foreach (var item in dto.Itens!)
         {
@@ -93,11 +138,16 @@ public class VendaService(
         var agora = DateTime.UtcNow;
         var valorTotal = dto.Itens!.Sum(i => i.PrecoVendaReal * i.Quantidade);
 
+foreach (var item in dto.Itens)
+{
+    Console.WriteLine($"ID ESTOQUE RECEBIDO: {item.IdEstoque}");
+}
+
         var venda = new Venda
         {
-            IdCliente = dto.IdCliente,
-            IdUsuario = idUsuario,
-            IdTipoPagamento = dto.IdTipoPagamento,
+        IdCliente = dto.IdCliente,
+     IdUsuario = usuarioVenda, // administrador ou revendedora
+        IdTipoPagamento = dto.IdTipoPagamento,
             TotalParcelas = dto.TotalParcelas,
             Comentario = string.IsNullOrWhiteSpace(dto.Comentario) ? null : dto.Comentario.Trim(),
             DataVenda = agora,
@@ -285,4 +335,46 @@ public class VendaService(
         }
         return parcelas;
     }
+
+   public async Task<Result<VendaDetalheDto>> ObterPorIdAsync(
+    int id,
+    bool isAdmin)
+{
+    var venda = await vendaRepository.ObterPorIdAsync(id);
+
+    if (venda is null)
+        return Result<VendaDetalheDto>.Falha("Venda não encontrada.");
+
+        Console.WriteLine($"Cliente null? {venda.Cliente == null}");
+Console.WriteLine($"Usuario null? {venda.Usuario == null}");
+
+foreach (var item in venda.Itens)
+{
+    Console.WriteLine($"Estoque null? {item.Estoque == null}");
+    Console.WriteLine($"Produto null? {item.Estoque?.Produto == null}");
+}
+
+var dto = new VendaDetalheDto(
+    venda.Id,
+    venda.IdCliente,
+    venda.Cliente?.Nome ?? "",
+    venda.IdUsuario,
+    venda.Usuario?.Nome ?? "",
+    venda.IdTipoPagamento,
+    venda.TotalParcelas,
+    venda.Comentario,
+    venda.Itens.Select(i =>
+        new ItemVendaDetalheDto(
+            i.IdEstoque,
+            i.Estoque.IdProduto,
+            i.Estoque.Produto?.Descricao ?? "",
+            i.Quantidade,
+            i.PrecoVendaReal
+        )
+    ).ToList()
+);
+
+    return Result<VendaDetalheDto>.Ok(dto);
+}
+
 }
