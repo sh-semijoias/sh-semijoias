@@ -2,10 +2,11 @@
   <mat-label>{{ label }}</mat-label>
 <input
   matInput
-  [readonly]="effectiveControl.disabled"
   [formControl]="$any(effectiveControl)"
   [matAutocomplete]="auto"
-  [placeholder]="placeholder" />
+  [placeholder]="placeholder"
+  (focus)="onFocus()" />
+
 @if (effectiveControl.value && !effectiveControl.disabled) {
   <button matSuffix mat-icon-button type="button" (click)="limpar()">
     <mat-icon>close</mat-icon>

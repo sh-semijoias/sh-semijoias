@@ -261,6 +261,8 @@ readonly loadRevendedoresFn = (
   readonly displayProduto = (p: EstoqueDto | null): string =>
     p ? p.produto : '';
 
+
+
 onRevendedorSelecionado(r: { id: string | number }): void {
 
   this.form.get('idUsuario')?.setValue(r.id.toString());

@@ -75,7 +75,7 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   }
 });
 
-    //this.carregarPagina(1, '');
+    this.carregarPagina(1, '');
   }
 
   ngOnDestroy(): void {
@@ -83,6 +83,14 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+
+  onFocus(): void {
+  if (this.opcoes().length === 0) {
+    this.buscaAtual = '';
+    this.carregarPagina(1, '');
+  }
+}
 
 onPanelAberto(auto: MatAutocomplete): void {
 

@@ -67,30 +67,60 @@ public class VendaService(
         if (erros.Count > 0)
             return Result<VendaCriadaDto>.Falha(erros);
 
-Guid usuarioVenda;
+Guid usuarioVenda = idUsuario;
+int? idMaleta = null;
 
 if (isAdmin)
 {
-    if (!Guid.TryParse(dto.IdUsuario, out usuarioVenda))
-        return Result<VendaCriadaDto>.Falha("Revendedor inválido.");
+    // Admin escolheu uma revendedora
+    if (!string.IsNullOrWhiteSpace(dto.IdUsuario))
+    {
+        if (!Guid.TryParse(dto.IdUsuario, out usuarioVenda))
+            return Result<VendaCriadaDto>.Falha("Revendedor inválido.");
+
+        var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
+
+        if (maleta is null)
+            return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+
+        idMaleta = maleta.Id;
+    }
+
+    // se dto.IdUsuario for vazio:
+    // usuarioVenda continua sendo o administrador
+    // idMaleta continua null
 }
 else
 {
-    usuarioVenda = idUsuario;
+    var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
+
+    if (maleta is null)
+        return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
+
+    idMaleta = maleta.Id;
 }
-
-var maleta = await maletaRepository.ObterPorUsuarioAsync(usuarioVenda);
-
-if (maleta is null)
-    return Result<VendaCriadaDto>.Falha("Revendedor não possui maleta ativa.");
-
-var idMaleta = maleta.Id;
 
 Console.WriteLine($"USUARIO VENDA: {usuarioVenda}");
 Console.WriteLine($"MALETA ENCONTRADA: {idMaleta}");
 
-        var idsEstoque = dto.Itens!.Select(i => i.IdEstoque).ToList();
-        var estoques = await estoqueRepository.BuscarPorIdsAsync(idsEstoque, idMaleta);
+var idsEstoque = dto.Itens.Select(i => i.IdEstoque).ToList();
+
+Dictionary<int, Estoque> estoques;
+
+if (idMaleta.HasValue)
+{
+    estoques = await estoqueRepository.BuscarPorIdsAsync(
+        idsEstoque,
+        idMaleta.Value
+    );
+}
+else
+{
+    // venda do estoque geral
+    estoques = await estoqueRepository.BuscarPorIdsAsync(
+        idsEstoque
+    );
+}
 
         Console.WriteLine($"ESTOQUES ENCONTRADOS: {estoques.Count}");
 
@@ -115,9 +145,9 @@ foreach (var item in dto.Itens)
 
         var venda = new Venda
         {
-            IdCliente = dto.IdCliente,
-            IdUsuario = usuarioVenda,
-            IdTipoPagamento = dto.IdTipoPagamento,
+        IdCliente = dto.IdCliente,
+     IdUsuario = usuarioVenda, // administrador ou revendedora
+        IdTipoPagamento = dto.IdTipoPagamento,
             TotalParcelas = dto.TotalParcelas,
             Comentario = string.IsNullOrWhiteSpace(dto.Comentario) ? null : dto.Comentario.Trim(),
             DataVenda = agora,
