@@ -67,17 +67,53 @@
           <div formArrayName="itens" class="flex flex-col gap-4">
             @for (item of itens.controls; track $index) {
               <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-3 items-start">
-<app-autocomplete-paginado
-    label="Produto"
-    [control]="produtoControls()[$index]"
-    [loadFn]="loadProdutosFn"
-    [displayFn]="displayProduto"
-    [excluirIds]="produtosSelecionadosExceto($index)"
-    [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
-    errorMessage="Selecione um produto."
-    (selecionado)="selecionarProduto($index, $any($event))"
-    (limpo)="limparProdutoLinha($index)"
-/>
+<div class="flex flex-col gap-2 flex-1">
+
+  <app-autocomplete-paginado
+      label="Produto"
+      [control]="produtoControls()[$index]"
+      [loadFn]="loadProdutosFn"
+      [displayFn]="displayProduto"
+      [excluirIds]="produtosSelecionadosExceto($index)"
+      [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
+      errorMessage="Selecione um produto."
+      (selecionado)="selecionarProduto($index, $any($event))"
+      (limpo)="limparProdutoLinha($index)"
+  />
+
+
+
+
+<img
+  [src]="getImagem(previews()[$index])"
+  width="200">
+
+@if (!modoVisualizacao()) {
+
+  <input
+    #fileInput
+    type="file"
+    accept="image/*"
+    style="display:none"
+    (change)="onFotoSelecionada($event, $index)" />
+
+  <button
+    mat-stroked-button
+    type="button"
+    (click)="fileInput.click()">
+    <mat-icon>photo_camera</mat-icon>
+    Adicionar foto
+  </button>
+
+}
+
+
+
+
+
+</div>
+
+
 
                 <div class="flex gap-3 items-start w-full sm:w-auto">
                 <mat-form-field appearance="outline" class="flex-1 sm:flex-none sm:w-36">
@@ -121,6 +157,7 @@
     label="Adicionar produto"
     (clicked)="adicionarItem()" />
 }
+
 
           <mat-divider />
 

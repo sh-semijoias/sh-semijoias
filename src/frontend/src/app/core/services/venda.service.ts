@@ -117,6 +117,7 @@ export interface VendaDetalheDto {
     produto: string;
     quantidade: number;
     precoVendaReal: number;
+    fotoPath?: string;
   }[];
 }
 
@@ -147,9 +148,12 @@ export class VendaService {
     return this.http.get<FormaPagamentoDto[]>(`${this.baseUrl}/formas-pagamento`);
   }
 
-  criar(dto: CriarVendaDto): Observable<VendaCriadaDto> {
-    return this.http.post<VendaCriadaDto>(this.baseUrl, dto);
-  }
+criar(formData: FormData): Observable<VendaCriadaDto> {
+    return this.http.post<VendaCriadaDto>(
+        this.baseUrl,
+        formData
+    );
+}
 
   listarMotivosCancelamento(): Observable<MotivoCancelamentoDto[]> {
     return this.http.get<MotivoCancelamentoDto[]>(`${this.baseUrl}/motivos-cancelamento`);

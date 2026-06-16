@@ -288,6 +288,10 @@ namespace ShSemijoias.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("FotoPath")
+                        .HasColumnType("text")
+                        .HasColumnName("foto_path");
+
                     b.Property<int>("IdEstoque")
                         .HasColumnType("integer")
                         .HasColumnName("id_estoque");

@@ -17,5 +17,6 @@ public record ItemVendaDetalheDto(
     int IdProduto,
     string Produto,
     int Quantidade,
-    decimal PrecoVendaReal
+    decimal PrecoVendaReal,
+    string? FotoPath
 );

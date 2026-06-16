@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShSemijoias.Api.Extensions;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
+using System.Text.Json;
 
 namespace ShSemijoias.Api.Controllers;
 
@@ -75,14 +76,43 @@ public async Task<IActionResult> ObterPorId(int id)
     }
 
 [HttpPost]
-public async Task<IActionResult> Criar([FromBody] CriarVendaDto dto)
+public async Task<IActionResult> Criar(
+    [FromForm] string dadosVenda,
+    List<IFormFile> arquivos)
 {
+    
+var dto = System.Text.Json.JsonSerializer.Deserialize<CriarVendaDto>(
+    dadosVenda,
+    new System.Text.Json.JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    }
+);
+
+Console.WriteLine(dadosVenda);
+
+Console.WriteLine($"IdCliente: {dto?.IdCliente}");
+Console.WriteLine($"IdTipoPagamento: {dto?.IdTipoPagamento}");
+Console.WriteLine($"Parcelas: {dto?.TotalParcelas}");
+Console.WriteLine($"Itens: {dto?.Itens?.Count}");
+
+    if (dto == null)
+        return BadRequest("Dados da venda inválidos.");
+
     Console.WriteLine($"DTO.IdUsuario recebido: {dto.IdUsuario}");
+    Console.WriteLine($"Arquivos recebidos: {arquivos.Count}");
 
     var isAdmin = User.IsInRole("Administrador");
-    var idUsuario = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var idUsuario = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!
+    );
 
-    var result = await vendaService.CriarAsync(dto, idUsuario, isAdmin);
+    var result = await vendaService.CriarAsync(
+        dto,
+        arquivos,
+        idUsuario,
+        isAdmin
+    );
 
     return result.Sucesso
         ? CreatedAtAction(nameof(Listar), new { }, result.Valor)

@@ -83,16 +83,35 @@ export class FormVendaComponent implements OnInit, OnDestroy {
 private vendaId: number | null = null;
 
   readonly clienteControl = new FormControl<ClientesDto | string | null>(null, Validators.required);
+  readonly previews = signal<(string | null)[]>([]);
 
 
+getImagem(path: string | null): string {
 
+  console.log('PATH RECEBIDO:', path);
+
+  if (!path) return '';
+
+  if (path.startsWith('data:image')) {
+    return path;
+  }
+
+  const url = 'http://localhost:5224' + path;
+
+  console.log('URL FINAL:', url);
+
+  return url;
+}
 
 
 private carregarVenda(id: number): void {
+
+
   this.service.obterPorId(id).subscribe({
+
     next: venda => {
 
-      // Campos do FormGroup
+      // Dados principais
       this.form.patchValue({
         idUsuario: venda.idUsuario,
         idTipoPagamento: venda.idTipoPagamento,
@@ -110,49 +129,16 @@ private carregarVenda(id: number): void {
       });
 
       // Revendedor
-this.revendedorControl.setValue({
-  id: venda.idUsuario!,
-  nome: venda.nomeRevendedora!
-});
+      this.revendedorControl.setValue({
+        id: venda.idUsuario!,
+        nome: venda.nomeRevendedora!
+      });
 
-      // Limpa itens existentes
-this.itens.clear();
-this.produtosSelecionados.set([]);
-
-venda.itens.forEach(item => {
-
-  const grupo = this.fb.group({
-    idEstoque: [item.idEstoque],
-    idProduto: [item.idProduto],
-    quantidade: [item.quantidade],
-    precoVendaReal: [
-      this.formatarMoeda(item.precoVendaReal)
-    ]
-  });
-
-  this.itens.push(grupo);
-
-  this.produtosSelecionados.update(arr => [
-    ...arr,
-    {
-      id: item.idEstoque,
-      idProduto: item.idProduto,
-      produto: item.produto,
-      quantidade: item.quantidade,
-      precoCompra: 0,
-      precoVendaSugerido: item.precoVendaReal,
-      idTipoProduto: 0,
-      tipo: ''
-    } as EstoqueDto
-  ]);
-});
-
-this.recalcularTotal();
-
-      // modo somente leitura
-this.itens.clear();
+      // Limpa estruturas
+  this.itens.clear();
 this.produtosSelecionados.set([]);
 this.produtoControls.set([]);
+this.previews.set([]);
 
 venda.itens.forEach(item => {
 
@@ -185,23 +171,44 @@ venda.itens.forEach(item => {
 
   this.produtoControls()[indice].setValue(produto);
 
-  if (this.modoVisualizacao()) {
+  this.previews.update(arr => {
+    arr[indice] = item.fotoPath ?? null;
+    return [...arr];
+  });
+
+  console.log("Foto recebida:", item.fotoPath);
+console.log("Preview:", this.previews());
+
+});
+
+if (this.modoVisualizacao()) {
   this.form.disable();
   this.clienteControl.disable();
   this.revendedorControl.disable();
-
   this.produtoControls().forEach(c => c.disable());
 }
-});
 
 this.recalcularTotal();
 
+      if (this.modoVisualizacao()) {
+
+        this.form.disable();
+        this.clienteControl.disable();
+        this.revendedorControl.disable();
+
+        this.produtoControls().forEach(c => c.disable());
+      }
+
       console.log('VENDA RECEBIDA', venda);
+
     },
+
     error: erro => {
       console.error('ERRO AO BUSCAR VENDA', erro);
     }
+
   });
+
 }
 
   readonly isAdmin = computed(  () => this.auth.currentUser()?.role === Perfil.Administrador
@@ -341,7 +348,8 @@ adicionarItem(): void {
       idEstoque: [null],
       idProduto: [null],
       quantidade: [null],
-      precoVendaReal: ['']
+      precoVendaReal: [''],
+      foto: [null]
     })
   );
 
@@ -424,21 +432,52 @@ removerItem(index: number): void {
 
     const cliente = clienteSelecionado as ClientesDto;
     const raw = this.form.getRawValue();
-const dto: CriarVendaDto = {
+
+    const dto: CriarVendaDto = {
   idCliente: Number(cliente.id),
   idUsuario: raw.idUsuario || undefined,
   idTipoPagamento: raw.idTipoPagamento!,
   totalParcelas: raw.totalParcelas!,
   comentario: raw.comentario?.trim() || undefined,
-      itens: (this.itens.getRawValue() as { idEstoque: number; quantidade: number; precoVendaReal: string }[])
-        .map(i => ({
-          idEstoque: i.idEstoque,
-          quantidade: i.quantidade,
-          precoVendaReal: this.parseMoeda(i.precoVendaReal) ?? 0,
-        })),
-    };
-console.log('DTO enviado', dto);
-    this.service.criar(dto).subscribe({
+
+  itens: (this.itens.getRawValue() as any[]).map(i => ({
+    idEstoque: i.idEstoque,
+    quantidade: i.quantidade,
+    precoVendaReal: this.parseMoeda(i.precoVendaReal) ?? 0
+  }))
+};
+
+console.log('DTO ENVIADO');
+console.log(dto);
+
+console.log(JSON.stringify(dto));
+
+const formData = new FormData();
+
+formData.append(
+    'dadosVenda',
+    JSON.stringify(dto)
+);
+
+this.itens.controls.forEach(grupo => {
+
+    const foto = grupo.get('foto')?.value;
+
+    if (foto) {
+        formData.append(
+            'arquivos',
+            foto,
+            foto.name
+        );
+    }
+
+});
+
+for (const item of formData.entries()) {
+  console.log(item);
+}
+
+    this.service.criar(formData).subscribe({
       next: () => {
         this.snackBar.open('Venda registrada com sucesso!', 'Fechar', { duration: 3000 });
         this.router.navigate(['/vendas']);
@@ -450,6 +489,41 @@ console.log('DTO enviado', dto);
       },
     });
   }
+
+onFotoSelecionada(event: Event, index: number): void {
+
+  console.log("Entrou no método");
+
+  const input = event.target as HTMLInputElement;
+
+  if (!input.files?.length) {
+    return;
+  }
+
+  const arquivo = input.files[0];
+
+  // SALVA O ARQUIVO NO FORMGROUP
+  this.itens.at(index).get('foto')?.setValue(arquivo);
+
+  console.log("Arquivo salvo:", arquivo);
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+
+    this.previews.update(arr => {
+      arr[index] = reader.result as string;
+      return [...arr];
+    });
+
+    console.log("Preview:", this.previews());
+  };
+
+  reader.readAsDataURL(arquivo);
+}
+
+
+
 
   private recalcularTotal(): void {
     const soma = (this.itens.getRawValue() as { quantidade: number | null; precoVendaReal: string }[])
@@ -474,4 +548,5 @@ console.log('DTO enviado', dto);
   private formatarMoeda(value: number): string {
     return value.toFixed(2).replace('.', ',');
   }
+
 }
