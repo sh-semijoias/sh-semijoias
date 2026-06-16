@@ -11,4 +11,5 @@ public class ItemVenda
     public decimal PrecoVendaReal { get; set; }
     public decimal PrecoCompra { get; set; }
     public decimal PrecoVendaSugerido { get; set; }
+    public string? FotoPath { get; set; } 
 }

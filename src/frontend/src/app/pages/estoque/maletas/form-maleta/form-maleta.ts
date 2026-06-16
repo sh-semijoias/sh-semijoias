@@ -173,6 +173,10 @@ this.carregando.set(false);
   }
 
   selecionarProduto(index: number, produto: ProdutoResumidoDto): void {
+
+      console.log('PRODUTO SELECIONADO');
+  console.log(produto);
+
     this.itens.at(index).get('idProduto')?.setValue(produto.id);
     const qtdCtrl = this.itens.at(index).get('quantidade');
     qtdCtrl?.setValidators([Validators.required, Validators.min(1), Validators.max(produto.quantidade)]);

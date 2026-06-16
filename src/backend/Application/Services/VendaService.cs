@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Http;
 using ShSemijoias.Application.Common;
 using ShSemijoias.Application.DTOs.Vendas;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
+
 
 namespace ShSemijoias.Application.Services;
 
@@ -31,8 +33,23 @@ public class VendaService(
         return Result<IReadOnlyList<FormaPagamentoDto>>.Ok(dtos);
     }
 
-    public async Task<Result<VendaCriadaDto>> CriarAsync(CriarVendaDto dto, Guid idUsuario, bool isAdmin)
+
+public async Task<Result<VendaCriadaDto>> CriarAsync(    CriarVendaDto dto,    List<IFormFile> arquivos,    Guid idUsuario,    bool isAdmin)
     {
+
+Console.WriteLine($"Fotos recebidas: {arquivos.Count}");
+Console.WriteLine($"IdCliente: {dto.IdCliente}");
+Console.WriteLine($"IdTipoPagamento: {dto.IdTipoPagamento}");
+Console.WriteLine($"Parcelas: {dto.TotalParcelas}");
+Console.WriteLine($"Itens: {dto.Itens?.Count}");
+Console.WriteLine($"Arquivos: {arquivos.Count}");
+
+
+foreach (var arquivo in arquivos)
+{
+    Console.WriteLine(arquivo.FileName);
+}
+
         var erros = new List<string>();
 
         if (dto.Itens == null || dto.Itens.Count == 0)
@@ -70,6 +87,8 @@ public class VendaService(
 Guid usuarioVenda = idUsuario;
 int? idMaleta = null;
 
+
+
 if (isAdmin)
 {
     // Admin escolheu uma revendedora
@@ -100,10 +119,13 @@ else
     idMaleta = maleta.Id;
 }
 
+Console.WriteLine($"------------------------------------------");
 Console.WriteLine($"USUARIO VENDA: {usuarioVenda}");
 Console.WriteLine($"MALETA ENCONTRADA: {idMaleta}");
 
-var idsEstoque = dto.Itens.Select(i => i.IdEstoque).ToList();
+var idsEstoque = (dto.Itens ?? [])
+    .Select(i => i.IdEstoque)
+    .ToList();
 
 Dictionary<int, Estoque> estoques;
 
@@ -112,7 +134,11 @@ if (idMaleta.HasValue)
     estoques = await estoqueRepository.BuscarPorIdsAsync(
         idsEstoque,
         idMaleta.Value
+        
     );
+    
+
+    
 }
 else
 {
@@ -120,7 +146,10 @@ else
     estoques = await estoqueRepository.BuscarPorIdsAsync(
         idsEstoque
     );
+
+    
 }
+
 
         Console.WriteLine($"ESTOQUES ENCONTRADOS: {estoques.Count}");
 
@@ -138,34 +167,73 @@ else
         var agora = DateTime.UtcNow;
         var valorTotal = dto.Itens!.Sum(i => i.PrecoVendaReal * i.Quantidade);
 
-foreach (var item in dto.Itens)
+        var itensVenda = new List<ItemVenda>();
+
+for (int index = 0; index < dto.Itens.Count; index++)
 {
-    Console.WriteLine($"ID ESTOQUE RECEBIDO: {item.IdEstoque}");
+    var item = dto.Itens[index];
+    var estoque = estoques[item.IdEstoque];
+
+    string? fotoPath = null;
+
+    if (index < arquivos.Count)
+    {
+        var arquivo = arquivos[index];
+
+        var extensao = Path.GetExtension(arquivo.FileName);
+        var nomeArquivo = $"{Guid.NewGuid()}{extensao}";
+
+        var pasta = Path.Combine("wwwroot", "uploads", "vendas");
+
+        if (!Directory.Exists(pasta))
+            Directory.CreateDirectory(pasta);
+
+        var caminho = Path.Combine(pasta, nomeArquivo);
+
+        using var stream = new FileStream(caminho, FileMode.Create);
+        await arquivo.CopyToAsync(stream);
+
+        fotoPath = $"/uploads/vendas/{nomeArquivo}";
+    }
+      Console.WriteLine($"-----------------------------");
+    Console.WriteLine($"SALVANDO FOTO: {fotoPath}");
+
+    itensVenda.Add(new ItemVenda
+    {
+        IdEstoque = item.IdEstoque,
+        Quantidade = item.Quantidade,
+        PrecoVendaReal = item.PrecoVendaReal,
+        PrecoCompra = estoque.Produto.PrecoCompra,
+        PrecoVendaSugerido = estoque.Produto.PrecoVendaSugerido,
+        FotoPath = fotoPath
+    });
 }
 
-        var venda = new Venda
-        {
-        IdCliente = dto.IdCliente,
-     IdUsuario = usuarioVenda, // administrador ou revendedora
-        IdTipoPagamento = dto.IdTipoPagamento,
-            TotalParcelas = dto.TotalParcelas,
-            Comentario = string.IsNullOrWhiteSpace(dto.Comentario) ? null : dto.Comentario.Trim(),
-            DataVenda = agora,
-            DataAtualizacao = agora,
-            Itens = dto.Itens.Select(i =>
-            {
-                var estoque = estoques[i.IdEstoque];
-                return new ItemVenda
-                {
-                    IdEstoque = i.IdEstoque,
-                    Quantidade = i.Quantidade,
-                    PrecoVendaReal = i.PrecoVendaReal,
-                    PrecoCompra = estoque.Produto.PrecoCompra,
-                    PrecoVendaSugerido = estoque.Produto.PrecoVendaSugerido,
-                };
-            }).ToList(),
-            Parcelas = GerarParcelas(dto.TotalParcelas, valorTotal, agora),
-        };
+var venda = new Venda
+{
+    IdCliente = dto.IdCliente,
+    IdUsuario = usuarioVenda,
+    IdTipoPagamento = dto.IdTipoPagamento,
+    TotalParcelas = dto.TotalParcelas,
+    Comentario = string.IsNullOrWhiteSpace(dto.Comentario)
+        ? null
+        : dto.Comentario.Trim(),
+    DataVenda = agora,
+    DataAtualizacao = agora,
+    Itens = itensVenda,
+    Parcelas = GerarParcelas(dto.TotalParcelas, valorTotal, agora)
+};
+
+Console.WriteLine($"-------------------------------------");
+Console.WriteLine($"USUARIO DA VENDA: {dto.IdUsuario}");
+
+Console.WriteLine("IDS RECEBIDOS:");
+
+foreach(var item in dto.Itens)
+{
+    Console.WriteLine(item.IdEstoque);
+}
+
 
         await using var transacao = await vendaRepository.BeginTransacaoAsync();
         try
@@ -350,8 +418,9 @@ Console.WriteLine($"Usuario null? {venda.Usuario == null}");
 
 foreach (var item in venda.Itens)
 {
-    Console.WriteLine($"Estoque null? {item.Estoque == null}");
-    Console.WriteLine($"Produto null? {item.Estoque?.Produto == null}");
+    Console.WriteLine("----------------");
+    Console.WriteLine($"IdEstoque: {item.IdEstoque}");
+    Console.WriteLine($"FotoPath: {item.FotoPath}");
 }
 
 var dto = new VendaDetalheDto(
@@ -364,13 +433,14 @@ var dto = new VendaDetalheDto(
     venda.TotalParcelas,
     venda.Comentario,
     venda.Itens.Select(i =>
-        new ItemVendaDetalheDto(
-            i.IdEstoque,
-            i.Estoque.IdProduto,
-            i.Estoque.Produto?.Descricao ?? "",
-            i.Quantidade,
-            i.PrecoVendaReal
-        )
+new ItemVendaDetalheDto(
+    i.IdEstoque,
+    i.Estoque.IdProduto,
+    i.Estoque.Produto?.Descricao ?? "",
+    i.Quantidade,
+    i.PrecoVendaReal,
+    i.FotoPath
+)
     ).ToList()
 );
 

@@ -116,6 +116,7 @@ app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseStaticFiles();
 
 await app.MigrateAsync();
 await app.SeedAdminAsync();
