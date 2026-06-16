@@ -119,6 +119,7 @@ else
     idMaleta = maleta.Id;
 }
 
+Console.WriteLine($"------------------------------------------");
 Console.WriteLine($"USUARIO VENDA: {usuarioVenda}");
 Console.WriteLine($"MALETA ENCONTRADA: {idMaleta}");
 
@@ -133,7 +134,11 @@ if (idMaleta.HasValue)
     estoques = await estoqueRepository.BuscarPorIdsAsync(
         idsEstoque,
         idMaleta.Value
+        
     );
+    
+
+    
 }
 else
 {
@@ -141,7 +146,10 @@ else
     estoques = await estoqueRepository.BuscarPorIdsAsync(
         idsEstoque
     );
+
+    
 }
+
 
         Console.WriteLine($"ESTOQUES ENCONTRADOS: {estoques.Count}");
 
@@ -216,7 +224,15 @@ var venda = new Venda
     Parcelas = GerarParcelas(dto.TotalParcelas, valorTotal, agora)
 };
 
+Console.WriteLine($"-------------------------------------");
+Console.WriteLine($"USUARIO DA VENDA: {dto.IdUsuario}");
 
+Console.WriteLine("IDS RECEBIDOS:");
+
+foreach(var item in dto.Itens)
+{
+    Console.WriteLine(item.IdEstoque);
+}
 
 
         await using var transacao = await vendaRepository.BeginTransacaoAsync();

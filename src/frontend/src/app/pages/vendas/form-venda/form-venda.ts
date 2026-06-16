@@ -88,8 +88,6 @@ private vendaId: number | null = null;
 
 getImagem(path: string | null): string {
 
-  console.log('PATH RECEBIDO:', path);
-
   if (!path) return '';
 
   if (path.startsWith('data:image')) {
@@ -98,7 +96,6 @@ getImagem(path: string | null): string {
 
   const url = 'http://localhost:5224' + path;
 
-  console.log('URL FINAL:', url);
 
   return url;
 }
@@ -218,10 +215,7 @@ this.recalcularTotal();
     this.clientesService.listar(pagina, 10, busca || undefined);
 readonly loadProdutosFn = (pagina: number, busca: string) => {
 
-  console.log(
-    'ID USUARIO NO LOADPRODUTOS:',
-    this.form.get('idUsuario')?.value
-  );
+  console.log('LOAD PRODUTOS EXECUTADO');
 
   return this.estoqueService.listar({
     pagina,
@@ -272,25 +266,52 @@ readonly loadRevendedoresFn = (
 
 onRevendedorSelecionado(r: { id: string | number }): void {
 
+    console.log('REVENDEDOR SELECIONADO');
+  console.log(r);
+
   this.form.get('idUsuario')?.setValue(r.id.toString());
+
+
+
+  console.log(
+    'ID USUARIO APOS SETVALUE:',
+    this.form.get('idUsuario')?.value
+  );
 
   this.produtosSelecionados.set([]);
 
-  // força os autocompletes a limparem os produtos selecionados
-  this.itens.controls.forEach(grupo => {
-    grupo.get('idEstoque')?.setValue(null);
-    grupo.get('idProduto')?.setValue(null);
-  });
+  this.produtoControls().forEach(ctrl => ctrl.setValue(null));
 
-  console.log('Revendedor selecionado:', r.id);
+this.itens.controls.forEach(grupo => {
+
+  grupo.get('idEstoque')?.setValue(null);
+  grupo.get('idProduto')?.setValue(null);
+  grupo.get('quantidade')?.setValue(null);
+  grupo.get('precoVendaReal')?.setValue('');
+
+});
+
 }
 
 onRevendedorLimpo(): void {
+
+
+  console.error('REVENDEDOR LIMPO');
+
+  console.trace();
+
   this.form.get('idUsuario')?.setValue('');
 }
 
 
   ngOnInit(): void {
+
+    this.form.get('idUsuario')?.valueChanges.subscribe(v => {
+  console.log('IDUSUARIO ALTERADO:', v);
+
+  console.trace();
+});
+
     this.itens.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(() => this.recalcularTotal());
 
@@ -383,6 +404,10 @@ removerItem(index: number): void {
   }
 
   selecionarProduto(index: number, produto: EstoqueDto): void {
+
+          console.log('PRODUTO SELECIONADO');
+  console.log(produto);
+
     const grupo = this.itens.at(index);
     grupo.get('idEstoque')?.setValue(produto.id);
     grupo.get('idProduto')?.setValue(produto.idProduto);

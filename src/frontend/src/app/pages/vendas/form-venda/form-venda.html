@@ -35,6 +35,8 @@
   />
 }
 
+
+
           <div class="flex flex-col sm:flex-row gap-3">
             <mat-form-field appearance="outline" class="w-full sm:flex-1">
               <mat-label>Forma de pagamento</mat-label>
@@ -69,18 +71,19 @@
               <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-3 items-start">
 <div class="flex flex-col gap-2 flex-1">
 
-  <app-autocomplete-paginado
-      label="Produto"
-      [control]="produtoControls()[$index]"
-      [loadFn]="loadProdutosFn"
-      [displayFn]="displayProduto"
-      [excluirIds]="produtosSelecionadosExceto($index)"
-      [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
-      errorMessage="Selecione um produto."
-      (selecionado)="selecionarProduto($index, $any($event))"
-      (limpo)="limparProdutoLinha($index)"
-  />
 
+<app-autocomplete-paginado
+  label="Produto"
+  [control]="produtoControls()[$index]"
+  [loadFn]="loadProdutosFn"
+  [displayFn]="displayProduto"
+  [reloadToken]="form.get('idUsuario')?.value"
+  [excluirIds]="produtosSelecionadosExceto($index)"
+  [hasError]="!!(item.get('idEstoque')?.invalid && item.get('idEstoque')?.touched)"
+  errorMessage="Selecione um produto."
+  (selecionado)="selecionarProduto($index, $any($event))"
+  (limpo)="limparProdutoLinha($index)"
+/>
 
 
 

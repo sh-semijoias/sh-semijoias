@@ -75,6 +75,8 @@ else
 
         if (erros.Count > 0)
             return Result<bool>.Falha(erros);
+            
+
 
         foreach (var item in dto.Itens)
         {
@@ -83,6 +85,8 @@ else
             Console.WriteLine($"ID ESTOQUE: {estoque.Id}");
 Console.WriteLine($"ID MALETA: {estoque.IdMaleta}");
 Console.WriteLine($"ID PRODUTO: {estoque.IdProduto}");
+
+
 
             if (estoque is not null)
             {
@@ -102,6 +106,7 @@ Console.WriteLine($"ID PRODUTO: {estoque.IdProduto}");
 
         await estoqueRepository.SalvarAsync();
         return Result<bool>.Ok(true);
+        
     }
 
     public async Task<Result<bool>> AtualizarQuantidadeAsync(int idEstoque, AtualizarQuantidadeEstoqueDto dto)
@@ -126,4 +131,6 @@ Console.WriteLine($"ID PRODUTO: {estoque.IdProduto}");
         return Result<ListaPaginada<ProdutoResumidoDto>>.Ok(
             new ListaPaginada<ProdutoResumidoDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
     }
+
+    
 }

@@ -7,8 +7,14 @@
   [placeholder]="placeholder"
   (focus)="onFocus()" />
 
+
 @if (effectiveControl.value && !effectiveControl.disabled) {
-  <button matSuffix mat-icon-button type="button" (click)="limpar()">
+<button
+  matSuffix
+  mat-icon-button
+  type="button"
+  (mousedown)="$event.preventDefault()"
+  (click)="limpar()">
     <mat-icon>close</mat-icon>
   </button>
 }

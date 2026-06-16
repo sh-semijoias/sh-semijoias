@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, Output, OnInit, OnDestroy, EventEmitter, signal, computed, inject } from '@angular/core';
+import { Component, HostBinding, Input, Output, OnInit, OnDestroy, OnChanges, SimpleChanges, EventEmitter, signal, computed, inject } from '@angular/core';
 import { ReactiveFormsModule, FormControl, AbstractControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocomplete, MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -22,7 +22,8 @@ import { input } from '@angular/core';
   ],
   templateUrl: './autocomplete-paginado.html',
 })
-export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
+export class AutocompletePaginadoComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() reloadToken: unknown;
   @Input({ required: true }) label!: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   @Input({ required: true }) loadFn!: (pagina: number, busca: string) => Observable<{ items: any[]; total: number }>;
@@ -60,7 +61,23 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   private readonly panelAberto$ = new Subject<void>();
   private readonly destroy$ = new Subject<void>();
 
+
+  ngOnChanges(changes: SimpleChanges) {
+
+  if (changes['reloadToken']) {
+
+    this.buscaAtual = '';
+
+    this.carregarPagina(1, '');
+
+  }
+
+}
+
   ngOnInit(): void {
+
+      console.log('CRIADO:', this.label);
+
     this.effectiveControl.valueChanges.pipe(
       debounceTime(300),
       takeUntil(this.destroy$)
@@ -79,6 +96,9 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+
+      console.log('DESTRUIDO:', this.label);
+
     this.panelAberto$.next();
     this.destroy$.next();
     this.destroy$.complete();
@@ -86,6 +106,9 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
 
 
   onFocus(): void {
+
+      console.log('FOCUS');
+
   if (this.opcoes().length === 0) {
     this.buscaAtual = '';
     this.carregarPagina(1, '');
@@ -93,6 +116,9 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy {
 }
 
 onPanelAberto(auto: MatAutocomplete): void {
+
+    console.log('PANEL ABERTO');
+  console.log('OPCOES ATUAIS', this.opcoes());
 
     if (this.effectiveControl.disabled) {
     return;
@@ -132,13 +158,20 @@ onPanelAberto(auto: MatAutocomplete): void {
     });
   }
 
-  limpar(): void {
-    this.effectiveControl.setValue(null);
-    if (this.control) this.control.setValue(null);
-    this.buscaAtual = '';
-    this.carregarPagina(1, '');
-    this.limpo.emit();
-  }
+
+
+limpar(): void {
+
+  console.log('BOTAO X CLICADO:', this.label);
+
+  this.effectiveControl.setValue(null);
+
+  this.buscaAtual = '';
+
+  this.carregarPagina(1, '');
+
+  this.limpo.emit();
+}
 
   onOpcaoSelecionada(opcao: { id: string | number }): void {
     if (this.control) this.control.setValue(opcao);
@@ -146,10 +179,21 @@ onPanelAberto(auto: MatAutocomplete): void {
   }
 
   private carregarPagina(pagina: number, busca: string): void {
+
+      console.log('CARREGAR PAGINA', pagina, busca);
+
     this.carregando.set(true);
     this.loadFn(pagina, busca).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
-        this.opcoes.set(res.items);
+
+    console.log('ANTES SET');
+    console.log(this.opcoes());
+
+    this.opcoes.set(res.items);
+
+    console.log('DEPOIS SET');
+    console.log(this.opcoes());
+
         this.total.set(res.total);
         this.carregando.set(false);
       },
