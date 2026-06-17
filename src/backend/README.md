@@ -73,3 +73,15 @@ Requisitos mínimos para senhas de usuários:
 ## Pacotes NuGet
 
 Versões gerenciadas centralmente em `Directory.Packages.props`. Não especificar versão nos `.csproj` individuais.
+
+Realziando publicacao
+
+connection string neon
+postgresql://neondb_owner:npg_VlgDYwG7q4iu@ep-dark-surf-ahlai5a0.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+original do appsettings.json
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=sh_semijoias;Username=postgres;Password=sua_senha"
+  },
