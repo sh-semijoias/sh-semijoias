@@ -20,7 +20,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
-        policy.WithOrigins("http://localhost:4200")
+        policy
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
