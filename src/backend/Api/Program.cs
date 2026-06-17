@@ -105,9 +105,11 @@ builder.Services.AddScoped<IUserContext, UserContext>();
 
 var app = builder.Build();
 
-
+if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
     app.MapScalarApiReference();
+}
 
 app.UseHttpsRedirection();
 app.UseCors("frontend");
