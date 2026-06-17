@@ -81,7 +81,7 @@ postgresql://neondb_owner:npg_VlgDYwG7q4iu@ep-dark-surf-ahlai5a0.c-3.us-east-1.a
 
 original do appsettings.json
 
-{
+
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Port=5432;Database=sh_semijoias;Username=postgres;Password=sua_senha"
   },
