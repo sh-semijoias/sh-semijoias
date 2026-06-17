@@ -52,8 +52,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "shsemijoias.auth";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+options.Cookie.SameSite = SameSiteMode.None;
+options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.SlidingExpiration = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.LoginPath = "/login";

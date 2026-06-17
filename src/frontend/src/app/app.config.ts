@@ -13,6 +13,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/services/auth.interceptor';
 
+import {  HttpInterceptorFn} from '@angular/common/http';
+
 function paginatorIntlPtBr(): MatPaginatorIntl {
   const intl = new MatPaginatorIntl();
   intl.itemsPerPageLabel = 'Itens por página:';
@@ -28,6 +30,16 @@ function paginatorIntlPtBr(): MatPaginatorIntl {
   };
   return intl;
 }
+
+export const credentialsInterceptor: HttpInterceptorFn =
+(req, next) => {
+
+  const cloned = req.clone({
+    withCredentials: true
+  });
+
+  return next(cloned);
+};
 
 export const BR_DATE_FORMATS = {
   parse: {
