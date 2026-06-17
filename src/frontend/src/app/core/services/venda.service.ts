@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export enum OrdenacaoVenda {
   DataVenda = 0,
@@ -125,7 +126,8 @@ export interface VendaDetalheDto {
 @Injectable({ providedIn: 'root' })
 export class VendaService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/vendas';
+private readonly baseUrl =
+  `${environment.apiUrl}/api/vendas`;
 
   listar(filtros: ListarVendasFiltros): Observable<ListarVendasResultado> {
     let params = new HttpParams()

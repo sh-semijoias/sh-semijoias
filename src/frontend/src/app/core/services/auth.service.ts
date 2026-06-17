@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface LoginRequestDto {
   email: string;
@@ -25,7 +26,8 @@ export interface TrocarSenhaDto {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/auth';
+private readonly baseUrl =
+  `${environment.apiUrl}/api/auth`;
 
   readonly currentUser = signal<LoginResponseDto | null>(null);
 

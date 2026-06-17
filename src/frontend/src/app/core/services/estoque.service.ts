@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ListaPaginada } from './usuario.service';
+import { environment } from '../../../environments/environment';
 
 export enum OrdenacaoEstoque {
   Produto = 0,
@@ -40,7 +41,8 @@ export interface ProdutoResumidoDto { id: number; descricao: string; quantidade:
 @Injectable({ providedIn: 'root' })
 export class EstoqueService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/estoque';
+private readonly baseUrl =
+  `${environment.apiUrl}/api/estoque`;
 
   listar(filtros: ListarEstoqueFiltros): Observable<ListaPaginada<EstoqueDto>> {
 

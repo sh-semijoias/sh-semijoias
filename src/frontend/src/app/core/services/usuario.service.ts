@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface ListaPaginada<T> {
   items: T[];
@@ -38,7 +39,8 @@ export interface EditarUsuarioDto {
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/usuarios';
+private readonly baseUrl =
+  `${environment.apiUrl}/api/usuarios`;
 
   listar(pagina = 1, tamanhoPagina = 10): Observable<ListaPaginada<UsuarioDto>> {
     return this.http.get<ListaPaginada<UsuarioDto>>(this.baseUrl, {
