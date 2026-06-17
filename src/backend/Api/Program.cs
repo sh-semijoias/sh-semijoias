@@ -20,7 +20,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
-        policy
+             policy.WithOrigins(
+            "http://localhost:4200",
+            "https://sh-semijoias-1.onrender.com"
+        )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
