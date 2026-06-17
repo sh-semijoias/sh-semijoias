@@ -94,7 +94,8 @@ getImagem(path: string | null): string {
     return path;
   }
 
-  const url = 'http://localhost:5224' + path;
+const API_URL = 'https://sh-semijoias.onrender.com';
+const url = API_URL + path;
 
 
   return url;
