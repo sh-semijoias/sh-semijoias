@@ -6,10 +6,10 @@ export interface Periodo {
   atalho: AtalhoPeriodo | null;
 }
 
-export const ATALHOS_PERIODO: { id: AtalhoPeriodo; rotulo: string }[] = [
-  { id: 'ultimos30', rotulo: 'Últimos 30 dias' },
-  { id: 'ultimos90', rotulo: 'Últimos 90 dias' },
-  { id: 'ultimos12meses', rotulo: 'Últimos 12 meses' },
+export const ATALHOS_PERIODO: { id: AtalhoPeriodo; rotulo: string; rotuloCurto: string }[] = [
+  { id: 'ultimos30', rotulo: 'Últimos 30 dias', rotuloCurto: '30 dias' },
+  { id: 'ultimos90', rotulo: 'Últimos 90 dias', rotuloCurto: '90 dias' },
+  { id: 'ultimos12meses', rotulo: 'Últimos 12 meses', rotuloCurto: '12 meses' },
 ];
 
 // Todos os atalhos terminam hoje e incluem o dia de hoje

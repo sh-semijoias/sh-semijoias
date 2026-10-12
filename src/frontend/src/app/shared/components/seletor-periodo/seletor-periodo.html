@@ -26,13 +26,11 @@
   (detach)="fechar()">
   <div class="painel" [class.mobile]="isMobile()" role="dialog" aria-label="Escolher período">
     <div class="atalhos">
-      @if (!isMobile()) {
-        <p class="titulo-atalhos">Atalhos</p>
-      }
+      <p class="titulo-atalhos">{{ isMobile() ? 'Últimos' : 'Atalhos' }}</p>
       @for (atalho of atalhos; track atalho.id) {
         <button type="button" class="atalho" [class.ativo]="periodo().atalho === atalho.id"
-                (click)="aplicarAtalho(atalho.id)">
-          {{ atalho.rotulo }}
+                [attr.aria-label]="atalho.rotulo" (click)="aplicarAtalho(atalho.id)">
+          {{ isMobile() ? atalho.rotuloCurto : atalho.rotulo }}
         </button>
       }
     </div>
