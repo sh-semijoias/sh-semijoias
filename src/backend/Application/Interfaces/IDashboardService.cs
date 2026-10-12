@@ -1,0 +1,9 @@
+using ShSemijoias.Application.Common;
+using ShSemijoias.Application.DTOs.Dashboard;
+
+namespace ShSemijoias.Application.Interfaces;
+
+public interface IDashboardService
+{
+    Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta);
+}
