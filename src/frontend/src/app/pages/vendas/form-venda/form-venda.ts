@@ -23,6 +23,7 @@ import { ClientesService, ClientesDto } from '../../../core/services/clientes.se
 import { AddRowButtonComponent } from '../../../shared/components/add-row-button/add-row-button';
 import { AutocompletePaginadoComponent } from '../../../shared/components/autocomplete-paginado/autocomplete-paginado';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { environment } from '../../../../environments/environment';
 import { computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { Perfil } from '../../../core/enums/perfil.enum';
@@ -94,8 +95,7 @@ getImagem(path: string | null): string {
     return path;
   }
 
-const API_URL = 'https://sh-semijoias.onrender.com';
-const url = API_URL + path;
+const url = environment.apiUrl + path;
 
 
   return url;
