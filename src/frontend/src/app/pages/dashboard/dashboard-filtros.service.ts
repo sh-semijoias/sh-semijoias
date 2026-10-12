@@ -1,9 +1,9 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { FiltrosIndicadores } from '../../core/services/dashboard.service';
+import { Periodo, calcularAtalho } from '../../shared/components/seletor-periodo/periodo';
 
 export interface FiltrosDashboard {
-  inicio: Date;
-  fim: Date;
+  periodo: Periodo;
   idRevendedora: string | null;
   idTipoProduto: number | null;
 }
@@ -12,7 +12,7 @@ export interface FiltrosDashboard {
 @Injectable()
 export class DashboardFiltrosService {
   readonly filtros = signal<FiltrosDashboard>({
-    ...ultimos90Dias(),
+    periodo: calcularAtalho('ultimos90'),
     idRevendedora: null,
     idTipoProduto: null,
   });
@@ -20,8 +20,8 @@ export class DashboardFiltrosService {
   readonly filtrosApi = computed<FiltrosIndicadores>(() => {
     const filtros = this.filtros();
     return {
-      dataInicio: formatarDataApi(filtros.inicio),
-      dataFim: formatarDataApi(filtros.fim),
+      dataInicio: formatarDataApi(filtros.periodo.inicio),
+      dataFim: formatarDataApi(filtros.periodo.fim),
       idRevendedora: filtros.idRevendedora ?? undefined,
       idTipoProduto: filtros.idTipoProduto ?? undefined,
     };
@@ -30,12 +30,6 @@ export class DashboardFiltrosService {
   atualizar(alteracao: Partial<FiltrosDashboard>): void {
     this.filtros.update(filtros => ({ ...filtros, ...alteracao }));
   }
-}
-
-function ultimos90Dias(): { inicio: Date; fim: Date } {
-  const fim = new Date();
-  const inicio = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate() - 89);
-  return { inicio, fim };
 }
 
 // Usa a data local (e não toISOString, que converte para UTC e pode trocar o dia)
