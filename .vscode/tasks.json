@@ -4,7 +4,7 @@
     {
       "label": "docker: up",
       "type": "shell",
-      "command": "docker compose up -d",
+      "command": "docker compose up -d --wait",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -86,12 +86,6 @@
       "label": "npm: start",
       "dependsOn": ["backend: wait", "ng: serve"],
       "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "start: dependencies",
-      "dependsOn": ["docker: up", "ng: serve"],
-      "dependsOrder": "parallel",
       "problemMatcher": []
     },
     {
