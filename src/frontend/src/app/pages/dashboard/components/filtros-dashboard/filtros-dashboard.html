@@ -2,9 +2,10 @@
   <app-seletor-periodo [periodo]="periodo()" (periodoChange)="alterarPeriodo($event)" />
 
   <app-autocomplete-paginado
-    label="Revendedor" placeholder="Buscar revendedor..."
+    label="Revendedor" placeholder="Todos"
     fieldClass="w-full"
     subscriptSizing="dynamic"
+    floatLabel="always"
     [control]="revendedorControl"
     [loadFn]="loadRevendedoresFn"
     [displayFn]="displayRevendedor"

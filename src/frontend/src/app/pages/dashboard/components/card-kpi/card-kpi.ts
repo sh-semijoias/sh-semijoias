@@ -1,8 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton';
 
 export type CorCardKpi = 'indigo' | 'teal' | 'violet' | 'orange';
 
@@ -16,7 +16,7 @@ const CORES: Record<CorCardKpi, { fundo: string; icone: string }> = {
 @Component({
   selector: 'app-card-kpi',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule],
+  imports: [MatCardModule, MatIconModule, MatTooltipModule, SkeletonComponent],
   templateUrl: './card-kpi.html',
 })
 export class CardKpiComponent {

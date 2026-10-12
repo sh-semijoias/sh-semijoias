@@ -1,11 +1,11 @@
 import { Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton';
 
 @Component({
   selector: 'app-card-indicador',
   standalone: true,
-  imports: [MatCardModule, MatProgressSpinnerModule],
+  imports: [MatCardModule, SkeletonComponent],
   templateUrl: './card-indicador.html',
 })
 export class CardIndicadorComponent {

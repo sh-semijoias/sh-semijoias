@@ -1,4 +1,4 @@
-<mat-card appearance="outlined" class="h-full">
+<mat-card appearance="outlined" class="h-full" [attr.aria-busy]="carregando()">
   <mat-card-content class="py-2!">
     <div class="flex items-center gap-3">
       <div class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0" [class]="classesCor().fundo">
@@ -13,7 +13,14 @@
           }
         </div>
         @if (carregando()) {
-          <mat-spinner diameter="24" class="my-2" />
+          <div>
+            <div class="flex items-center h-7">
+              <app-skeleton class="h-5 w-28" />
+            </div>
+            <div class="flex items-center h-4">
+              <app-skeleton class="h-3 w-24" />
+            </div>
+          </div>
         } @else if (erro()) {
           <p class="text-sm text-(--mat-sys-error) my-1">Não foi possível carregar.</p>
         } @else {
