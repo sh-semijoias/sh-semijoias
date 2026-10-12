@@ -13,10 +13,12 @@ import { FormMaletaComponent } from './pages/estoque/maletas/form-maleta/form-ma
 import { FormProdutoComponent } from './pages/produtos/form-produto/form-produto';
 import { ListaVendasComponent } from './pages/vendas/lista-vendas/lista-vendas';
 import { FormVendaComponent } from './pages/vendas/form-venda/form-venda';
+import { DashboardComponent } from './pages/dashboard/dashboard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'vendas', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'usuarios', component: ListaUsuariosComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'usuarios/novo', component: FormUsuarioComponent, canActivate: [authGuard(Perfil.Administrador)] },
   { path: 'usuarios/:id/editar', component: FormUsuarioComponent, canActivate: [authGuard(Perfil.Administrador)] },

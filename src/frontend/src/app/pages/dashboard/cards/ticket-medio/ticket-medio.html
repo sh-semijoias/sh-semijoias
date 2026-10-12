@@ -1,0 +1,17 @@
+@let dados = ticketMedio.value();
+<app-card-kpi
+  icone="confirmation_number"
+  cor="indigo"
+  titulo="Ticket médio"
+  ajuda="Faturamento do período (preço de venda real × quantidade) dividido pela quantidade de vendas. Vendas canceladas não entram no cálculo. A variação compara com o período anterior de mesma duração."
+  [carregando]="ticketMedio.isLoading()"
+  [erro]="!!ticketMedio.error()">
+  <span valor>{{ (dados?.ticketMedio ?? 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+  <ng-container rodape>
+    @if (dados?.variacaoPercentual != null) {
+      <app-variacao [valor]="dados!.variacaoPercentual" />
+      <span>·</span>
+    }
+    <span>{{ (dados?.quantidadeVendas ?? 0) | number:'1.0-0':'pt-BR' }} {{ dados?.quantidadeVendas === 1 ? 'venda' : 'vendas' }}</span>
+  </ng-container>
+</app-card-kpi>

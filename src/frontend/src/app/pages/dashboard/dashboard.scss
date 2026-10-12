@@ -1,0 +1,14 @@
+// Cards grandes do protótipo: cada card declara a própria grid-area
+.indicadores {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'abc abc classes'
+      'idade margem mensal'
+      'clientes clientes dsi';
+  }
+}

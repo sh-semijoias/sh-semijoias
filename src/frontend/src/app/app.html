@@ -33,6 +33,12 @@
         fixedTopGap="56"
       >
         <mat-nav-list>
+          @if (authService.currentUser()?.role === 'Administrador') {
+            <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>dashboard</mat-icon>
+              Dashboard
+            </a>
+          }
           <a mat-list-item routerLink="/vendas" routerLinkActive="active-link">
             <mat-icon matListItemIcon>point_of_sale</mat-icon>
             Vendas
