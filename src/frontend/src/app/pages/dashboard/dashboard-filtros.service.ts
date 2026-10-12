@@ -26,6 +26,10 @@ export class DashboardFiltrosService {
       idTipoProduto: filtros.idTipoProduto ?? undefined,
     };
   });
+
+  atualizar(alteracao: Partial<FiltrosDashboard>): void {
+    this.filtros.update(filtros => ({ ...filtros, ...alteracao }));
+  }
 }
 
 function ultimos90Dias(): { inicio: Date; fim: Date } {

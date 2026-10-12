@@ -1,0 +1,22 @@
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <app-autocomplete-paginado
+    label="Revendedor" placeholder="Buscar revendedor..."
+    fieldClass="w-full"
+    subscriptSizing="dynamic"
+    [control]="revendedorControl"
+    [loadFn]="loadRevendedoresFn"
+    [displayFn]="displayRevendedor"
+    (selecionado)="alterarRevendedor($event.id)"
+    (limpo)="alterarRevendedor(null)"
+  />
+
+  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic" floatLabel="always">
+    <mat-label>Categoria</mat-label>
+    <mat-select placeholder="Todas" [value]="idTipoProduto()" (selectionChange)="alterarCategoria($event.value)">
+      <mat-option [value]="null">Todas</mat-option>
+      @for (categoria of categorias(); track categoria.id) {
+        <mat-option [value]="categoria.id">{{ categoria.descricao }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
