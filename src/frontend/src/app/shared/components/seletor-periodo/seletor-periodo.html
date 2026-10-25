@@ -1,0 +1,53 @@
+<mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic" floatLabel="always"
+                cdkOverlayOrigin #origem="cdkOverlayOrigin">
+  <mat-label>Período</mat-label>
+  <input matInput readonly class="cursor-pointer" [attr.aria-label]="'Período: ' + rotuloAcessivel()"
+         (click)="abrir()" (keydown.enter)="abrir()" (keydown.space)="abrir()" />
+  <div class="valor-periodo" aria-hidden="true">
+    @if (rotulo().atalho) {
+      <span class="atalho-secundario">{{ rotulo().atalho }}</span>
+    }
+    <span class="truncate">{{ rotulo().datas }}</span>
+  </div>
+  <button matIconButton matSuffix type="button" aria-label="Escolher período" (click)="abrir()">
+    <mat-icon>calendar_today</mat-icon>
+  </button>
+</mat-form-field>
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origem"
+  [cdkConnectedOverlayOpen]="aberto()"
+  [cdkConnectedOverlayHasBackdrop]="true"
+  [cdkConnectedOverlayWidth]="isMobile() ? 'calc(100vw - 32px)' : ''"
+  cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+  (backdropClick)="fechar()"
+  (overlayKeydown)="aoTeclar($event)"
+  (detach)="fechar()">
+  <div class="painel" [class.mobile]="isMobile()" role="dialog" aria-label="Escolher período">
+    <div class="atalhos">
+      <p class="titulo-atalhos">{{ isMobile() ? 'Últimos' : 'Atalhos' }}</p>
+      @for (atalho of atalhos; track atalho.id) {
+        <button type="button" class="atalho" [class.ativo]="periodo().atalho === atalho.id"
+                [attr.aria-label]="atalho.rotulo" (click)="aplicarAtalho(atalho.id)">
+          {{ isMobile() ? atalho.rotuloCurto : atalho.rotulo }}
+        </button>
+      }
+    </div>
+
+    <div class="calendario">
+      <mat-calendar
+        [selected]="rascunho()"
+        [startAt]="rascunho().end ?? rascunho().start"
+        [maxDate]="hoje"
+        (selectedChange)="selecionarData($event)" />
+
+      <div class="rodape">
+        <span class="text-sm">{{ rotuloRascunho() }}</span>
+        <span class="flex-1"></span>
+        <button mat-button type="button" (click)="fechar()">Cancelar</button>
+        <button mat-flat-button type="button" [disabled]="!rascunho().end" (click)="aplicar()">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</ng-template>

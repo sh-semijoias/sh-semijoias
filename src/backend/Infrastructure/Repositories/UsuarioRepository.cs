@@ -13,7 +13,7 @@ public class UsuarioRepository(UserManager<Usuario> userManager, ApplicationDbCo
         var query = context.Users
             .Include(u => u.Perfis)
             .Where(u => perfil == null || u.Perfis.Any(p => p.NormalizedName == perfil.ToUpper()))
-            .Where(u => busca == null || u.Nome.Contains(busca))
+            .Where(u => string.IsNullOrWhiteSpace(busca) || EF.Functions.ILike(u.Nome, $"%{busca}%"))
             .OrderBy(u => u.Nome);
 
         var total = await query.CountAsync();

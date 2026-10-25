@@ -66,7 +66,7 @@ public class ClienteRepository(ApplicationDbContext context) : IClienteRepositor
     if (!string.IsNullOrWhiteSpace(busca))
     {
         query = query.Where(x =>
-            x.Nome.Contains(busca));
+            EF.Functions.ILike(x.Nome, $"%{busca}%"));
     }
 
     var total = await query.CountAsync();

@@ -43,7 +43,12 @@ override parse(value: any): Date | null {
     return value instanceof Date ? value : null;
   }
 
-  override format(date: Date): string {
+  override format(date: Date, displayFormat: unknown): string {
+
+    // Formatos Intl (cabeçalho do calendário, rótulos de acessibilidade) seguem o adapter nativo
+    if (typeof displayFormat === 'object' && displayFormat !== null) {
+      return super.format(date, displayFormat);
+    }
 
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');

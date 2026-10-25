@@ -36,6 +36,7 @@ export class AutocompletePaginadoComponent implements OnInit, OnDestroy, OnChang
   @Input() errorMessage = '';
   @Input() fieldClass = '';
   @Input() subscriptSizing: 'fixed' | 'dynamic' = 'fixed';
+  @Input() floatLabel: 'auto' | 'always' = 'auto';
 
 
   @HostBinding('class') get hostClass(): string { return 'block ' + this.fieldClass; }
