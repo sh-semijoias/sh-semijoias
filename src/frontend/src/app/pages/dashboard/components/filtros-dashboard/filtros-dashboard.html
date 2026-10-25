@@ -1,5 +1,6 @@
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-  <app-seletor-periodo [periodo]="periodo()" (periodoChange)="alterarPeriodo($event)" />
+<!-- Larguras intermediárias: período (texto longo) em linha própria, revendedor e categoria lado a lado -->
+<div class="grid grid-cols-1 @lg:grid-cols-2 @4xl:grid-cols-3 gap-3">
+  <app-seletor-periodo class="@lg:col-span-2 @4xl:col-span-1" [periodo]="periodo()" (periodoChange)="alterarPeriodo($event)" />
 
   <app-autocomplete-paginado
     label="Revendedor" placeholder="Todos"
