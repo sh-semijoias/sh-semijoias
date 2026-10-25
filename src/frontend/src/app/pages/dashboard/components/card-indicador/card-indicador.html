@@ -2,32 +2,41 @@
   <mat-card-content class="flex flex-col gap-3 h-full">
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">
-        <h3 class="text-base font-semibold">{{ titulo() }}</h3>
+        <div class="flex items-center gap-1">
+          <h3 class="text-base font-semibold">{{ titulo() }}</h3>
+          @if (textoAjuda()) {
+            <button type="button" class="ajuda" [matTooltip]="textoAjuda()" [attr.aria-label]="'Sobre o indicador: ' + titulo()">
+              <mat-icon class="text-base! w-4! h-4! leading-4!">info</mat-icon>
+            </button>
+          }
+        </div>
         @if (subtitulo()) {
           <p class="text-sm text-(--mat-sys-on-surface-variant)">{{ subtitulo() }}</p>
         }
-        @if (naoSegueFiltroPeriodo()) {
-          <p class="text-sm text-(--mat-sys-on-surface-variant)">Não segue o filtro de período</p>
-        }
       </div>
-      @if (etiqueta()) {
-        <span class="shrink-0 rounded-md border border-(--mat-sys-outline) px-2 py-0.5 text-xs text-(--mat-sys-on-surface-variant)">
-          {{ etiqueta() }}
-        </span>
-      }
+      <div class="flex shrink-0 items-center gap-2">
+        @if (etiqueta()) {
+          <span class="rounded-md border border-(--mat-sys-outline) px-2 py-0.5 text-xs text-(--mat-sys-on-surface-variant)">
+            {{ etiqueta() }}
+          </span>
+        }
+        <ng-content select="[acoes]" />
+      </div>
     </div>
 
     <div class="flex-1 min-h-0">
       @if (carregando()) {
-        <div class="flex flex-col gap-3 py-2">
-          <app-skeleton class="h-4 w-3/4" />
-          <app-skeleton class="h-4 w-1/2" />
-          <app-skeleton class="h-32 w-full" />
-        </div>
+        <ng-content select="[esqueleto]">
+          <div class="flex flex-col gap-3 py-2">
+            <app-skeleton class="h-4 w-3/4" />
+            <app-skeleton class="h-4 w-1/2" />
+            <app-skeleton class="h-32 w-full" />
+          </div>
+        </ng-content>
       } @else if (erro()) {
         <p class="text-sm text-(--mat-sys-error)">Não foi possível carregar.</p>
       } @else if (vazio()) {
-        <p class="text-sm text-(--mat-sys-on-surface-variant)">Nenhum dado no período.</p>
+        <p class="text-sm text-(--mat-sys-on-surface-variant)">{{ mensagemVazio() }}</p>
       } @else {
         <ng-content />
       }

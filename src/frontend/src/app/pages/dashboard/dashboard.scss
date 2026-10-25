@@ -1,4 +1,8 @@
-// Cards grandes do protótipo: cada card declara a própria grid-area
+// Cards grandes do protótipo, posicionados pela ordem no DOM (sem reservar espaço para cards ainda inexistentes):
+//   curva ABC (2 colunas) · produtos por classe
+//   idade do estoque · composição da margem · ticket médio por mês
+//   top clientes (2 colunas) · DSI
+// Cards de 2 colunas usam a classe lg:col-span-2 no host.
 .indicadores {
   display: grid;
   gap: 0.75rem;
@@ -6,9 +10,5 @@
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-areas:
-      'abc abc classes'
-      'idade margem mensal'
-      'clientes clientes dsi';
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { FiltrosIndicadores } from '../../core/services/dashboard.service';
+import { FiltrosIndicadores, FiltrosSemPeriodo } from '../../core/services/dashboard.service';
 import { Periodo, calcularAtalho } from '../../shared/components/seletor-periodo/periodo';
 
 export interface FiltrosDashboard {
@@ -26,6 +26,15 @@ export class DashboardFiltrosService {
       idTipoProduto: filtros.idTipoProduto ?? undefined,
     };
   });
+
+  // Para cards que não seguem o período: só emite quando revendedora ou categoria mudam
+  readonly filtrosSemPeriodo = computed<FiltrosSemPeriodo>(
+    () => {
+      const { idRevendedora, idTipoProduto } = this.filtrosApi();
+      return { idRevendedora, idTipoProduto };
+    },
+    { equal: (a, b) => a.idRevendedora === b.idRevendedora && a.idTipoProduto === b.idTipoProduto },
+  );
 
   atualizar(alteracao: Partial<FiltrosDashboard>): void {
     this.filtros.update(filtros => ({ ...filtros, ...alteracao }));
