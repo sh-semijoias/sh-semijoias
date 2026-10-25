@@ -17,8 +17,8 @@
           <mat-icon>logout</mat-icon> Sair
         </button>
       </mat-menu>
-      <button matIconButton (click)="toggleDarkMode()">
-        <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      <button matIconButton (click)="tema.alternar()" [attr.aria-label]="tema.escuro() ? 'Usar tema claro' : 'Usar tema escuro'">
+        <mat-icon>{{ tema.escuro() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
     </mat-toolbar>
 
