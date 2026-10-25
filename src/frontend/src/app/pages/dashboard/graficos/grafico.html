@@ -1,0 +1,39 @@
+<p class="sr-only">{{ descricao() }}</p>
+
+<!-- A tabela fica sempre no DOM: visível quando escolhida, senão só para leitores de tela -->
+<!-- Visível, a tabela rola dentro da altura do gráfico: tabindex permite rolar pelo teclado -->
+<div [class]="exibirTabela() ? 'overflow-auto ' + altura() : 'sr-only'"
+     [attr.tabindex]="exibirTabela() ? 0 : null"
+     [attr.role]="exibirTabela() ? 'region' : null"
+     [attr.aria-label]="exibirTabela() ? 'Dados do gráfico' : null">
+  <table class="tabela-grafico w-full text-sm">
+    <thead>
+      <tr>
+        @for (coluna of tabela().colunas; track $index) {
+          <th scope="col" [class.text-right]="$index > 0">{{ coluna }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (linha of tabela().linhas; track $index) {
+        <tr>
+          @for (celula of linha; track $index) {
+            @if ($first) {
+              <th scope="row">{{ celula }}</th>
+            } @else {
+              <td class="text-right">{{ celula }}</td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!exibirTabela()) {
+  <div echarts aria-hidden="true" [class]="altura()"
+       [options]="opcoesFinais()"
+       [theme]="temaGrafico()"
+       [initOpts]="{ renderer: 'svg' }"
+       [autoResize]="true"></div>
+}

@@ -7,6 +7,8 @@ namespace ShSemijoias.Application.Services;
 
 public class DashboardService(IDashboardRepository dashboardRepository) : IDashboardService
 {
+    private const int MesesTicketMensal = 12;
+
     public async Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta)
     {
         var erros = ValidarConsulta(consulta);
@@ -20,10 +22,39 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         var ticketAnterior = CalcularTicket(anterior);
         decimal? variacao = ticketAnterior == 0m
             ? null
-            : Math.Round((ticketAtual - ticketAnterior) / ticketAnterior * 100, 2);
+            : Math.Round((ticketAtual - ticketAnterior) / ticketAnterior * 100, 2, MidpointRounding.AwayFromZero);
 
         return Result<TicketMedioDto>.Ok(
-            new TicketMedioDto(Math.Round(ticketAtual, 2), atual.QuantidadeVendas, variacao));
+            new TicketMedioDto(Math.Round(ticketAtual, 2, MidpointRounding.AwayFromZero), atual.QuantidadeVendas, variacao));
+    }
+
+    public async Task<Result<TicketMedioMensalDto>> ObterTicketMedioMensalAsync(ObterTicketMedioMensalConsulta consulta)
+    {
+        // Últimos 12 meses, incluindo o mês atual até hoje
+        var hoje = FusoBrasilia.Hoje();
+        var primeiroMes = new DateOnly(hoje.Year, hoje.Month, 1).AddMonths(-(MesesTicketMensal - 1));
+
+        var vendasPorMes = await dashboardRepository.ObterVendasPorMesAsync(
+            new ObterIndicadoresConsulta(primeiroMes, hoje, consulta.IdRevendedora, consulta.IdTipoProduto));
+
+        var meses = Enumerable.Range(0, MesesTicketMensal)
+            .Select(i => primeiroMes.AddMonths(i))
+            .Select(mes =>
+            {
+                var vendas = vendasPorMes.FirstOrDefault(v => v.Ano == mes.Year && v.Mes == mes.Month);
+                decimal? ticket = vendas is null
+                    ? null
+                    : Math.Round(vendas.Faturamento / vendas.QuantidadeVendas, 2, MidpointRounding.AwayFromZero);
+                return new TicketMedioMesDto(mes.Year, mes.Month, ticket);
+            })
+            .ToList();
+
+        var totalVendas = vendasPorMes.Sum(v => v.QuantidadeVendas);
+        decimal? itensPorVenda = totalVendas == 0
+            ? null
+            : Math.Round((decimal)vendasPorMes.Sum(v => v.QuantidadeItens) / totalVendas, 1, MidpointRounding.AwayFromZero);
+
+        return Result<TicketMedioMensalDto>.Ok(new TicketMedioMensalDto(meses, itensPorVenda));
     }
 
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>

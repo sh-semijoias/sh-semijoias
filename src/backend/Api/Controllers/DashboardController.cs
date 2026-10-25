@@ -18,4 +18,11 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
         var result = await dashboardService.ObterTicketMedioAsync(consulta);
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
+
+    [HttpGet("ticket-medio-mensal")]
+    public async Task<IActionResult> ObterTicketMedioMensal([FromQuery] ObterTicketMedioMensalConsulta consulta)
+    {
+        var result = await dashboardService.ObterTicketMedioMensalAsync(consulta);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
+    }
 }

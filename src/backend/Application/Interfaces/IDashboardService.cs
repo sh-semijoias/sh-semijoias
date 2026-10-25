@@ -6,4 +6,5 @@ namespace ShSemijoias.Application.Interfaces;
 public interface IDashboardService
 {
     Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta);
+    Task<Result<TicketMedioMensalDto>> ObterTicketMedioMensalAsync(ObterTicketMedioMensalConsulta consulta);
 }

@@ -9,6 +9,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatDialog} from '@angular/material/dialog';
 import { NavigationEnd, Router, RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { TemaService } from './core/services/tema.service';
 import { DialogTrocarSenhaComponent } from './pages/auth/dialog-trocar-senha/dialog-trocar-senha';
 
 @Component({
@@ -22,12 +23,12 @@ export class App implements OnDestroy {
 
   protected readonly isMobile = signal(true);
   protected readonly snavOpen = signal(false);
-  protected readonly darkMode = signal(false);
   protected readonly isLogin = signal(false);
 
   private readonly _mobileQuery: MediaQueryList;
   private readonly _mobileQueryListener: () => void;
 
+  protected readonly tema = inject(TemaService);
   protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -40,26 +41,12 @@ export class App implements OnDestroy {
     this._mobileQueryListener = () => this.isMobile.set(this._mobileQuery.matches);
     this._mobileQuery.addEventListener('change', this._mobileQueryListener);
 
-    const stored = localStorage.getItem('darkMode');
-    const prefersDark = stored !== null ? stored === 'true' : media.matchMedia('(prefers-color-scheme: dark)').matches;
-    this.darkMode.set(prefersDark);
-    document.documentElement.classList.toggle('dark-mode', prefersDark);
-    document.documentElement.classList.toggle('light-mode', !prefersDark);
-
     this.isLogin.set(this.router.url.startsWith('/login'));
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.isLogin.set(event.urlAfterRedirects.startsWith('/login'));
       }
     });
-  }
-
-  protected toggleDarkMode(): void {
-    const isDark = !this.darkMode();
-    this.darkMode.set(isDark);
-    localStorage.setItem('darkMode', String(isDark));
-    document.documentElement.classList.toggle('dark-mode', isDark);
-    document.documentElement.classList.toggle('light-mode', !isDark);
   }
 
   protected isLoginRoute(): boolean {

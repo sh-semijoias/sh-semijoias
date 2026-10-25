@@ -19,6 +19,25 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
         return new ResumoVendasPeriodo(faturamento, quantidadeVendas);
     }
 
+    public async Task<IList<VendasMes>> ObterVendasPorMesAsync(ObterIndicadoresConsulta consulta)
+    {
+        // Agrupa pelo mês no horário de Brasília, para que vendas da noite do último dia não caiam no mês seguinte
+        return await (
+            from item in ItensVendidos(consulta)
+            group item by new
+            {
+                TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Venda.DataVenda, FusoBrasilia.Id).Year,
+                TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Venda.DataVenda, FusoBrasilia.Id).Month
+            } into mes
+            select new VendasMes(
+                mes.Key.Year,
+                mes.Key.Month,
+                mes.Sum(i => i.PrecoVendaReal * i.Quantidade),
+                mes.Select(i => i.IdVenda).Distinct().Count(),
+                mes.Sum(i => i.Quantidade))
+        ).ToListAsync();
+    }
+
     // Base de todos os indicadores de venda: itens de vendas não canceladas que atendem aos filtros do dashboard
     private IQueryable<ItemVenda> ItensVendidos(ObterIndicadoresConsulta consulta)
     {
@@ -26,14 +45,11 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
 
         return
             from item in context.ItensVenda.AsNoTracking()
-            join venda in context.Vendas.AsNoTracking() on item.IdVenda equals venda.Id
-            join estoque in context.Estoques.AsNoTracking() on item.IdEstoque equals estoque.Id
-            join produto in context.Produtos.AsNoTracking() on estoque.IdProduto equals produto.Id
-            where venda.Cancelamento == null
-            where venda.DataVenda >= intervalo.Inicio
-            where venda.DataVenda < intervalo.FimExclusivo
-            where consulta.IdRevendedora == null || venda.IdUsuario == consulta.IdRevendedora
-            where consulta.IdTipoProduto == null || produto.IdTipoProduto == consulta.IdTipoProduto
+            where item.Venda.Cancelamento == null
+            where item.Venda.DataVenda >= intervalo.Inicio
+            where item.Venda.DataVenda < intervalo.FimExclusivo
+            where consulta.IdRevendedora == null || item.Venda.IdUsuario == consulta.IdRevendedora
+            where consulta.IdTipoProduto == null || item.Estoque.Produto.IdTipoProduto == consulta.IdTipoProduto
             select item;
     }
 }

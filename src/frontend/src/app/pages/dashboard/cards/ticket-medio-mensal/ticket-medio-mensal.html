@@ -1,0 +1,32 @@
+@let dados = ticketMensal.value();
+<app-card-indicador
+  titulo="Ticket médio por mês"
+  subtitulo="Últimos 12 meses"
+  etiqueta="Comercial"
+  ajuda="Faturamento de cada mês (preço de venda real × quantidade) dividido pela quantidade de vendas do mês. Vendas canceladas não entram no cálculo. Itens por venda é a média dos últimos 12 meses."
+  [naoSegueFiltroPeriodo]="true"
+  [carregando]="ticketMensal.isLoading()"
+  [erro]="!!ticketMensal.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda nos últimos 12 meses.">
+  @if (dados && !semVendas()) {
+    <app-menu-grafico acoes [(exibirTabela)]="exibirTabela" />
+  }
+
+  <div esqueleto class="flex flex-col gap-2">
+    <app-skeleton class="h-56 w-full" />
+    <app-skeleton class="h-5 w-full" />
+  </div>
+
+  <!-- Só cria o gráfico com os dados em mãos: o conteúdo projetado é instanciado mesmo enquanto o card carrega -->
+  @if (dados && !semVendas()) {
+    <app-grafico [opcoes]="opcoes()" [descricao]="descricao()" [tabela]="tabela()" [exibirTabela]="exibirTabela()" />
+  }
+
+  @if (!ticketMensal.isLoading() && !ticketMensal.error() && !semVendas()) {
+    <div rodape class="flex items-center justify-between border-t border-(--mat-sys-outline-variant) pt-3 text-sm">
+      <span class="text-(--mat-sys-on-surface-variant)">Itens por venda</span>
+      <span class="font-semibold">{{ dados?.itensPorVenda | number:'1.1-1':'pt-BR' }}</span>
+    </div>
+  }
+</app-card-indicador>
