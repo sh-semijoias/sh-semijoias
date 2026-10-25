@@ -3,3 +3,7 @@
 
 # Chrome debug profile (preserves cookies/session entre sessões de debug)
 .vscode/.chrome-profile/
+
+# Evidências de testes manuais (screenshots) e artefatos do MCP do Playwright
+evidencias/
+.playwright-mcp/
