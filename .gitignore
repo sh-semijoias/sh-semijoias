@@ -10,3 +10,6 @@ evidencias/
 
 #prototipo pdf
 prototipo.pdf
+
+#packege-lock
+package-lock.json
