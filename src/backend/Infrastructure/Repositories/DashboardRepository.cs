@@ -38,43 +38,112 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
         ).ToListAsync();
     }
 
-    public async Task<IList<FaturamentoProduto>> ObterFaturamentoPorProdutoAsync(ObterIndicadoresConsulta consulta)
+    // A curva inteira é calculada no banco, com funções de janela, e o resultado tem tamanho fixo qualquer que seja o
+    // catálogo: os destaques de cada classe, o último produto de cada classe (cortes) e uma amostra de pontos da curva.
+    // O EF Core não traduz funções de janela a partir do LINQ, por isso o SQL escrito à mão.
+    public async Task<IList<LinhaCurvaAbc>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
     {
-        var vendidos = await (
-            from item in ItensVendidos(consulta)
-            group item by new
-            {
-                item.Estoque.IdProduto,
-                item.Estoque.Produto.Descricao,
-                Categoria = item.Estoque.Produto.TipoProduto.Descricao
-            } into produto
-            select new FaturamentoProduto(
-                produto.Key.IdProduto,
-                produto.Key.Descricao,
-                produto.Key.Categoria,
-                produto.Sum(i => i.Quantidade),
-                produto.Sum(i => i.PrecoVendaReal * i.Quantidade))
-        ).ToListAsync();
+        const decimal limiteClasseA = 0.80m;
+        const decimal limiteClasseB = 0.95m;
+        const int produtosPorClasse = 5;
+        // Acima disso, a curva vem amostrada (um ponto a cada N produtos); abaixo, um ponto por produto
+        const int pontosCurva = 200;
 
-        var idsVendidos = vendidos.Select(p => p.IdProduto).ToList();
+        var intervalo = IntervaloUtc.De(consulta.DataInicio, consulta.DataFim);
 
-        // Produtos com estoque disponível e sem venda no período entram com faturamento zero.
-        // Com revendedora, só o estoque das maletas dela; sem, o estoque geral e todas as maletas.
-        var semVenda = await (
-            from estoque in context.Estoques.AsNoTracking()
-            where estoque.Quantidade > 0
-            where !idsVendidos.Contains(estoque.IdProduto)
-            where consulta.IdRevendedora == null || estoque.Maleta!.IdUsuario == consulta.IdRevendedora
-            where consulta.IdTipoProduto == null || estoque.Produto.IdTipoProduto == consulta.IdTipoProduto
-            select new
-            {
-                estoque.IdProduto,
-                estoque.Produto.Descricao,
-                Categoria = estoque.Produto.TipoProduto.Descricao
-            }
-        ).Distinct().ToListAsync();
-
-        return [.. vendidos, .. semVenda.Select(p => new FaturamentoProduto(p.IdProduto, p.Descricao, p.Categoria, 0, 0m))];
+        return await context.Database.SqlQuery<LinhaCurvaAbc>($"""
+            WITH vendidos AS (
+                -- Faturamento por produto: vendas não canceladas no período, com os filtros do dashboard
+                SELECT e.id_produto,
+                       sum(i.quantidade) AS quantidade_vendida,
+                       sum(i.preco_venda_real * i.quantidade) AS faturamento
+                FROM item_venda i
+                JOIN venda v ON v.id = i.id_venda
+                JOIN estoque e ON e.id = i.id_estoque
+                JOIN produto p ON p.id = e.id_produto
+                LEFT JOIN cancelamento_venda c ON c.id_venda = v.id
+                WHERE c.id IS NULL
+                  AND v.data_venda >= {intervalo.Inicio}
+                  AND v.data_venda < {intervalo.FimExclusivo}
+                  AND ({consulta.IdRevendedora}::uuid IS NULL OR v.id_usuario = {consulta.IdRevendedora}::uuid)
+                  AND ({consulta.IdTipoProduto}::int IS NULL OR p.id_tipo_produto = {consulta.IdTipoProduto}::int)
+                GROUP BY e.id_produto
+            ),
+            com_estoque AS (
+                -- Produtos com estoque disponível: com revendedora, só nas maletas dela; sem, no estoque geral e em todas as maletas
+                SELECT DISTINCT e.id_produto
+                FROM estoque e
+                JOIN produto p ON p.id = e.id_produto
+                LEFT JOIN maleta m ON m.id = e.id_maleta
+                WHERE e.quantidade > 0
+                  AND ({consulta.IdRevendedora}::uuid IS NULL OR m.id_usuario = {consulta.IdRevendedora}::uuid)
+                  AND ({consulta.IdTipoProduto}::int IS NULL OR p.id_tipo_produto = {consulta.IdTipoProduto}::int)
+            ),
+            produtos AS (
+                -- Vendidos e, com faturamento zero, os que têm estoque mas não venderam
+                SELECT p.id,
+                       p.descricao,
+                       t.descricao AS categoria,
+                       coalesce(vd.quantidade_vendida, 0)::int AS quantidade_vendida,
+                       coalesce(vd.faturamento, 0) AS faturamento
+                FROM vendidos vd
+                FULL JOIN com_estoque ce ON ce.id_produto = vd.id_produto
+                JOIN produto p ON p.id = coalesce(vd.id_produto, ce.id_produto)
+                JOIN tipo_produto t ON t.id = p.id_tipo_produto
+            ),
+            ranking AS (
+                -- Desempate por quantidade, nome e id, para o ranking não mudar entre requisições.
+                -- Nome com collation ICU: a padrão do banco, na imagem Alpine (musl), compara por bytes e põe "Pérola" depois de "Ponto"
+                SELECT *,
+                       row_number() OVER ordem AS posicao,
+                       sum(faturamento) OVER ordem AS acumulado,
+                       sum(faturamento) OVER () AS faturamento_total,
+                       count(*) OVER () AS total_produtos
+                FROM produtos
+                WINDOW ordem AS (ORDER BY faturamento DESC, quantidade_vendida DESC, descricao COLLATE "pt-BR-x-icu", id ROWS UNBOUNDED PRECEDING)
+            ),
+            classificados AS (
+                -- A classe vem do acumulado antes do produto: quem faz o acumulado passar de um limite fica na classe desse limite
+                SELECT *,
+                       CASE
+                           WHEN acumulado - faturamento < {limiteClasseA} * faturamento_total THEN 'A'
+                           WHEN acumulado - faturamento < {limiteClasseB} * faturamento_total THEN 'B'
+                           ELSE 'C'
+                       END AS classe
+                FROM ranking
+            ),
+            por_classe AS (
+                SELECT *,
+                       row_number() OVER (PARTITION BY classe ORDER BY posicao) AS ordem_na_classe,
+                       row_number() OVER (PARTITION BY classe ORDER BY posicao DESC) AS ordem_inversa_na_classe,
+                       count(*) OVER (PARTITION BY classe) AS quantidade_classe,
+                       sum(faturamento) OVER (PARTITION BY classe) AS faturamento_classe
+                FROM classificados
+            )
+            SELECT posicao::int AS posicao,
+                   descricao,
+                   categoria,
+                   quantidade_vendida,
+                   round(faturamento, 2) AS faturamento,
+                   classe,
+                   -- Sem arredondar: o serviço arredonda conforme o uso (2 casas na curva, 1 nos destaques)
+                   posicao * 100.0 / total_produtos AS percentual_produtos,
+                   coalesce(acumulado * 100 / nullif(faturamento_total, 0), 0) AS percentual_acumulado,
+                   -- Destaques: os de maior faturamento nas classes A e B; na C, os de menor
+                   CASE WHEN classe = 'C' THEN ordem_inversa_na_classe ELSE ordem_na_classe END <= {produtosPorClasse} AS destaque,
+                   ordem_inversa_na_classe = 1 AS ultimo_da_classe,
+                   quantidade_classe::int AS quantidade_classe,
+                   round(faturamento_classe, 2) AS faturamento_classe,
+                   round(quantidade_classe * 100.0 / total_produtos, 1) AS percentual_mix_classe,
+                   round(coalesce(faturamento_classe * 100 / nullif(faturamento_total, 0), 0), 1) AS percentual_faturamento_classe,
+                   total_produtos::int AS total_produtos,
+                   round(faturamento_total, 2) AS faturamento_total
+            FROM por_classe
+            WHERE CASE WHEN classe = 'C' THEN ordem_inversa_na_classe ELSE ordem_na_classe END <= {produtosPorClasse}
+               OR ordem_inversa_na_classe = 1
+               OR posicao % greatest(1, ceil(total_produtos / {(decimal)pontosCurva})::int) = 0
+            ORDER BY posicao
+            """).ToListAsync();
     }
 
     // Base de todos os indicadores de venda: itens de vendas não canceladas que atendem aos filtros do dashboard

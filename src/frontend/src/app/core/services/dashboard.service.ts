@@ -48,15 +48,26 @@ export interface ClasseAbcDto {
   percentualMix: number;
   percentualFaturamento: number;
   faturamento: number;
+  // No último produto da classe: o ponto de corte na curva
+  percentualProdutosAcumulado: number;
+  percentualFaturamentoAcumulado: number;
   // A e B: os 5 de maior faturamento; C: os 5 de menor, do menor para o maior
   produtos: ProdutoAbcDto[];
+}
+
+// Ponto da curva, na ordem do ranking (posicao 1 = maior faturamento)
+export interface PontoCurvaAbcDto {
+  posicao: number;
+  classe: ClasseAbc;
+  percentualProdutos: number;
+  percentualFaturamento: number;
 }
 
 export interface CurvaAbcDto {
   totalProdutos: number;
   faturamento: number;
-  // Um ponto por produto, na ordem do ranking; vazio quando não houve faturamento
-  percentuaisAcumulados: number[];
+  // Com muitos produtos, amostrados (sempre com o último de cada classe); vazio quando não houve faturamento
+  pontos: PontoCurvaAbcDto[];
   classes: ClasseAbcDto[];
 }
 

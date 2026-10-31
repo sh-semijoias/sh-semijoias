@@ -8,9 +8,6 @@ namespace ShSemijoias.Application.Services;
 public class DashboardService(IDashboardRepository dashboardRepository) : IDashboardService
 {
     private const int MesesTicketMensal = 12;
-    private const decimal LimiteClasseA = 80m;
-    private const decimal LimiteClasseB = 95m;
-    private const int ProdutosPorClasse = 5;
     private static readonly string[] ClassesAbc = ["A", "B", "C"];
 
     public async Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta)
@@ -67,73 +64,55 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         if (erros.Count > 0)
             return Result<CurvaAbcDto>.Falha(erros);
 
-        // Desempate pela quantidade e pelo nome, para o ranking não mudar entre requisições
-        var produtos = (await dashboardRepository.ObterFaturamentoPorProdutoAsync(consulta))
-            .OrderByDescending(p => p.Faturamento)
-            .ThenByDescending(p => p.QuantidadeVendida)
-            .ThenBy(p => p.Descricao)
-            .ToList();
+        // Ranking, acumulado, classes, destaques e totais já vêm calculados do banco: aqui só se agrupa o resultado
+        var linhas = await dashboardRepository.ObterCurvaAbcAsync(consulta);
+        var totais = linhas.FirstOrDefault();
+        if (totais is null || totais.FaturamentoTotal == 0m)
+            return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais?.TotalProdutos ?? 0, 0m, [], []));
 
-        var faturamentoTotal = produtos.Sum(p => p.Faturamento);
-        if (faturamentoTotal == 0m)
-            return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(produtos.Count, 0m, [], []));
-
-        // A classe vem do acumulado antes do produto: quem faz o acumulado passar de um limite fica na classe desse limite
-        var classificados = new List<ProdutoClassificado>();
-        var acumulado = 0m;
-        foreach (var produto in produtos)
+        var classes = new List<ClasseAbcDto>();
+        // Classe sem produtos termina onde a anterior terminou
+        var corte = (Produtos: 0m, Faturamento: 0m);
+        foreach (var classe in ClassesAbc)
         {
-            var classe = ClassificarAbc(acumulado / faturamentoTotal * 100);
-            acumulado += produto.Faturamento;
-            classificados.Add(new ProdutoClassificado(classificados.Count + 1, produto, classe, acumulado / faturamentoTotal * 100));
+            var daClasse = linhas.Where(l => l.Classe == classe).ToList();
+            var ultimo = daClasse.FirstOrDefault(l => l.UltimoDaClasse);
+            if (ultimo is not null)
+                corte = (Arredondar(ultimo.PercentualProdutos, 2), Arredondar(ultimo.PercentualAcumulado, 2));
+
+            // As linhas vêm na ordem do ranking; na classe C, a aba mostra do menor para o maior faturamento
+            var destaques = daClasse.Where(l => l.Destaque);
+            if (classe == "C")
+                destaques = destaques.Reverse();
+
+            classes.Add(new ClasseAbcDto(
+                classe,
+                ultimo?.QuantidadeClasse ?? 0,
+                ultimo?.PercentualMixClasse ?? 0m,
+                ultimo?.PercentualFaturamentoClasse ?? 0m,
+                ultimo?.FaturamentoClasse ?? 0m,
+                corte.Produtos,
+                corte.Faturamento,
+                destaques
+                    .Select(l => new ProdutoAbcDto(
+                        l.Posicao,
+                        l.Descricao,
+                        l.Categoria,
+                        l.QuantidadeVendida,
+                        l.Faturamento,
+                        Arredondar(l.PercentualAcumulado, 1)))
+                    .ToList()));
         }
 
-        var classes = ClassesAbc
-            .Select(classe =>
-            {
-                var daClasse = classificados.Where(p => p.Classe == classe).ToList();
-                var faturamento = daClasse.Sum(p => p.Produto.Faturamento);
-                var destaques = classe == "C" ? Enumerable.Reverse(daClasse) : daClasse;
-
-                return new ClasseAbcDto(
-                    classe,
-                    daClasse.Count,
-                    Percentual(daClasse.Count, produtos.Count),
-                    Percentual(faturamento, faturamentoTotal),
-                    Math.Round(faturamento, 2, MidpointRounding.AwayFromZero),
-                    destaques.Take(ProdutosPorClasse).Select(ParaProdutoAbcDto).ToList());
-            })
+        var pontos = linhas
+            .Select(l => new PontoCurvaAbcDto(l.Posicao, l.Classe, Arredondar(l.PercentualProdutos, 2), Arredondar(l.PercentualAcumulado, 2)))
             .ToList();
 
-        var percentuaisAcumulados = classificados
-            .Select(p => Math.Round(p.PercentualAcumulado, 2, MidpointRounding.AwayFromZero))
-            .ToList();
-
-        return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(
-            produtos.Count,
-            Math.Round(faturamentoTotal, 2, MidpointRounding.AwayFromZero),
-            percentuaisAcumulados,
-            classes));
+        return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais.TotalProdutos, totais.FaturamentoTotal, pontos, classes));
     }
 
-    private record ProdutoClassificado(int Posicao, FaturamentoProduto Produto, string Classe, decimal PercentualAcumulado);
-
-    private static string ClassificarAbc(decimal percentualAcumuladoAnterior) =>
-        percentualAcumuladoAnterior < LimiteClasseA ? "A"
-        : percentualAcumuladoAnterior < LimiteClasseB ? "B"
-        : "C";
-
-    private static ProdutoAbcDto ParaProdutoAbcDto(ProdutoClassificado p) =>
-        new(
-            p.Posicao,
-            p.Produto.Descricao,
-            p.Produto.Categoria,
-            p.Produto.QuantidadeVendida,
-            Math.Round(p.Produto.Faturamento, 2, MidpointRounding.AwayFromZero),
-            Math.Round(p.PercentualAcumulado, 1, MidpointRounding.AwayFromZero));
-
-    private static decimal Percentual(decimal parte, decimal total) =>
-        Math.Round(parte / total * 100, 1, MidpointRounding.AwayFromZero);
+    private static decimal Arredondar(decimal valor, int casas) =>
+        Math.Round(valor, casas, MidpointRounding.AwayFromZero);
 
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>
         resumo.QuantidadeVendas == 0 ? 0m : resumo.Faturamento / resumo.QuantidadeVendas;

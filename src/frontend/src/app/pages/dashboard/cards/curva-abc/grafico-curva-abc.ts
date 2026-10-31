@@ -24,42 +24,32 @@ interface FaixaClasse {
 
 // Faixas das classes no eixo horizontal; classe sem produtos não tem faixa
 function faixasClasses(dados: CurvaAbcDto): FaixaClasse[] {
-  const total = dados.percentuaisAcumulados.length;
-  let ate = 0;
+  let inicio = 0;
 
-  return dados.classes.flatMap(({ classe, quantidadeProdutos }) => {
-    const inicio = (ate / total) * 100;
-    ate += quantidadeProdutos;
-    return quantidadeProdutos === 0 ? [] : [{ classe, inicio, fim: (ate / total) * 100 }];
+  return dados.classes.flatMap(({ classe, quantidadeProdutos, percentualProdutosAcumulado }) => {
+    const faixa = { classe, inicio, fim: percentualProdutosAcumulado };
+    inicio = percentualProdutosAcumulado;
+    return quantidadeProdutos === 0 ? [] : [faixa];
   });
 }
 
 // Pontos de corte das classes A e B: o último produto da classe, exatamente sobre a curva
 function cortes(dados: CurvaAbcDto): { classe: ClasseAbc; produtos: number; faturamento: number }[] {
-  return faixasClasses(dados)
-    .filter(faixa => faixa.classe !== 'C')
-    .map(faixa => {
-      const ultimo = Math.round((faixa.fim / 100) * dados.percentuaisAcumulados.length);
-      return { classe: faixa.classe, produtos: faixa.fim, faturamento: dados.percentuaisAcumulados[ultimo - 1] };
-    });
-}
-
-// Classe do produto na posição informada (1 = maior faturamento)
-function classeDaPosicao(dados: CurvaAbcDto, posicao: number): ClasseAbc {
-  let ate = 0;
-  for (const { classe, quantidadeProdutos } of dados.classes) {
-    ate += quantidadeProdutos;
-    if (posicao <= ate) return classe;
-  }
-  return 'C';
+  return dados.classes
+    .filter(classe => classe.classe !== 'C' && classe.quantidadeProdutos > 0)
+    .map(classe => ({
+      classe: classe.classe,
+      produtos: classe.percentualProdutosAcumulado,
+      faturamento: classe.percentualFaturamentoAcumulado,
+    }));
 }
 
 // largura: do gráfico em px, para encurtar e posicionar os rótulos
 export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, largura: number): EChartsCoreOption {
   const compacto = largura < LARGURA_COMPACTA;
   const larguraPlotagem = largura - MARGEM_PLOTAGEM;
-  const total = dados.percentuaisAcumulados.length;
-  const pontos = [[0, 0], ...dados.percentuaisAcumulados.map((percentual, i) => [((i + 1) / total) * 100, percentual])];
+  // Com muitos produtos, os pontos vêm amostrados da API; a curva começa na origem
+  const pontos = [[0, 0], ...dados.pontos.map(ponto => [ponto.percentualProdutos, ponto.percentualFaturamento])];
   const corClasse: Record<ClasseAbc, string> = { A: paleta.classeA, B: paleta.classeB, C: paleta.classeC };
   const eixoPercentual = {
     type: 'value',
@@ -83,13 +73,13 @@ export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, 
     tooltip: {
       trigger: 'axis',
       formatter: (params: { dataIndex: number }[]) => {
-        const posicao = params[0].dataIndex;
-        if (posicao === 0) return '';
-        const [produtos, faturamento] = pontos[posicao];
+        const indice = params[0].dataIndex;
+        if (indice === 0) return '';
+        const ponto = dados.pontos[indice - 1];
         return (
-          `Produto #${posicao} de ${total} · Classe ${classeDaPosicao(dados, posicao)}<br>` +
-          `${formatarPercentualInteiro(produtos)} dos produtos<br>` +
-          `<strong>${formatarPercentual(faturamento)} do faturamento</strong>`
+          `Produto #${ponto.posicao} de ${dados.totalProdutos} · Classe ${ponto.classe}<br>` +
+          `${formatarPercentualInteiro(ponto.percentualProdutos)} dos produtos<br>` +
+          `<strong>${formatarPercentual(ponto.percentualFaturamento)} do faturamento</strong>`
         );
       },
     },

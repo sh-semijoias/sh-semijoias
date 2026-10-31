@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ClasseAbc, ClasseAbcDto, CurvaAbcDto } from '../../../../core/services/dashboard.service';
+import { ClasseAbc, ClasseAbcDto, CurvaAbcDto, PontoCurvaAbcDto } from '../../../../core/services/dashboard.service';
 import { PaletaGrafico } from '../../graficos/tema-grafico';
 import { descreverCurvaAbc, montarOpcoesCurvaAbc, tabelaCurvaAbc } from './grafico-curva-abc';
 
@@ -19,16 +19,44 @@ const paleta: PaletaGrafico = {
   fonte: 'fonte',
 };
 
-function classe(nome: ClasseAbc, quantidadeProdutos: number, percentualMix: number, percentualFaturamento: number, faturamento: number): ClasseAbcDto {
-  return { classe: nome, quantidadeProdutos, percentualMix, percentualFaturamento, faturamento, produtos: [] };
+// corte: % dos produtos e % do faturamento no último produto da classe
+function classe(
+  nome: ClasseAbc,
+  quantidadeProdutos: number,
+  percentualMix: number,
+  percentualFaturamento: number,
+  faturamento: number,
+  corte: [number, number],
+): ClasseAbcDto {
+  const [percentualProdutosAcumulado, percentualFaturamentoAcumulado] = corte;
+  return {
+    classe: nome,
+    quantidadeProdutos,
+    percentualMix,
+    percentualFaturamento,
+    faturamento,
+    percentualProdutosAcumulado,
+    percentualFaturamentoAcumulado,
+    produtos: [],
+  };
+}
+
+// Um ponto por produto (curva sem amostragem), com a classe de cada posição
+function pontos(acumulados: number[], classes: ClasseAbc[]): PontoCurvaAbcDto[] {
+  return acumulados.map((percentualFaturamento, i) => ({
+    posicao: i + 1,
+    classe: classes[i],
+    percentualProdutos: ((i + 1) / acumulados.length) * 100,
+    percentualFaturamento,
+  }));
 }
 
 // 10 produtos: 2 em A (até 82%), 3 em B (até 96%), 5 em C (2 deles sem vendas)
 const dez: CurvaAbcDto = {
   totalProdutos: 10,
   faturamento: 1000,
-  percentuaisAcumulados: [50, 82, 88, 92, 96, 98, 99, 100, 100, 100],
-  classes: [classe('A', 2, 20, 82, 820), classe('B', 3, 30, 14, 140), classe('C', 5, 50, 4, 40)],
+  pontos: pontos([50, 82, 88, 92, 96, 98, 99, 100, 100, 100], ['A', 'A', 'B', 'B', 'B', 'C', 'C', 'C', 'C', 'C']),
+  classes: [classe('A', 2, 20, 82, 820, [20, 82]), classe('B', 3, 30, 14, 140, [50, 96]), classe('C', 5, 50, 4, 40, [100, 100])],
 };
 
 // O Intl separa "R$" do valor com espaço não separável
@@ -53,7 +81,7 @@ const serie = (dados: CurvaAbcDto, largura = LARGO) =>
   (montarOpcoesCurvaAbc(dados, paleta, largura) as { series: SerieCurva[] }).series[0];
 
 describe('montarOpcoesCurvaAbc', () => {
-  it('começa a curva na origem e põe um ponto por produto no % dos produtos', () => {
+  it('começa a curva na origem e segue os pontos da API', () => {
     const pontos = serie(dez).data;
 
     expect(pontos).toHaveLength(11);
@@ -104,11 +132,12 @@ describe('montarOpcoesCurvaAbc', () => {
 
   it('omite faixa e corte da classe sem produtos', () => {
     // Um produto concentra 96% do faturamento: vai para A, e o seguinte já parte de 96% (C)
+    // Classe vazia termina onde a anterior terminou
     const semB: CurvaAbcDto = {
       totalProdutos: 4,
       faturamento: 100,
-      percentuaisAcumulados: [96, 99, 100, 100],
-      classes: [classe('A', 1, 25, 96, 96), classe('B', 0, 0, 0, 0), classe('C', 3, 75, 4, 4)],
+      pontos: pontos([96, 99, 100, 100], ['A', 'C', 'C', 'C']),
+      classes: [classe('A', 1, 25, 96, 96, [25, 96]), classe('B', 0, 0, 0, 0, [25, 96]), classe('C', 3, 75, 4, 4, [100, 100])],
     };
     const s = serie(semB);
 
@@ -125,6 +154,25 @@ describe('montarOpcoesCurvaAbc', () => {
     expect(dica).toContain('88,0% do faturamento');
     expect(opcoes.tooltip.formatter([{ dataIndex: 0 }])).toBe('');
   });
+
+  it('com a curva amostrada, mostra no tooltip a posição real do produto', () => {
+    // 1.000 produtos, com um ponto a cada 5 posições (a API amostra acima de 200 produtos)
+    const amostrada: CurvaAbcDto = {
+      ...dez,
+      totalProdutos: 1000,
+      pontos: [
+        { posicao: 5, classe: 'A', percentualProdutos: 0.5, percentualFaturamento: 12.34 },
+        { posicao: 10, classe: 'A', percentualProdutos: 1, percentualFaturamento: 20.1 },
+      ],
+    };
+    const opcoes = montarOpcoesCurvaAbc(amostrada, paleta, LARGO) as {
+      series: SerieCurva[];
+      tooltip: { formatter: (p: { dataIndex: number }[]) => string };
+    };
+
+    expect(opcoes.series[0].data).toEqual([[0, 0], [0.5, 12.34], [1, 20.1]]);
+    expect(opcoes.tooltip.formatter([{ dataIndex: 2 }])).toContain('Produto #10 de 1000 · Classe A');
+  });
 });
 
 describe('descreverCurvaAbc', () => {
@@ -138,7 +186,7 @@ describe('descreverCurvaAbc', () => {
   });
 
   it('indica a classe sem produtos', () => {
-    const semB = { ...dez, classes: [dez.classes[0], classe('B', 0, 0, 0, 0), dez.classes[2]] };
+    const semB = { ...dez, classes: [dez.classes[0], classe('B', 0, 0, 0, 0, [20, 82]), dez.classes[2]] };
 
     expect(descreverCurvaAbc(semB)).toContain('Classe B: nenhum produto.');
   });
