@@ -1,0 +1,76 @@
+@let dados = curvaAbc.value();
+<app-card-indicador
+  titulo="Produtos por classe"
+  [subtitulo]="subtitulo()"
+  ajuda="Produtos ordenados do maior para o menor faturamento no período (preço de venda real × quantidade). Classe A reúne os produtos até 80% do faturamento acumulado, B até 95% e C o restante, incluindo produtos com estoque disponível e sem vendas. Vendas canceladas não entram no cálculo."
+  [carregando]="curvaAbc.isLoading()"
+  [erro]="!!curvaAbc.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda no período.">
+  <div esqueleto class="flex flex-col gap-3">
+    <app-skeleton class="h-10 w-full" />
+    <app-skeleton class="h-16 w-full" />
+    @for (_ of [1, 2, 3, 4, 5]; track $index) {
+      <app-skeleton class="h-10 w-full" />
+    }
+  </div>
+
+  @if (dados && !semVendas()) {
+    <mat-tab-group animationDuration="0ms"
+                   [selectedIndex]="abaSelecionada()" (selectedIndexChange)="abaSelecionada.set($event)">
+      @for (classe of dados.classes; track classe.classe) {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            Classe {{ classe.classe }}
+            <span class="contagem">
+              {{ classe.quantidadeProdutos }}<span class="sr-only"> {{ classe.quantidadeProdutos === 1 ? 'produto' : 'produtos' }}</span>
+            </span>
+          </ng-template>
+
+          <div class="resumo">
+            <span class="selo" [attr.data-classe]="classe.classe" aria-hidden="true">{{ classe.classe }}</span>
+            <div class="min-w-0">
+              <p class="font-semibold">{{ classe.quantidadeProdutos }} {{ classe.quantidadeProdutos === 1 ? 'produto' : 'produtos' }}</p>
+              <p class="texto-secundario">{{ classe.percentualMix | number:'1.1-1':'pt-BR' }}% do mix</p>
+            </div>
+            <div class="ml-auto min-w-0 text-right">
+              <p><span class="text-lg font-semibold">{{ classe.percentualFaturamento | number:'1.1-1':'pt-BR' }}%</span>&ngsp;<span class="texto-secundario">do faturamento</span></p>
+              <p class="texto-secundario">{{ classe.faturamento | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</p>
+            </div>
+          </div>
+
+          @if (classe.produtos.length === 0) {
+            <p class="texto-secundario py-3">Nenhum produto nesta classe.</p>
+          } @else {
+            <p class="texto-secundario mt-3 mb-1">
+              {{ classe.classe === 'C' ? 'Menor faturamento da classe' : 'Maior faturamento da classe' }}
+            </p>
+            <ol class="produtos" [attr.aria-label]="'Produtos da classe ' + classe.classe">
+              @for (produto of classe.produtos; track produto.posicao) {
+                <li>
+                  <span class="posicao"><span class="sr-only">Posição </span>#{{ produto.posicao }}</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-medium truncate" [title]="produto.descricao">{{ produto.descricao }}</p>
+                    <p class="texto-secundario">
+                      @if (exibirCategoria()) {
+                        {{ produto.categoria }} ·
+                      }
+                      {{ produto.quantidadeVendida | number:'1.0-0':'pt-BR' }} un.
+                    </p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="font-semibold">{{ produto.faturamento | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</p>
+                    <p class="texto-secundario">
+                      <span aria-hidden="true">acum.</span><span class="sr-only">acumulado</span>
+                      {{ produto.percentualAcumulado | number:'1.1-1':'pt-BR' }}%
+                    </p>
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+        </mat-tab>
+      }
+    </mat-tab-group>
+  }
+</app-card-indicador>
