@@ -7,4 +7,5 @@ public interface IDashboardService
 {
     Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta);
     Task<Result<TicketMedioMensalDto>> ObterTicketMedioMensalAsync(ObterTicketMedioMensalConsulta consulta);
+    Task<Result<MargemBrutaDto>> ObterMargemBrutaAsync(ObterIndicadoresConsulta consulta);
 }

@@ -4,6 +4,7 @@ using ShSemijoias.Application.DTOs.Dashboard;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
 using ShSemijoias.Infrastructure.Persistence;
+using ShSemijoias.Domain.Enums;
 
 namespace ShSemijoias.Infrastructure.Repositories;
 
@@ -15,8 +16,10 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
 
         var faturamento = await itens.SumAsync(i => (decimal?)(i.PrecoVendaReal * i.Quantidade)) ?? 0m;
         var quantidadeVendas = await itens.Select(i => i.IdVenda).Distinct().CountAsync();
+        var cmv = await itens.SumAsync(i =>(decimal?)(i.PrecoCompra * i.Quantidade))?? 0m;
+        var repasse = await itens.SumAsync(i =>i.Venda.Usuario.Perfis.Any(p => p.Name == Perfis.Revendedor)? (decimal?)((i.PrecoVendaReal - i.PrecoVendaSugerido) * i.Quantidade): 0m) ?? 0m;
 
-        return new ResumoVendasPeriodo(faturamento, quantidadeVendas);
+        return new ResumoVendasPeriodo(faturamento, quantidadeVendas, cmv , repasse);
     }
 
     public async Task<IList<VendasMes>> ObterVendasPorMesAsync(ObterIndicadoresConsulta consulta)

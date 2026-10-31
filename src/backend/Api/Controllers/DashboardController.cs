@@ -25,4 +25,15 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
         var result = await dashboardService.ObterTicketMedioMensalAsync(consulta);
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
+
+    [HttpGet("margem-bruta")]
+    public async Task<IActionResult> ObterMargemBruta(
+        [FromQuery] ObterIndicadoresConsulta consulta)
+    {
+        var result = await dashboardService.ObterMargemBrutaAsync(consulta);
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
 }
