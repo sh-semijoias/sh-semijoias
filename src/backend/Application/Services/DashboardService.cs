@@ -64,26 +64,17 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         if (erros.Count > 0)
             return Result<CurvaAbcDto>.Falha(erros);
 
-        // Ranking, acumulado, classes, destaques e totais já vêm calculados do banco: aqui só se agrupa o resultado
+        // Tudo vem calculado do banco (ranking, classes, destaques, arredondamento): aqui as linhas só viram o DTO por classe
         var linhas = await dashboardRepository.ObterCurvaAbcAsync(consulta);
         var totais = linhas.FirstOrDefault();
         if (totais is null || totais.FaturamentoTotal == 0m)
             return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais?.TotalProdutos ?? 0, 0m, [], []));
 
         var classes = new List<ClasseAbcDto>();
-        // Classe sem produtos termina onde a anterior terminou
-        var corte = (Produtos: 0m, Faturamento: 0m);
         foreach (var classe in ClassesAbc)
         {
             var daClasse = linhas.Where(l => l.Classe == classe).ToList();
             var ultimo = daClasse.FirstOrDefault(l => l.UltimoDaClasse);
-            if (ultimo is not null)
-                corte = (Arredondar(ultimo.PercentualProdutos, 2), Arredondar(ultimo.PercentualAcumulado, 2));
-
-            // As linhas vêm na ordem do ranking; na classe C, a aba mostra do menor para o maior faturamento
-            var destaques = daClasse.Where(l => l.Destaque);
-            if (classe == "C")
-                destaques = destaques.Reverse();
 
             classes.Add(new ClasseAbcDto(
                 classe,
@@ -91,28 +82,21 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
                 ultimo?.PercentualMixClasse ?? 0m,
                 ultimo?.PercentualFaturamentoClasse ?? 0m,
                 ultimo?.FaturamentoClasse ?? 0m,
-                corte.Produtos,
-                corte.Faturamento,
-                destaques
-                    .Select(l => new ProdutoAbcDto(
-                        l.Posicao,
-                        l.Descricao,
-                        l.Categoria,
-                        l.QuantidadeVendida,
-                        l.Faturamento,
-                        Arredondar(l.PercentualAcumulado, 1)))
+                ultimo?.PercentualProdutos,
+                ultimo?.PercentualAcumulado,
+                daClasse
+                    .Where(l => l.Destaque)
+                    .OrderBy(l => l.OrdemDestaque)
+                    .Select(l => new ProdutoAbcDto(l.Posicao, l.Descricao, l.Categoria, l.QuantidadeVendida, l.Faturamento, l.PercentualAcumuladoDestaque))
                     .ToList()));
         }
 
         var pontos = linhas
-            .Select(l => new PontoCurvaAbcDto(l.Posicao, l.Classe, Arredondar(l.PercentualProdutos, 2), Arredondar(l.PercentualAcumulado, 2)))
+            .Select(l => new PontoCurvaAbcDto(l.Posicao, l.Classe, l.PercentualProdutos, l.PercentualAcumulado))
             .ToList();
 
         return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais.TotalProdutos, totais.FaturamentoTotal, pontos, classes));
     }
-
-    private static decimal Arredondar(decimal valor, int casas) =>
-        Math.Round(valor, casas, MidpointRounding.AwayFromZero);
 
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>
         resumo.QuantidadeVendas == 0 ? 0m : resumo.Faturamento / resumo.QuantidadeVendas;

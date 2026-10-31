@@ -22,26 +22,23 @@ interface FaixaClasse {
   fim: number;
 }
 
-// Faixas das classes no eixo horizontal; classe sem produtos não tem faixa
+// Faixas das classes no eixo horizontal. Classe sem produtos (corte nulo) não tem faixa, e a seguinte começa onde a anterior terminou
 function faixasClasses(dados: CurvaAbcDto): FaixaClasse[] {
   let inicio = 0;
 
-  return dados.classes.flatMap(({ classe, quantidadeProdutos, percentualProdutosAcumulado }) => {
-    const faixa = { classe, inicio, fim: percentualProdutosAcumulado };
-    inicio = percentualProdutosAcumulado;
-    return quantidadeProdutos === 0 ? [] : [faixa];
+  return dados.classes.flatMap(({ classe, percentualProdutosAcumulado: fim }) => {
+    if (fim === null) return [];
+    const faixa = { classe, inicio, fim };
+    inicio = fim;
+    return [faixa];
   });
 }
 
-// Pontos de corte das classes A e B: o último produto da classe, exatamente sobre a curva
+// Pontos de corte das classes A e B: o último produto da classe, exatamente sobre a curva; classe sem produtos não tem corte
 function cortes(dados: CurvaAbcDto): { classe: ClasseAbc; produtos: number; faturamento: number }[] {
-  return dados.classes
-    .filter(classe => classe.classe !== 'C' && classe.quantidadeProdutos > 0)
-    .map(classe => ({
-      classe: classe.classe,
-      produtos: classe.percentualProdutosAcumulado,
-      faturamento: classe.percentualFaturamentoAcumulado,
-    }));
+  return dados.classes.flatMap(({ classe, percentualProdutosAcumulado: produtos, percentualFaturamentoAcumulado: faturamento }) =>
+    classe === 'C' || produtos === null || faturamento === null ? [] : [{ classe, produtos, faturamento }],
+  );
 }
 
 // largura: do gráfico em px, para encurtar e posicionar os rótulos

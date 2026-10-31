@@ -48,9 +48,9 @@ export interface ClasseAbcDto {
   percentualMix: number;
   percentualFaturamento: number;
   faturamento: number;
-  // No último produto da classe: o ponto de corte na curva
-  percentualProdutosAcumulado: number;
-  percentualFaturamentoAcumulado: number;
+  // No último produto da classe: o ponto de corte na curva. Nulos quando a classe não tem produtos
+  percentualProdutosAcumulado: number | null;
+  percentualFaturamentoAcumulado: number | null;
   // A e B: os 5 de maior faturamento; C: os 5 de menor, do menor para o maior
   produtos: ProdutoAbcDto[];
 }

@@ -48,8 +48,9 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
 
         return await (
             from produto in RankingAbc(consulta)
-            // Destaques: os de maior faturamento nas classes A e B; na C, os de menor
-            let destaque = (produto.Classe == "C" ? produto.OrdemInversaNaClasse : produto.OrdemNaClasse) <= produtosPorClasse
+            // Destaques: os de maior faturamento nas classes A e B; na C, os de menor, do menor para o maior
+            let ordemDestaque = produto.Classe == "C" ? produto.OrdemInversaNaClasse : produto.OrdemNaClasse
+            let destaque = ordemDestaque <= produtosPorClasse
             let ultimoDaClasse = produto.OrdemInversaNaClasse == 1
             // Passo da amostragem: divisão inteira arredondada para cima
             let passo = (produto.TotalProdutos + pontosCurva - 1) / pontosCurva
@@ -62,9 +63,12 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 produto.QuantidadeVendida,
                 produto.Faturamento,
                 produto.Classe,
-                produto.PercentualProdutos,
-                produto.PercentualAcumulado,
+                // round() do PostgreSQL arredonda numeric para longe do zero no empate, como o resto da API
+                Math.Round(produto.PercentualProdutos, 2),
+                Math.Round(produto.PercentualAcumulado, 2),
+                Math.Round(produto.PercentualAcumulado, 1),
                 destaque,
+                ordemDestaque,
                 ultimoDaClasse,
                 produto.QuantidadeClasse,
                 produto.FaturamentoClasse,

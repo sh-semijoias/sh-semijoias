@@ -19,16 +19,16 @@ const paleta: PaletaGrafico = {
   fonte: 'fonte',
 };
 
-// corte: % dos produtos e % do faturamento no último produto da classe
+// corte: % dos produtos e % do faturamento no último produto da classe; nulo na classe sem produtos
 function classe(
   nome: ClasseAbc,
   quantidadeProdutos: number,
   percentualMix: number,
   percentualFaturamento: number,
   faturamento: number,
-  corte: [number, number],
+  corte: [number, number] | null,
 ): ClasseAbcDto {
-  const [percentualProdutosAcumulado, percentualFaturamentoAcumulado] = corte;
+  const [percentualProdutosAcumulado, percentualFaturamentoAcumulado] = corte ?? [null, null];
   return {
     classe: nome,
     quantidadeProdutos,
@@ -132,16 +132,19 @@ describe('montarOpcoesCurvaAbc', () => {
 
   it('omite faixa e corte da classe sem produtos', () => {
     // Um produto concentra 96% do faturamento: vai para A, e o seguinte já parte de 96% (C)
-    // Classe vazia termina onde a anterior terminou
+    // A faixa da C começa onde a A terminou
     const semB: CurvaAbcDto = {
       totalProdutos: 4,
       faturamento: 100,
       pontos: pontos([96, 99, 100, 100], ['A', 'C', 'C', 'C']),
-      classes: [classe('A', 1, 25, 96, 96, [25, 96]), classe('B', 0, 0, 0, 0, [25, 96]), classe('C', 3, 75, 4, 4, [100, 100])],
+      classes: [classe('A', 1, 25, 96, 96, [25, 96]), classe('B', 0, 0, 0, 0, null), classe('C', 3, 75, 4, 4, [100, 100])],
     };
     const s = serie(semB);
 
-    expect(s.markArea.data.map(([inicio]) => inicio.label.formatter)).toEqual(['A', 'C']);
+    expect(s.markArea.data.map(([inicio, fim]) => [inicio.label.formatter, inicio.xAxis, fim.xAxis])).toEqual([
+      ['A', 0, 25],
+      ['C', 25, 100],
+    ]);
     expect(s.markPoint.data.map(c => c.coord)).toEqual([[25, 96]]);
   });
 
@@ -186,7 +189,7 @@ describe('descreverCurvaAbc', () => {
   });
 
   it('indica a classe sem produtos', () => {
-    const semB = { ...dez, classes: [dez.classes[0], classe('B', 0, 0, 0, 0, [20, 82]), dez.classes[2]] };
+    const semB = { ...dez, classes: [dez.classes[0], classe('B', 0, 0, 0, 0, null), dez.classes[2]] };
 
     expect(descreverCurvaAbc(semB)).toContain('Classe B: nenhum produto.');
   });
