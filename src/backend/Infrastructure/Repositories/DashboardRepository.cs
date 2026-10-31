@@ -38,20 +38,54 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
         ).ToListAsync();
     }
 
-    // A curva inteira é calculada no banco, com funções de janela, e o resultado tem tamanho fixo qualquer que seja o
-    // catálogo: os destaques de cada classe, o último produto de cada classe (cortes) e uma amostra de pontos da curva.
-    // O EF Core não traduz funções de janela a partir do LINQ, por isso o SQL escrito à mão.
+    // Curva do dashboard: do ranking completo, só os destaques de cada classe, o último produto de cada classe (cortes)
+    // e uma amostra de pontos. O resultado tem tamanho fixo, qualquer que seja o catálogo.
     public async Task<IList<LinhaCurvaAbc>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
     {
-        const decimal limiteClasseA = 0.80m;
-        const decimal limiteClasseB = 0.95m;
         const int produtosPorClasse = 5;
         // Acima disso, a curva vem amostrada (um ponto a cada N produtos); abaixo, um ponto por produto
         const int pontosCurva = 200;
 
+        return await (
+            from produto in RankingAbc(consulta)
+            // Destaques: os de maior faturamento nas classes A e B; na C, os de menor
+            let destaque = (produto.Classe == "C" ? produto.OrdemInversaNaClasse : produto.OrdemNaClasse) <= produtosPorClasse
+            let ultimoDaClasse = produto.OrdemInversaNaClasse == 1
+            // Passo da amostragem: divisão inteira arredondada para cima
+            let passo = (produto.TotalProdutos + pontosCurva - 1) / pontosCurva
+            where destaque || ultimoDaClasse || produto.Posicao % passo == 0
+            orderby produto.Posicao
+            select new LinhaCurvaAbc(
+                produto.Posicao,
+                produto.Descricao,
+                produto.Categoria,
+                produto.QuantidadeVendida,
+                produto.Faturamento,
+                produto.Classe,
+                produto.PercentualProdutos,
+                produto.PercentualAcumulado,
+                destaque,
+                ultimoDaClasse,
+                produto.QuantidadeClasse,
+                produto.FaturamentoClasse,
+                produto.PercentualMixClasse,
+                produto.PercentualFaturamentoClasse,
+                produto.TotalProdutos,
+                produto.FaturamentoTotal)
+        ).ToListAsync();
+    }
+
+    // Ranking completo da curva ABC, uma linha por produto, calculado no banco com funções de janela (o EF Core não as
+    // traduz a partir do LINQ, por isso o SQL escrito à mão). É composável: quem usa filtra, ordena e pagina em LINQ por cima,
+    // e todas as telas compartilham a mesma classificação.
+    private IQueryable<ProdutoRankingAbc> RankingAbc(ObterIndicadoresConsulta consulta)
+    {
+        const decimal limiteClasseA = 0.80m;
+        const decimal limiteClasseB = 0.95m;
+
         var intervalo = IntervaloUtc.De(consulta.DataInicio, consulta.DataFim);
 
-        return await context.Database.SqlQuery<LinhaCurvaAbc>($"""
+        return context.Database.SqlQuery<ProdutoRankingAbc>($"""
             WITH vendidos AS (
                 -- Faturamento por produto: vendas não canceladas no período, com os filtros do dashboard
                 SELECT e.id_produto,
@@ -121,17 +155,17 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 FROM classificados
             )
             SELECT posicao::int AS posicao,
+                   id AS id_produto,
                    descricao,
                    categoria,
                    quantidade_vendida,
                    round(faturamento, 2) AS faturamento,
                    classe,
-                   -- Sem arredondar: o serviço arredonda conforme o uso (2 casas na curva, 1 nos destaques)
+                   -- Sem arredondar: quem usa arredonda conforme a exibição
                    posicao * 100.0 / total_produtos AS percentual_produtos,
                    coalesce(acumulado * 100 / nullif(faturamento_total, 0), 0) AS percentual_acumulado,
-                   -- Destaques: os de maior faturamento nas classes A e B; na C, os de menor
-                   CASE WHEN classe = 'C' THEN ordem_inversa_na_classe ELSE ordem_na_classe END <= {produtosPorClasse} AS destaque,
-                   ordem_inversa_na_classe = 1 AS ultimo_da_classe,
+                   ordem_na_classe::int AS ordem_na_classe,
+                   ordem_inversa_na_classe::int AS ordem_inversa_na_classe,
                    quantidade_classe::int AS quantidade_classe,
                    round(faturamento_classe, 2) AS faturamento_classe,
                    round(quantidade_classe * 100.0 / total_produtos, 1) AS percentual_mix_classe,
@@ -139,11 +173,7 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                    total_produtos::int AS total_produtos,
                    round(faturamento_total, 2) AS faturamento_total
             FROM por_classe
-            WHERE CASE WHEN classe = 'C' THEN ordem_inversa_na_classe ELSE ordem_na_classe END <= {produtosPorClasse}
-               OR ordem_inversa_na_classe = 1
-               OR posicao % greatest(1, ceil(total_produtos / {(decimal)pontosCurva})::int) = 0
-            ORDER BY posicao
-            """).ToListAsync();
+            """);
     }
 
     // Base de todos os indicadores de venda: itens de vendas não canceladas que atendem aos filtros do dashboard
