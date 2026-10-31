@@ -99,6 +99,10 @@ export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, 
         type: 'line',
         data: pontos,
         showSymbol: false,
+        // Com poucos produtos, cada ponto vira um trecho reto visível. A suavização passa pelos mesmos pontos,
+        // então os cortes continuam sobre a curva. Sem smoothMonotone: os modos monótonos achatam a curva em
+        // cada ponto e a deixam em degraus.
+        smooth: true,
         lineStyle: { color: paleta.terciaria },
         itemStyle: { color: paleta.terciaria },
         markArea: {
