@@ -7,6 +7,14 @@ import { formatarMoeda, formatarPercentual, formatarPercentualInteiro } from '..
 const LIMITES_CLASSES = [80, 95];
 const OPACIDADE_FAIXA = 0.18;
 
+// Abaixo desta largura do gráfico (px), os rótulos encurtam
+const LARGURA_COMPACTA = 480;
+// Estimativas para posicionar os rótulos dos cortes sem medir o texto: a área de plotagem desconta
+// o eixo vertical e as margens, e cada caractere dos rótulos ocupa no máximo isto
+const MARGEM_PLOTAGEM = 52;
+const LARGURA_CARACTERE = 6.5;
+const DISTANCIA_ROTULO = 14;
+
 interface FaixaClasse {
   classe: ClasseAbc;
   // Posição no eixo horizontal (% dos produtos) do primeiro e do último produto da classe
@@ -46,8 +54,10 @@ function classeDaPosicao(dados: CurvaAbcDto, posicao: number): ClasseAbc {
   return 'C';
 }
 
-// compacto: rótulos curtos para cards estreitos
-export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, compacto = false): EChartsCoreOption {
+// largura: do gráfico em px, para encurtar e posicionar os rótulos
+export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, largura: number): EChartsCoreOption {
+  const compacto = largura < LARGURA_COMPACTA;
+  const larguraPlotagem = largura - MARGEM_PLOTAGEM;
   const total = dados.percentuaisAcumulados.length;
   const pontos = [[0, 0], ...dados.percentuaisAcumulados.map((percentual, i) => [((i + 1) / total) * 100, percentual])];
   const corClasse: Record<ClasseAbc, string> = { A: paleta.classeA, B: paleta.classeB, C: paleta.classeC };
@@ -97,7 +107,8 @@ export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, 
             {
               xAxis: faixa.inicio,
               itemStyle: { color: corClasse[faixa.classe], opacity: OPACIDADE_FAIXA },
-              label: { show: true, position: 'insideTop', formatter: faixa.classe, color: paleta.textoSecundario, fontWeight: 'bold' },
+              // Na base: no topo, a letra disputa espaço com a curva e com o rótulo da linha de 95%
+              label: { show: true, position: 'insideBottom', formatter: faixa.classe, color: paleta.textoSecundario, fontWeight: 'bold' },
             },
             { xAxis: faixa.fim },
           ]),
@@ -114,22 +125,29 @@ export function montarOpcoesCurvaAbc(dados: CurvaAbcDto, paleta: PaletaGrafico, 
           symbol: 'circle',
           symbolSize: 10,
           itemStyle: { color: paleta.superficie, borderColor: paleta.terciaria, borderWidth: 2 },
-          data: cortes(dados).map(corte => ({
-            coord: [corte.produtos, corte.faturamento],
-            label: {
-              show: true,
-              // Abaixo e à direita do ponto, onde a curva (côncava) não passa
-              position: [14, 6],
-              align: 'left',
-              formatter: compacto
-                ? `{titulo|${corte.classe}: ${formatarPercentualInteiro(corte.produtos)} dos itens}\n{detalhe|→ ${formatarPercentual(corte.faturamento)} do fat.}`
-                : `{titulo|${corte.classe}: ${formatarPercentualInteiro(corte.produtos)} dos produtos}\n{detalhe|→ ${formatarPercentual(corte.faturamento)} do faturamento}`,
-              rich: {
-                titulo: { color: paleta.texto, fontWeight: 'bold', fontSize: 12, lineHeight: 16 },
-                detalhe: { color: paleta.textoSecundario, fontSize: 11, lineHeight: 16 },
+          data: cortes(dados).map(corte => {
+            const [titulo, detalhe] = compacto
+              ? [`${corte.classe}: ${formatarPercentualInteiro(corte.produtos)} dos itens`, `→ ${formatarPercentual(corte.faturamento)} do fat.`]
+              : [`${corte.classe}: ${formatarPercentualInteiro(corte.produtos)} dos produtos`, `→ ${formatarPercentual(corte.faturamento)} do faturamento`];
+            const larguraRotulo = Math.max(titulo.length, detalhe.length) * LARGURA_CARACTERE;
+            // Se não couber à direita do ponto, encosta na borda direita do gráfico, ainda abaixo da curva
+            const deslocamento = Math.min(DISTANCIA_ROTULO, larguraPlotagem - (corte.produtos / 100) * larguraPlotagem - larguraRotulo);
+
+            return {
+              coord: [corte.produtos, corte.faturamento],
+              label: {
+                show: true,
+                // Abaixo e à direita do ponto, onde a curva (côncava) não passa
+                position: [deslocamento, 6],
+                align: 'left',
+                formatter: `{titulo|${titulo}}\n{detalhe|${detalhe}}`,
+                rich: {
+                  titulo: { color: paleta.texto, fontWeight: 'bold', fontSize: 12, lineHeight: 16 },
+                  detalhe: { color: paleta.textoSecundario, fontSize: 11, lineHeight: 16 },
+                },
               },
-            },
-          })),
+            };
+          }),
         },
       },
     ],

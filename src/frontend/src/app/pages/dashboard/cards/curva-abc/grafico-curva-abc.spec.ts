@@ -38,11 +38,19 @@ interface SerieCurva {
   data: number[][];
   markArea: { data: [{ xAxis: number; itemStyle: { color: string }; label: { formatter: string } }, { xAxis: number }][] };
   markLine: { data: { yAxis: number }[] };
-  markPoint: { data: { coord: number[]; label: { formatter: string } }[] };
+  markPoint: { data: RotuloCorte[] };
 }
 
-const serie = (dados: CurvaAbcDto, compacto = false) =>
-  (montarOpcoesCurvaAbc(dados, paleta, compacto) as { series: SerieCurva[] }).series[0];
+const LARGO = 800;
+const ESTREITO = 300;
+
+interface RotuloCorte {
+  coord: number[];
+  label: { formatter: string; position: number[] };
+}
+
+const serie = (dados: CurvaAbcDto, largura = LARGO) =>
+  (montarOpcoesCurvaAbc(dados, paleta, largura) as { series: SerieCurva[] }).series[0];
 
 describe('montarOpcoesCurvaAbc', () => {
   it('começa a curva na origem e põe um ponto por produto no % dos produtos', () => {
@@ -77,11 +85,21 @@ describe('montarOpcoesCurvaAbc', () => {
     expect(cortes[1].label.formatter).toContain('B: 50% dos produtos');
   });
 
-  it('usa rótulos curtos nos cortes quando compacto', () => {
-    const corte = serie(dez, true).markPoint.data[0];
+  it('usa rótulos curtos nos cortes quando o gráfico é estreito', () => {
+    const corte = serie(dez, ESTREITO).markPoint.data[0];
 
     expect(corte.label.formatter).toContain('A: 20% dos itens');
     expect(corte.label.formatter).toContain('82,0% do fat.');
+  });
+
+  it('põe o rótulo à direita do ponto e o encosta na borda quando não cabe', () => {
+    // 200px: cerca de 150px de área de plotagem
+    const [corteA, corteB] = serie(dez, 200).markPoint.data;
+
+    // A, em 20%, cabe ao lado do ponto
+    expect(corteA.label.position).toEqual([14, 6]);
+    // B, em 50%, não cabe: o deslocamento puxa o rótulo para a esquerda
+    expect(corteB.label.position[0]).toBeLessThan(14);
   });
 
   it('omite faixa e corte da classe sem produtos', () => {
@@ -99,7 +117,7 @@ describe('montarOpcoesCurvaAbc', () => {
   });
 
   it('informa no tooltip a posição, a classe e o acumulado do produto', () => {
-    const opcoes = montarOpcoesCurvaAbc(dez, paleta) as { tooltip: { formatter: (p: { dataIndex: number }[]) => string } };
+    const opcoes = montarOpcoesCurvaAbc(dez, paleta, LARGO) as { tooltip: { formatter: (p: { dataIndex: number }[]) => string } };
     const dica = opcoes.tooltip.formatter([{ dataIndex: 3 }]);
 
     expect(dica).toContain('Produto #3 de 10 · Classe B');

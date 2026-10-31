@@ -1,4 +1,3 @@
-@let dados = curvaAbc.value();
 <app-card-indicador
   titulo="Produtos por classe"
   [subtitulo]="subtitulo()"
@@ -15,7 +14,7 @@
     }
   </div>
 
-  @if (dados && !semVendas()) {
+  @if (dados(); as dados) {
     <mat-tab-group animationDuration="0ms"
                    [selectedIndex]="abaSelecionada()" (selectedIndexChange)="abaSelecionada.set($event)">
       @for (classe of dados.classes; track classe.classe) {

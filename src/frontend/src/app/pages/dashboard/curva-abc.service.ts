@@ -15,5 +15,8 @@ export class CurvaAbcService {
     stream: ({ params }) => this.dashboardService.obterCurvaAbc(params),
   });
 
-  readonly semVendas = computed(() => (this.curvaAbc.value()?.faturamento ?? 0) === 0);
+  // value() lança exceção com o recurso em erro: os cards leem os dados por aqui
+  readonly dados = computed(() => (this.curvaAbc.hasValue() ? this.curvaAbc.value() : undefined));
+
+  readonly semVendas = computed(() => (this.dados()?.faturamento ?? 0) === 0);
 }

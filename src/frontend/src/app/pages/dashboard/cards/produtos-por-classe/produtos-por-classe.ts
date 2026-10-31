@@ -20,14 +20,15 @@ export class CardProdutosPorClasseComponent {
 
   protected readonly curvaAbc = this.curvaAbcService.curvaAbc;
   protected readonly semVendas = this.curvaAbcService.semVendas;
+  protected readonly dados = computed(() => (this.semVendas() ? undefined : this.curvaAbcService.dados()));
   protected readonly abaSelecionada = signal(0);
 
   // Com uma categoria filtrada, todos os produtos são dela: repetir a categoria em cada linha seria ruído
   protected readonly exibirCategoria = computed(() => this.filtros.filtros().idTipoProduto === null);
 
   protected readonly subtitulo = computed(() => {
-    const dados = this.curvaAbc.value();
-    if (!dados || this.semVendas()) return '';
+    const dados = this.dados();
+    if (!dados) return '';
     const produtos = dados.totalProdutos === 1 ? '1 produto' : `${dados.totalProdutos} produtos`;
     return `${produtos} no período · ${formatarMoedaCurta(dados.faturamento)}`;
   });

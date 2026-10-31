@@ -1,4 +1,3 @@
-@let dados = curvaAbc.value();
 <app-card-indicador
   titulo="Curva ABC por produto"
   [subtitulo]="subtitulo()"
@@ -8,7 +7,7 @@
   [erro]="!!curvaAbc.error()"
   [vazio]="semVendas()"
   mensagemVazio="Nenhuma venda no período.">
-  @if (dados && !semVendas()) {
+  @if (dados()) {
     <app-menu-grafico acoes [(exibirTabela)]="exibirTabela" />
   }
 
@@ -18,7 +17,7 @@
   </div>
 
   <!-- Só cria o gráfico com os dados em mãos: o conteúdo projetado é instanciado mesmo enquanto o card carrega -->
-  @if (dados && !semVendas()) {
+  @if (dados()) {
     <!-- O gráfico ocupa a altura que sobrar quando o card ao lado (produtos por classe) for mais alto -->
     <div class="flex h-full flex-col">
       @if (!exibirTabela()) {
