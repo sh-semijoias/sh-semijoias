@@ -3,11 +3,14 @@ import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
 
-export const errorInterceptor: HttpInterceptorFn = (req, next) =>
-  next(req).pipe(
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  // inject() só funciona no contexto de injeção do interceptor, não dentro do catchError (assíncrono)
+  const snackBar = inject(MatSnackBar);
+
+  return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 500) {
-        inject(MatSnackBar).open(
+        snackBar.open(
           'Ocorreu um erro interno. Tente novamente mais tarde.',
           'Fechar',
           { duration: 8000, panelClass: ['snack-error'] }
@@ -16,3 +19,4 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
       return throwError(() => error);
     })
   );
+};

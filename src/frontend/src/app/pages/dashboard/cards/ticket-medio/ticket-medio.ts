@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { DashboardService } from '../../../../core/services/dashboard.service';
@@ -20,4 +20,7 @@ export class CardTicketMedioComponent {
     params: () => this.filtros.filtrosApi(),
     stream: ({ params }) => this.dashboardService.obterTicketMedio(params),
   });
+
+  // value() lança exceção com o recurso em erro: o template lê os dados por aqui
+  protected readonly valor = computed(() => (this.ticketMedio.hasValue() ? this.ticketMedio.value() : undefined));
 }

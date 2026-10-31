@@ -26,7 +26,10 @@ export class CardTicketMedioMensalComponent {
 
   protected readonly exibirTabela = signal(false);
 
-  private readonly meses = computed(() => this.ticketMensal.value()?.meses ?? []);
+  // value() lança exceção com o recurso em erro: o template lê os dados por aqui
+  protected readonly valor = computed(() => (this.ticketMensal.hasValue() ? this.ticketMensal.value() : undefined));
+
+  private readonly meses = computed(() => this.valor()?.meses ?? []);
 
   protected readonly semVendas = computed(() => this.meses().every(m => m.ticketMedio === null));
   protected readonly opcoes = computed(() => montarOpcoesTicketMensal(this.meses()));
