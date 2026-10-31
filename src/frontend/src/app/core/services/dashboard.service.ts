@@ -31,6 +31,46 @@ export interface TicketMedioMensalDto {
   itensPorVenda: number | null;
 }
 
+export type ClasseAbc = 'A' | 'B' | 'C';
+
+export interface ProdutoAbcDto {
+  posicao: number;
+  descricao: string;
+  categoria: string;
+  quantidadeVendida: number;
+  faturamento: number;
+  percentualAcumulado: number;
+}
+
+export interface ClasseAbcDto {
+  classe: ClasseAbc;
+  quantidadeProdutos: number;
+  percentualMix: number;
+  percentualFaturamento: number;
+  faturamento: number;
+  // No último produto da classe: o ponto de corte na curva. Nulos quando a classe não tem produtos
+  percentualProdutosAcumulado: number | null;
+  percentualFaturamentoAcumulado: number | null;
+  // A e B: os 5 de maior faturamento; C: os 5 de menor, do menor para o maior
+  produtos: ProdutoAbcDto[];
+}
+
+// Ponto da curva, na ordem do ranking (posicao 1 = maior faturamento)
+export interface PontoCurvaAbcDto {
+  posicao: number;
+  classe: ClasseAbc;
+  percentualProdutos: number;
+  percentualFaturamento: number;
+}
+
+export interface CurvaAbcDto {
+  totalProdutos: number;
+  faturamento: number;
+  // Com muitos produtos, amostrados (sempre com o último de cada classe); vazio quando não houve faturamento
+  pontos: PontoCurvaAbcDto[];
+  classes: ClasseAbcDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
@@ -42,6 +82,10 @@ export class DashboardService {
 
   obterTicketMedioMensal(filtros: FiltrosSemPeriodo): Observable<TicketMedioMensalDto> {
     return this.http.get<TicketMedioMensalDto>(`${this.baseUrl}/ticket-medio-mensal`, { params: this.params(filtros) });
+  }
+
+  obterCurvaAbc(filtros: FiltrosIndicadores): Observable<CurvaAbcDto> {
+    return this.http.get<CurvaAbcDto>(`${this.baseUrl}/curva-abc`, { params: this.params(filtros) });
   }
 
   private params(filtros: FiltrosIndicadores | FiltrosSemPeriodo): HttpParams {

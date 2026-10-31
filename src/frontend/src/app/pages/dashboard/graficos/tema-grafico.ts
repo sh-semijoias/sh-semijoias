@@ -2,6 +2,11 @@ import { ThemeOption } from 'ngx-echarts';
 
 export interface PaletaGrafico {
   primaria: string;
+  terciaria: string;
+  superficie: string;
+  classeA: string;
+  classeB: string;
+  classeC: string;
   texto: string;
   textoSecundario: string;
   contorno: string;
@@ -13,6 +18,12 @@ export interface PaletaGrafico {
 
 const TOKENS: Record<Exclude<keyof PaletaGrafico, 'fonte'>, string> = {
   primaria: '--mat-sys-primary',
+  terciaria: '--mat-sys-tertiary',
+  superficie: '--mat-sys-surface',
+  // Definidas no styles.scss, compartilhadas com os cards da curva ABC
+  classeA: '--cor-classe-a',
+  classeB: '--cor-classe-b',
+  classeC: '--cor-classe-c',
   texto: '--mat-sys-on-surface',
   textoSecundario: '--mat-sys-on-surface-variant',
   contorno: '--mat-sys-outline',

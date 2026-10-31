@@ -8,6 +8,7 @@ namespace ShSemijoias.Application.Services;
 public class DashboardService(IDashboardRepository dashboardRepository) : IDashboardService
 {
     private const int MesesTicketMensal = 12;
+    private static readonly string[] ClassesAbc = ["A", "B", "C"];
 
     public async Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta)
     {
@@ -55,6 +56,46 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             : Math.Round((decimal)vendasPorMes.Sum(v => v.QuantidadeItens) / totalVendas, 1, MidpointRounding.AwayFromZero);
 
         return Result<TicketMedioMensalDto>.Ok(new TicketMedioMensalDto(meses, itensPorVenda));
+    }
+
+    public async Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
+    {
+        var erros = ValidarConsulta(consulta);
+        if (erros.Count > 0)
+            return Result<CurvaAbcDto>.Falha(erros);
+
+        // Tudo vem calculado do banco (ranking, classes, destaques, arredondamento): aqui as linhas só viram o DTO por classe
+        var linhas = await dashboardRepository.ObterCurvaAbcAsync(consulta);
+        var totais = linhas.FirstOrDefault();
+        if (totais is null || totais.FaturamentoTotal == 0m)
+            return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais?.TotalProdutos ?? 0, 0m, [], []));
+
+        var classes = new List<ClasseAbcDto>();
+        foreach (var classe in ClassesAbc)
+        {
+            var daClasse = linhas.Where(l => l.Classe == classe).ToList();
+            var ultimo = daClasse.FirstOrDefault(l => l.UltimoDaClasse);
+
+            classes.Add(new ClasseAbcDto(
+                classe,
+                ultimo?.QuantidadeClasse ?? 0,
+                ultimo?.PercentualMixClasse ?? 0m,
+                ultimo?.PercentualFaturamentoClasse ?? 0m,
+                ultimo?.FaturamentoClasse ?? 0m,
+                ultimo?.PercentualProdutos,
+                ultimo?.PercentualAcumulado,
+                daClasse
+                    .Where(l => l.Destaque)
+                    .OrderBy(l => l.OrdemDestaque)
+                    .Select(l => new ProdutoAbcDto(l.Posicao, l.Descricao, l.Categoria, l.QuantidadeVendida, l.Faturamento, l.PercentualAcumuladoDestaque))
+                    .ToList()));
+        }
+
+        var pontos = linhas
+            .Select(l => new PontoCurvaAbcDto(l.Posicao, l.Classe, l.PercentualProdutos, l.PercentualAcumulado))
+            .ToList();
+
+        return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais.TotalProdutos, totais.FaturamentoTotal, pontos, classes));
     }
 
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>

@@ -134,6 +134,17 @@ mat-card {
   }
 }
 
+// Cores das classes da curva ABC, usadas nos cards e no gráfico do dashboard (que as lê de um elemento no body).
+// Cada fundo tem uma cor de texto com contraste suficiente para o selo com a letra da classe.
+html {
+  --cor-classe-a: var(--mat-sys-primary);
+  --cor-classe-a-texto: var(--mat-sys-on-primary);
+  --cor-classe-b: light-dark(#6cc4be, #237571);
+  --cor-classe-b-texto: light-dark(#00201e, #ffffff);
+  --cor-classe-c: light-dark(#c4cbca, #4b5352);
+  --cor-classe-c-texto: light-dark(#1b1f1f, #e8eceb);
+}
+
 .snack-error .mdc-snackbar__surface {
   background-color: var(--mat-sys-error) !important;
   color: var(--mat-sys-on-error) !important;

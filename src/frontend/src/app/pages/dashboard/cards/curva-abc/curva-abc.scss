@@ -1,0 +1,38 @@
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+}
+
+.amostra {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.125rem;
+
+  &[data-classe='A'] {
+    background-color: var(--cor-classe-a);
+  }
+
+  &[data-classe='B'] {
+    background-color: var(--cor-classe-b);
+  }
+
+  &[data-classe='C'] {
+    background-color: var(--cor-classe-c);
+  }
+
+  &.linha {
+    width: 1rem;
+    height: 0.1875rem;
+    background-color: var(--mat-sys-tertiary);
+  }
+}
