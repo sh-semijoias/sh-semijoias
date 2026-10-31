@@ -1,0 +1,36 @@
+@let dados = curvaAbc.value();
+<app-card-indicador
+  titulo="Curva ABC por produto"
+  [subtitulo]="subtitulo()"
+  etiqueta="Estratégico / Operacional"
+  ajuda="Cada ponto soma o faturamento de mais um produto, do maior para o menor faturamento no período (preço de venda real × quantidade). Classe A reúne os produtos até 80% do faturamento acumulado, B até 95% e C o restante, incluindo produtos com estoque disponível e sem vendas. Vendas canceladas não entram no cálculo."
+  [carregando]="curvaAbc.isLoading()"
+  [erro]="!!curvaAbc.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda no período.">
+  @if (dados && !semVendas()) {
+    <app-menu-grafico acoes [(exibirTabela)]="exibirTabela" />
+  }
+
+  <div esqueleto class="flex flex-col gap-2">
+    <app-skeleton class="h-4 w-2/3" />
+    <app-skeleton class="h-72 w-full" />
+  </div>
+
+  <!-- Só cria o gráfico com os dados em mãos: o conteúdo projetado é instanciado mesmo enquanto o card carrega -->
+  @if (dados && !semVendas()) {
+    <!-- O gráfico ocupa a altura que sobrar quando o card ao lado (produtos por classe) for mais alto -->
+    <div class="flex h-full flex-col">
+      @if (!exibirTabela()) {
+        <!-- Legenda em HTML: as faixas das classes são áreas marcadas, que a legenda do ECharts não lista -->
+        <ul class="legenda" aria-hidden="true">
+          <li><span class="amostra" data-classe="A"></span>Classe A</li>
+          <li><span class="amostra" data-classe="B"></span>Classe B</li>
+          <li><span class="amostra" data-classe="C"></span>Classe C</li>
+          <li><span class="amostra linha"></span>% acumulado do faturamento</li>
+        </ul>
+      }
+      <app-grafico class="min-h-72 flex-1" altura="h-full" [opcoes]="opcoes()" [descricao]="descricao()" [tabela]="tabela()" [exibirTabela]="exibirTabela()" />
+    </div>
+  }
+</app-card-indicador>
