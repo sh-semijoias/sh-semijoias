@@ -32,4 +32,11 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
         var result = await dashboardService.ObterCurvaAbcAsync(consulta);
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
+
+    [HttpGet("faturamento-clientes")]
+    public async Task<IActionResult> ListarFaturamentoClientes([FromQuery] ListarFaturamentoClientesConsulta consulta)
+    {
+        var result = await dashboardService.ListarFaturamentoClientesAsync(consulta);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
+    }
 }
