@@ -32,6 +32,21 @@ export interface TicketMedioMensalDto {
   itensPorVenda: number | null;
 }
 
+export interface MargemBrutaDto {
+  percentual: number;
+  variacaoPercentual: number | null;
+}
+
+export interface DiasEstoqueDto {
+  diasEstoque: number;
+  diasBase: number;
+}
+
+export interface PecasSemGiroDto {
+  quantidadePecas: number;
+  valorParado: number;
+}
+
 export type ClasseAbc = 'A' | 'B' | 'C';
 
 export interface ProdutoAbcDto {
@@ -115,6 +130,18 @@ export class DashboardService {
 
   obterTicketMedioMensal(filtros: FiltrosSemPeriodo): Observable<TicketMedioMensalDto> {
     return this.http.get<TicketMedioMensalDto>(`${this.baseUrl}/ticket-medio-mensal`, { params: this.params(filtros) });
+  }
+
+  obterMargemBruta(filtros: FiltrosIndicadores): Observable<MargemBrutaDto> {
+    return this.http.get<MargemBrutaDto>(`${this.baseUrl}/margem-bruta`, { params: this.params(filtros) });
+  }
+
+  obterDiasEstoque(filtros: FiltrosIndicadores): Observable<DiasEstoqueDto> {
+    return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`, { params: this.params(filtros) });
+  }
+
+  obterPecasSemGiro(): Observable<PecasSemGiroDto> {
+    return this.http.get<PecasSemGiroDto>(`${this.baseUrl}/pecas-sem-giro`);
   }
 
   obterCurvaAbc(filtros: FiltrosIndicadores): Observable<CurvaAbcDto> {

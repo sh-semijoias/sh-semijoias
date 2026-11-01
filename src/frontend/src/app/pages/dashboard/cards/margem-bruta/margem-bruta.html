@@ -1,0 +1,22 @@
+@let dados = margemBruta.value();
+
+<app-card-kpi
+  icone="percent"
+  cor="teal"
+  titulo="Margem bruta"
+  ajuda="Margem bruta (faturamento - repasse às revendedoras - custo de mercadoria vendida) dividido pelo faturamento. Vendas canceladas não entram no cálculo. A variação compara com o período anterior de mesma duração."
+  [carregando]="margemBruta.isLoading()"
+  [erro]="!!margemBruta.error()">
+
+  <span valor>
+    {{ (dados?.percentual ?? 0) | number:'1.2-2':'pt-BR' }}%
+  </span>
+
+  <ng-container rodape>
+    @if (dados?.variacaoPercentual != null) {
+      <app-variacao [valor]="dados!.variacaoPercentual" />
+    }
+    após repasse e CMV
+  </ng-container>
+
+</app-card-kpi>

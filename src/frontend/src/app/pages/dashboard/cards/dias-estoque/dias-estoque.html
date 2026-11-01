@@ -1,0 +1,21 @@
+@let dados = diasEstoque.value();
+
+<app-card-kpi
+  icone="event_note"
+  cor="indigo"
+  titulo="Dias de estoque (DSI)"
+  ajuda="Número de dias que o estoque durará com base no consumo médio. Calculado como (Valor do Estoque Atual / CMV) x Dias do Período."
+  [carregando]="diasEstoque.isLoading()"
+  [erro]="!!diasEstoque.error()">
+
+  <span valor>
+    {{ (dados?.diasEstoque ?? 0) | number:'1.0-0':'pt-BR' }} dias
+  </span>
+
+  <ng-container rodape>
+    <span>
+      base {{ dados?.diasBase ?? 0 }} dias
+    </span>
+  </ng-container>
+
+</app-card-kpi>

@@ -7,3 +7,9 @@
 # Evidências de testes manuais (screenshots) e artefatos do MCP do Playwright
 evidencias/
 .playwright-mcp/
+
+#prototipo pdf
+prototipo.pdf
+
+#packege-lock
+package-lock.json

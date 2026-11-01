@@ -1,3 +1,3 @@
 namespace ShSemijoias.Domain.Entities;
 
-public record ResumoVendasPeriodo(decimal Faturamento, int QuantidadeVendas);
+public record ResumoVendasPeriodo(decimal Faturamento, int QuantidadeVendas, decimal Cmv, decimal Repasse);

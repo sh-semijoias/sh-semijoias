@@ -26,6 +26,41 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
         return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
 
+    [HttpGet("margem-bruta")]
+    public async Task<IActionResult> ObterMargemBruta(
+        [FromQuery] ObterIndicadoresConsulta consulta)
+    {
+        var result = await dashboardService.ObterMargemBrutaAsync(consulta);
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
+
+    [HttpGet("dias-estoque")]
+    public async Task<IActionResult> ObterDiasEstoque(
+        [FromQuery] ObterIndicadoresConsulta consulta)
+    {
+        var result =
+            await dashboardService
+                .ObterDiasEstoqueAsync(consulta);
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
+
+    [HttpGet("pecas-sem-giro")]
+    public async Task<IActionResult> ObterPecasSemGiro()
+    {
+        var result =
+            await dashboardService.ObterPecasSemGiroAsync();
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
+
     [HttpGet("curva-abc")]
     public async Task<IActionResult> ObterCurvaAbc([FromQuery] ObterIndicadoresConsulta consulta)
     {

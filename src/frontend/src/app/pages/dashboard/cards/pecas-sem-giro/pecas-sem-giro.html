@@ -1,0 +1,22 @@
+@let dados = pecasSemGiro.value();
+
+<app-card-kpi
+  icone="timer"
+  cor="orange"
+  titulo="Peças sem giro (+90 dias)"
+  ajuda="Peças sem venda há mais de 90 dias."
+  [carregando]="pecasSemGiro.isLoading()"
+  [erro]="!!pecasSemGiro.error()">
+
+  <span valor>
+    {{ (dados?.quantidadePecas ?? 0) | number:'1.0-0':'pt-BR' }} peças
+  </span>
+
+  <ng-container rodape>
+    <span>
+      {{ (dados?.valorParado ?? 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+      parados
+    </span>
+  </ng-container>
+
+</app-card-kpi>
