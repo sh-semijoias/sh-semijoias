@@ -36,4 +36,17 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
             ? Ok(result.Valor)
             : result.ToActionResult(this);
     }
+
+    [HttpGet("dias-estoque")]
+    public async Task<IActionResult> ObterDiasEstoque(
+        [FromQuery] ObterIndicadoresConsulta consulta)
+    {
+        var result =
+            await dashboardService
+                .ObterDiasEstoqueAsync(consulta);
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
 }

@@ -84,6 +84,39 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
                 variacaoPercentual));
     }
 
+    public async Task<Result<DiasEstoqueDto>>ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta)
+    {
+        var erros = ValidarConsulta(consulta);
+
+        if (erros.Count > 0)
+            return Result<DiasEstoqueDto>.Falha(erros);
+
+        var resumo =
+            await dashboardRepository
+                .ObterResumoVendasAsync(consulta);
+
+        var valorEstoque =
+            await dashboardRepository
+                .ObterValorEstoqueAtualAsync(consulta);
+
+        var diasPeriodo =
+            consulta.DataFim.DayNumber
+            - consulta.DataInicio.DayNumber
+            + 1;
+
+        var dsi = resumo.Cmv == 0
+            ? 0m
+            : Math.Round(
+                (valorEstoque / resumo.Cmv) * diasPeriodo,
+                0,
+                MidpointRounding.AwayFromZero);
+
+        return Result<DiasEstoqueDto>.Ok(
+            new DiasEstoqueDto(
+                dsi,
+                diasPeriodo));
+    }
+
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>
         resumo.QuantidadeVendas == 0 ? 0m : resumo.Faturamento / resumo.QuantidadeVendas;
 

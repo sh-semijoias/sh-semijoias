@@ -36,6 +36,11 @@ export interface MargemBrutaDto {
   variacaoPercentual: number | null;
 }
 
+export interface DiasEstoqueDto {
+  diasEstoque: number;
+  diasBase: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
@@ -51,6 +56,10 @@ export class DashboardService {
 
   obterMargemBruta(filtros: FiltrosIndicadores): Observable<MargemBrutaDto> {
     return this.http.get<MargemBrutaDto>(`${this.baseUrl}/margem-bruta`, { params: this.params(filtros) });
+  }
+
+  obterDiasEstoque(filtros: FiltrosIndicadores): Observable<DiasEstoqueDto> {
+  return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`,{ params: this.params(filtros) });
   }
 
   private params(filtros: FiltrosIndicadores | FiltrosSemPeriodo): HttpParams {

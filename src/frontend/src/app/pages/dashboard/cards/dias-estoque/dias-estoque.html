@@ -1,0 +1,21 @@
+@let dados = diasEstoque.value();
+
+<app-card-kpi
+  icone="event_note"
+  cor="teal"
+  titulo="Dias de estoque"
+  ajuda="Número de dias que o estoque durará com base no consumo médio. Vendas canceladas não entram no cálculo. A variação compara com o período anterior de mesma duração."
+  [carregando]="diasEstoque.isLoading()"
+  [erro]="!!diasEstoque.error()">
+
+  <span valor>
+    {{ (dados?.percentual ?? 0) | number:'1.2-2':'pt-BR' }}%
+  </span>
+
+  <ng-container rodape>
+    @if (dados?.variacaoPercentual != null) {
+      <app-variacao [valor]="dados!.variacaoPercentual" />
+    }
+  </ng-container>
+
+</app-card-kpi>

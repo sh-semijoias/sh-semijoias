@@ -41,6 +41,18 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
         ).ToListAsync();
     }
 
+    public async Task<decimal> ObterValorEstoqueAtualAsync(
+    ObterIndicadoresConsulta consulta)
+    {
+        return await context.Estoques
+            .Where(e =>
+                consulta.IdTipoProduto == null ||
+                e.Produto.IdTipoProduto == consulta.IdTipoProduto)
+            .SumAsync(e =>
+                (decimal?)(e.Quantidade * e.Produto.PrecoCompra))
+            ?? 0m;
+    }
+
     // Base de todos os indicadores de venda: itens de vendas não canceladas que atendem aos filtros do dashboard
     private IQueryable<ItemVenda> ItensVendidos(ObterIndicadoresConsulta consulta)
     {
