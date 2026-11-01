@@ -2,20 +2,20 @@
 
 <app-card-kpi
   icone="event_note"
-  cor="teal"
+  cor="indigo"
   titulo="Dias de estoque"
-  ajuda="Número de dias que o estoque durará com base no consumo médio. Vendas canceladas não entram no cálculo. A variação compara com o período anterior de mesma duração."
+  ajuda="Número de dias que o estoque durará com base no consumo médio. Calculado como (Valor do Estoque Atual / CMV) × Dias do Período."
   [carregando]="diasEstoque.isLoading()"
   [erro]="!!diasEstoque.error()">
 
   <span valor>
-    {{ (dados?.percentual ?? 0) | number:'1.2-2':'pt-BR' }}%
+    {{ (dados?.diasEstoque ?? 0) | number:'1.0-0':'pt-BR' }} dias
   </span>
 
   <ng-container rodape>
-    @if (dados?.variacaoPercentual != null) {
-      <app-variacao [valor]="dados!.variacaoPercentual" />
-    }
+    <span>
+      base {{ dados?.diasBase ?? 0 }} dias
+    </span>
   </ng-container>
 
 </app-card-kpi>
