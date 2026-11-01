@@ -1,0 +1,71 @@
+.texto-secundario {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// O padding padrão das abas (24px) faz as três não caberem num card de uma coluna; o Material não expõe token para isso
+:host ::ng-deep .mdc-tab {
+  min-width: 0;
+  padding: 0 0.5rem;
+}
+
+.contagem {
+  margin-left: 0.375rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.resumo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--mat-sys-surface-container);
+}
+
+.selo {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  font-weight: 700;
+
+  &[data-classe='A'] {
+    background-color: var(--cor-classe-a);
+    color: var(--cor-classe-a-texto);
+  }
+
+  &[data-classe='B'] {
+    background-color: var(--cor-classe-b);
+    color: var(--cor-classe-b-texto);
+  }
+
+  &[data-classe='C'] {
+    background-color: var(--cor-classe-c);
+    color: var(--cor-classe-c-texto);
+  }
+}
+
+.produtos li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.posicao {
+  width: 2.25rem;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}

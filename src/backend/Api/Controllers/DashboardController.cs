@@ -59,5 +59,11 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
         return result.Sucesso
             ? Ok(result.Valor)
             : result.ToActionResult(this);
+            
+    [HttpGet("curva-abc")]
+    public async Task<IActionResult> ObterCurvaAbc([FromQuery] ObterIndicadoresConsulta consulta)
+    {
+        var result = await dashboardService.ObterCurvaAbcAsync(consulta);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
 }

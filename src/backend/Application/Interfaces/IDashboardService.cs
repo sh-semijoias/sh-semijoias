@@ -10,4 +10,5 @@ public interface IDashboardService
     Task<Result<MargemBrutaDto>> ObterMargemBrutaAsync(ObterIndicadoresConsulta consulta);
     Task<Result<DiasEstoqueDto>> ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta);
     Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync();
+    Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta);
 }
