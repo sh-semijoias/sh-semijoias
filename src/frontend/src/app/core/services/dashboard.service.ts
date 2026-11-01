@@ -31,6 +31,11 @@ export interface TicketMedioMensalDto {
   itensPorVenda: number | null;
 }
 
+export interface MargemBrutaDto {
+  percentual: number;
+  variacaoPercentual: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
@@ -42,6 +47,10 @@ export class DashboardService {
 
   obterTicketMedioMensal(filtros: FiltrosSemPeriodo): Observable<TicketMedioMensalDto> {
     return this.http.get<TicketMedioMensalDto>(`${this.baseUrl}/ticket-medio-mensal`, { params: this.params(filtros) });
+  }
+
+  obterMargemBruta(filtros: FiltrosIndicadores): Observable<MargemBrutaDto> {
+    return this.http.get<MargemBrutaDto>(`${this.baseUrl}/margem-bruta`, { params: this.params(filtros) });
   }
 
   private params(filtros: FiltrosIndicadores | FiltrosSemPeriodo): HttpParams {

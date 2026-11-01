@@ -57,8 +57,53 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         return Result<TicketMedioMensalDto>.Ok(new TicketMedioMensalDto(meses, itensPorVenda));
     }
 
+    public async Task<Result<MargemBrutaDto>> ObterMargemBrutaAsync(ObterIndicadoresConsulta consulta)
+    {
+        var erros = ValidarConsulta(consulta);
+
+        if (erros.Count > 0)
+            return Result<MargemBrutaDto>.Falha(erros);
+
+        var atual = await dashboardRepository.ObterResumoVendasAsync(consulta);
+        var anterior = await dashboardRepository.ObterResumoVendasAsync(
+            consulta.PeriodoAnterior());
+
+        var margemAtual = CalcularMargemBruta(atual);
+        var margemAnterior = CalcularMargemBruta(anterior);
+
+        decimal? variacaoPercentual = margemAnterior == 0m
+            ? null
+            : Math.Round(
+                margemAtual - margemAnterior,
+                2,
+                MidpointRounding.AwayFromZero);
+
+        return Result<MargemBrutaDto>.Ok(
+            new MargemBrutaDto(
+                margemAtual,
+                variacaoPercentual));
+    }
+
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>
         resumo.QuantidadeVendas == 0 ? 0m : resumo.Faturamento / resumo.QuantidadeVendas;
+
+    private static decimal CalcularMargemBruta(
+    ResumoVendasPeriodo resumo)
+    {
+        if (resumo.Faturamento == 0m)
+            return 0m;
+
+        return Math.Round(
+            (
+                resumo.Faturamento
+                - resumo.Repasse
+                - resumo.Cmv
+            )
+            / resumo.Faturamento
+            * 100,
+            2,
+            MidpointRounding.AwayFromZero);
+    }
 
     private static List<string> ValidarConsulta(ObterIndicadoresConsulta consulta)
     {
@@ -76,3 +121,4 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         return erros;
     }
 }
+
