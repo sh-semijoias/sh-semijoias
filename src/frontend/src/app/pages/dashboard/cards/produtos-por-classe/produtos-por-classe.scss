@@ -69,3 +69,25 @@
   font-size: 0.75rem;
   color: var(--mat-sys-on-surface-variant);
 }
+
+// Altura fixa por linha: com ela, dá para reservar a altura de uma página cheia
+.produtos li {
+  box-sizing: border-box;
+  height: var(--altura-linha-produto);
+}
+
+:host {
+  --altura-linha-produto: 3.75rem;
+}
+
+// Com mais de uma página, reserva a altura de uma página cheia: a última página, com menos linhas, não encolhe o card
+// nem faz o paginador pular de lugar
+.paginada {
+  min-height: calc(var(--linhas-pagina) * var(--altura-linha-produto));
+}
+
+// Página seguinte carregando: mantém a anterior visível, esmaecida
+.atualizando {
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}

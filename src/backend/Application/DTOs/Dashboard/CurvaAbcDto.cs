@@ -7,8 +7,7 @@ public record CurvaAbcDto(int TotalProdutos, decimal Faturamento, IList<PontoCur
 public record PontoCurvaAbcDto(int Posicao, string Classe, decimal PercentualProdutos, decimal PercentualFaturamento);
 
 // PercentualProdutosAcumulado e PercentualFaturamentoAcumulado: no último produto da classe (ponto de corte na curva);
-// nulos quando a classe não tem produtos.
-// Produtos: os 5 de maior faturamento nas classes A e B; na C, os 5 de menor, do menor para o maior
+// nulos quando a classe não tem produtos. Os produtos de cada classe vêm paginados de outro endpoint (ListarProdutosAbcConsulta).
 public record ClasseAbcDto(
     string Classe,
     int QuantidadeProdutos,
@@ -16,9 +15,9 @@ public record ClasseAbcDto(
     decimal PercentualFaturamento,
     decimal Faturamento,
     decimal? PercentualProdutosAcumulado,
-    decimal? PercentualFaturamentoAcumulado,
-    IList<ProdutoAbcDto> Produtos);
+    decimal? PercentualFaturamentoAcumulado);
 
+// Produto da listagem de uma classe; Posicao é a do ranking geral
 public record ProdutoAbcDto(
     int Posicao,
     string Descricao,

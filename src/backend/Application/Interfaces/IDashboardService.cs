@@ -12,5 +12,6 @@ public interface IDashboardService
     Task<Result<DiasEstoqueDto>> ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta);
     Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync();
     Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta);
+    Task<Result<ListaPaginada<ProdutoAbcDto>>> ListarProdutosAbcAsync(ListarProdutosAbcConsulta consulta);
     Task<Result<ListaPaginada<FaturamentoClienteDto>>> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta);
 }

@@ -37,7 +37,6 @@ function classe(
     faturamento,
     percentualProdutosAcumulado,
     percentualFaturamentoAcumulado,
-    produtos: [],
   };
 }
 

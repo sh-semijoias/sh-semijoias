@@ -53,37 +53,26 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
             ?? 0m;
     }
 
-    // Curva do dashboard: do ranking completo, só os destaques de cada classe, o último produto de cada classe (cortes)
-    // e uma amostra de pontos. O resultado tem tamanho fixo, qualquer que seja o catálogo.
+    // Curva do dashboard: do ranking completo, só o último produto de cada classe (cortes) e uma amostra de pontos.
+    // O resultado tem tamanho fixo, qualquer que seja o catálogo.
     public async Task<IList<LinhaCurvaAbc>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
     {
-        const int produtosPorClasse = 5;
         // Acima disso, a curva vem amostrada (um ponto a cada N produtos); abaixo, um ponto por produto
         const int pontosCurva = 200;
 
         return await (
             from produto in RankingAbc(consulta)
-            // Destaques: os de maior faturamento nas classes A e B; na C, os de menor, do menor para o maior
-            let ordemDestaque = produto.Classe == "C" ? produto.OrdemInversaNaClasse : produto.OrdemNaClasse
-            let destaque = ordemDestaque <= produtosPorClasse
             let ultimoDaClasse = produto.OrdemInversaNaClasse == 1
             // Passo da amostragem: divisão inteira arredondada para cima
             let passo = (produto.TotalProdutos + pontosCurva - 1) / pontosCurva
-            where destaque || ultimoDaClasse || produto.Posicao % passo == 0
+            where ultimoDaClasse || produto.Posicao % passo == 0
             orderby produto.Posicao
             select new LinhaCurvaAbc(
                 produto.Posicao,
-                produto.Descricao,
-                produto.Categoria,
-                produto.QuantidadeVendida,
-                produto.Faturamento,
                 produto.Classe,
                 // round() do PostgreSQL arredonda numeric para longe do zero no empate, como o resto da API
                 Math.Round(produto.PercentualProdutos, 2),
                 Math.Round(produto.PercentualAcumulado, 2),
-                Math.Round(produto.PercentualAcumulado, 1),
-                destaque,
-                ordemDestaque,
                 ultimoDaClasse,
                 produto.QuantidadeClasse,
                 produto.FaturamentoClasse,
@@ -92,6 +81,35 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 produto.TotalProdutos,
                 produto.FaturamentoTotal)
         ).ToListAsync();
+    }
+
+    // Produtos de uma classe, paginados: A e B do maior para o menor faturamento; C do menor para o maior
+    public async Task<(IList<ProdutoClasseAbc> Items, int Total)> ListarProdutosAbcAsync(ListarProdutosAbcConsulta consulta)
+    {
+        var daClasse = RankingAbc(consulta.Indicadores())
+            .Where(p => p.Classe == consulta.Classe);
+
+        // As ordens na classe são únicas: a página não muda entre requisições
+        var ordenado = consulta.Classe == "C"
+            ? daClasse.OrderBy(p => p.OrdemInversaNaClasse)
+            : daClasse.OrderBy(p => p.OrdemNaClasse);
+
+        var items = await ordenado
+            .Skip((consulta.Pagina - 1) * consulta.TamanhoPagina)
+            .Take(consulta.TamanhoPagina)
+            .Select(p => new ProdutoClasseAbc(
+                p.Posicao,
+                p.Descricao,
+                p.Categoria,
+                p.QuantidadeVendida,
+                p.Faturamento,
+                // round() do PostgreSQL arredonda numeric para longe do zero no empate, como o resto da API
+                Math.Round(p.PercentualAcumulado, 1),
+                p.QuantidadeClasse))
+            .ToListAsync();
+
+        // O total é a quantidade da classe, que vem do ranking: sem um COUNT à parte. Página além do fim não traz linhas nem total
+        return (items, items.FirstOrDefault()?.QuantidadeClasse ?? 0);
     }
 
     public async Task<(IList<FaturamentoCliente> Items, int Total)> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta)
