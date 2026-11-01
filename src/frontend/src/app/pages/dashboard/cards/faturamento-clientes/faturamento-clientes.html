@@ -1,0 +1,98 @@
+@let resultado = dados();
+<app-card-indicador
+  titulo="Faturamento por cliente"
+  subtitulo="Clientes com maior faturamento no período, por revendedora"
+  etiqueta="Estratégico"
+  ajuda="Faturamento de cada cliente no período (preço de venda real × quantidade), separado pela revendedora que realizou a venda: um cliente atendido por duas revendedoras aparece em duas linhas. A posição é a do ranking por faturamento e o % do total considera todos os clientes do período. Vendas canceladas não entram no cálculo."
+  [carregando]="carregando()"
+  [erro]="!!lista.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda no período.">
+  <div esqueleto class="flex flex-col gap-3 py-2">
+    <app-skeleton class="h-4 w-full" />
+    @for (_ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track $index) {
+      <app-skeleton class="h-8 w-full" />
+    }
+  </div>
+
+  @if (resultado) {
+    <div #rolagem class="rolagem overflow-x-auto" [class.atualizando]="atualizando()" [attr.aria-busy]="atualizando()">
+      <table mat-table [dataSource]="resultado.items" class="tabela w-full"
+             matSort [matSortActive]="ordenacao().coluna" [matSortDirection]="ordenacao().direcao" matSortDisableClear
+             (matSortChange)="aoOrdenar($event)">
+        <caption class="sr-only">Faturamento por cliente no período</caption>
+
+        <ng-container matColumnDef="posicao">
+          <th mat-header-cell *matHeaderCellDef><span aria-hidden="true">#</span><span class="sr-only">Posição</span></th>
+          <td mat-cell *matCellDef="let item" class="texto-secundario">{{ item.posicao }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="cliente">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cliente</th>
+          <td mat-cell *matCellDef="let item">
+            <span class="nome font-semibold" [title]="item.nomeCliente">{{ item.nomeCliente }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="revendedora">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Revendedora</th>
+          <td mat-cell *matCellDef="let item">
+            <span class="flex items-center gap-2">
+              <app-avatar-iniciais class="avatar" [nome]="item.nomeRevendedora" [chave]="item.idRevendedora" />
+              <span class="nome" [title]="item.nomeRevendedora">{{ item.nomeRevendedora }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="vendas">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header start="desc" arrowPosition="before" class="numero">Vendas</th>
+          <td mat-cell *matCellDef="let item" class="numero">{{ item.quantidadeVendas | number:'1.0-0':'pt-BR' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="faturamento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header start="desc" arrowPosition="before" class="numero">Faturamento</th>
+          <td mat-cell *matCellDef="let item" class="numero font-semibold">
+            {{ item.faturamento | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="percentual">
+          <th mat-header-cell *matHeaderCellDef>% do total</th>
+          <td mat-cell *matCellDef="let item">
+            <span class="flex items-center gap-2">
+              <span class="barra" aria-hidden="true"><span [style.width.%]="item.percentualDoMaior"></span></span>
+              <span class="texto-secundario">{{ item.percentualTotal | number:'1.1-1':'pt-BR' }}%</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ultimaCompra">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header start="desc" arrowPosition="before" class="numero">Última compra</th>
+          <td mat-cell *matCellDef="let item" class="numero">
+            <time [attr.datetime]="item.dataUltimaCompra" [title]="item.dataUltimaCompra | date:'dd/MM/yyyy':'':'pt-BR'">
+              {{ item.dataUltimaCompra | date:formatoData():'':'pt-BR' }}
+            </time>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+        <tr mat-row *matRowDef="let item; columns: colunas"></tr>
+      </table>
+    </div>
+
+    @if (transborda()) {
+      <p class="texto-secundario mt-2">Deslize a tabela para ver todas as colunas</p>
+    }
+
+    <!-- Fora do overflow-x-auto: a borda superior ocupa a largura toda no celular -->
+    @if (resultado.total > tamanhoPagina) {
+      <mat-paginator
+        [length]="resultado.total"
+        [pageIndex]="pagina() - 1"
+        [pageSize]="tamanhoPagina"
+        [hidePageSize]="true"
+        (page)="aoPaginar($event)"
+        aria-label="Páginas do faturamento por cliente" />
+    }
+  }
+</app-card-indicador>
