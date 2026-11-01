@@ -1,6 +1,7 @@
 <app-card-indicador
   titulo="Produtos por classe"
   [subtitulo]="subtitulo()"
+  etiqueta="Estratégico / Operacional"
   ajuda="Produtos ordenados do maior para o menor faturamento no período (preço de venda real × quantidade). Classe A reúne os produtos até 80% do faturamento acumulado, B até 95% e C o restante, incluindo produtos com estoque disponível e sem vendas. Cada aba lista todos os produtos da classe, 5 por página: A e B do maior para o menor faturamento, C do menor para o maior. Vendas canceladas não entram no cálculo."
   [carregando]="curvaAbc.isLoading()"
   [erro]="!!curvaAbc.error()"
