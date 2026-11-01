@@ -135,8 +135,7 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
         var classes = new List<ClasseAbcDto>();
         foreach (var classe in ClassesAbc)
         {
-            var daClasse = linhas.Where(l => l.Classe == classe).ToList();
-            var ultimo = daClasse.FirstOrDefault(l => l.UltimoDaClasse);
+            var ultimo = linhas.FirstOrDefault(l => l.Classe == classe && l.UltimoDaClasse);
 
             classes.Add(new ClasseAbcDto(
                 classe,
@@ -145,12 +144,7 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
                 ultimo?.PercentualFaturamentoClasse ?? 0m,
                 ultimo?.FaturamentoClasse ?? 0m,
                 ultimo?.PercentualProdutos,
-                ultimo?.PercentualAcumulado,
-                daClasse
-                    .Where(l => l.Destaque)
-                    .OrderBy(l => l.OrdemDestaque)
-                    .Select(l => new ProdutoAbcDto(l.Posicao, l.Descricao, l.Categoria, l.QuantidadeVendida, l.Faturamento, l.PercentualAcumuladoDestaque))
-                    .ToList()));
+                ultimo?.PercentualAcumulado));
         }
 
         var pontos = linhas
@@ -158,6 +152,31 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             .ToList();
 
         return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais.TotalProdutos, totais.FaturamentoTotal, pontos, classes));
+    }
+
+    public async Task<Result<ListaPaginada<ProdutoAbcDto>>> ListarProdutosAbcAsync(ListarProdutosAbcConsulta consulta)
+    {
+        var erros = ValidarConsulta(consulta.Indicadores());
+
+        if (!ClassesAbc.Contains(consulta.Classe))
+            erros.Add("A classe deve ser A, B ou C.");
+
+        if (consulta.Pagina < 1)
+            erros.Add("A página deve ser maior que zero.");
+
+        if (consulta.TamanhoPagina < 1 || consulta.TamanhoPagina > TamanhoMaximoPagina)
+            erros.Add($"O tamanho da página deve estar entre 1 e {TamanhoMaximoPagina}.");
+
+        if (erros.Count > 0)
+            return Result<ListaPaginada<ProdutoAbcDto>>.Falha(erros);
+
+        var (items, total) = await dashboardRepository.ListarProdutosAbcAsync(consulta);
+        var dtos = items
+            .Select(p => new ProdutoAbcDto(p.Posicao, p.Descricao, p.Categoria, p.QuantidadeVendida, p.Faturamento, p.PercentualAcumulado))
+            .ToList();
+
+        return Result<ListaPaginada<ProdutoAbcDto>>.Ok(
+            new ListaPaginada<ProdutoAbcDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
     }
 
     public async Task<Result<ListaPaginada<FaturamentoClienteDto>>> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta)

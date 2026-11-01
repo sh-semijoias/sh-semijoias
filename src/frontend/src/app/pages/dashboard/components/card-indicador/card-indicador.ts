@@ -16,6 +16,8 @@ export class CardIndicadorComponent {
   readonly subtitulo = input<string>();
   readonly ajuda = input<string>();
   readonly etiqueta = input<string>();
+  // Subtítulo calculado a partir dos dados: reserva a linha com um esqueleto enquanto carrega, para o card não crescer ao terminar
+  readonly esqueletoSubtitulo = input(false);
   // Avisa no tooltip de ajuda
   readonly naoSegueFiltroPeriodo = input(false);
   readonly carregando = input(false);

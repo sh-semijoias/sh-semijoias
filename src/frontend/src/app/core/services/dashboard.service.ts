@@ -49,7 +49,9 @@ export interface PecasSemGiroDto {
 
 export type ClasseAbc = 'A' | 'B' | 'C';
 
+// Produto da listagem de uma classe
 export interface ProdutoAbcDto {
+  // Posição no ranking geral, do maior para o menor faturamento
   posicao: number;
   descricao: string;
   categoria: string;
@@ -67,8 +69,12 @@ export interface ClasseAbcDto {
   // No último produto da classe: o ponto de corte na curva. Nulos quando a classe não tem produtos
   percentualProdutosAcumulado: number | null;
   percentualFaturamentoAcumulado: number | null;
-  // A e B: os 5 de maior faturamento; C: os 5 de menor, do menor para o maior
-  produtos: ProdutoAbcDto[];
+}
+
+export interface ListarProdutosAbcFiltros extends FiltrosIndicadores {
+  classe: ClasseAbc;
+  pagina: number;
+  tamanhoPagina: number;
 }
 
 // Ponto da curva, na ordem do ranking (posicao 1 = maior faturamento)
@@ -146,6 +152,15 @@ export class DashboardService {
 
   obterCurvaAbc(filtros: FiltrosIndicadores): Observable<CurvaAbcDto> {
     return this.http.get<CurvaAbcDto>(`${this.baseUrl}/curva-abc`, { params: this.params(filtros) });
+  }
+
+  // A e B do maior para o menor faturamento; C do menor para o maior
+  listarProdutosAbc(filtros: ListarProdutosAbcFiltros): Observable<ListaPaginada<ProdutoAbcDto>> {
+    const params = this.params(filtros)
+      .set('classe', filtros.classe)
+      .set('pagina', filtros.pagina)
+      .set('tamanhoPagina', filtros.tamanhoPagina);
+    return this.http.get<ListaPaginada<ProdutoAbcDto>>(`${this.baseUrl}/produtos-abc`, { params });
   }
 
   listarFaturamentoClientes(filtros: ListarFaturamentoClientesFiltros): Observable<ListaPaginada<FaturamentoClienteDto>> {
