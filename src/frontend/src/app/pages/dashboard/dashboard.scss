@@ -1,7 +1,7 @@
 // Cards grandes do protótipo, posicionados pela ordem no DOM (sem reservar espaço para cards ainda inexistentes):
 //   curva ABC (2 colunas) · produtos por classe
 //   idade do estoque · composição da margem · ticket médio por mês
-//   top clientes (2 colunas) · DSI
+//   faturamento por cliente (2 colunas) · DSI
 // Cards de 2 colunas usam a classe @2xl:col-span-2 no host.
 // Container queries: a largura considerada é a do conteúdo do dashboard (o menu lateral fixo ocupa parte da janela).
 .indicadores {
