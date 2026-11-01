@@ -110,7 +110,8 @@ export class CardFaturamentoClientesComponent {
       if (!elemento) return;
       const observador = new ResizeObserver(() => this.transborda.set(elemento.scrollWidth > elemento.clientWidth));
       observador.observe(elemento);
-      if (elemento.firstElementChild) observador.observe(elemento.firstElementChild);
+      const tabela = elemento.querySelector('table');
+      if (tabela) observador.observe(tabela);
       onCleanup(() => observador.disconnect());
     });
   }

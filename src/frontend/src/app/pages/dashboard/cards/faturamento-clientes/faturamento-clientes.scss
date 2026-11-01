@@ -8,6 +8,15 @@
   container: tabela-clientes / inline-size;
 }
 
+// Com mais de uma página, reserva a altura de uma página cheia (cabeçalho + linhas da página): a última página, com menos
+// linhas, não encolhe o card nem faz o paginador pular de lugar. Fica num wrapper dentro da rolagem para a barra de rolagem
+// horizontal (celular) não ocupar parte da altura reservada
+.paginada {
+  min-height: calc(
+    var(--mat-table-header-container-height, 56px) + var(--linhas-pagina) * var(--mat-table-row-item-container-height, 52px)
+  );
+}
+
 // Largura mínima: abaixo dela (celular), a tabela rola na horizontal em vez de espremer as colunas
 .tabela {
   min-width: 36rem;
