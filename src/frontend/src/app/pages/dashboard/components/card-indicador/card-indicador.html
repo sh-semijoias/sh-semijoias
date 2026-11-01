@@ -19,6 +19,9 @@
       </div>
       @if (subtitulo()) {
         <p class="mt-1 text-sm text-(--mat-sys-on-surface-variant)">{{ subtitulo() }}</p>
+      } @else if (carregando() && esqueletoSubtitulo()) {
+        <!-- Linha do subtítulo (text-sm: 20px) reservada enquanto os dados dele carregam -->
+        <div class="mt-1 flex h-5 items-center" aria-hidden="true"><app-skeleton class="h-3.5 w-1/2" /></div>
       }
       @if (etiqueta()) {
         <span class="mt-2.5 inline-block rounded-md border border-(--mat-sys-outline) px-2 py-0.5 text-xs text-(--mat-sys-on-surface-variant)">

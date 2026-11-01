@@ -1,18 +1,23 @@
 <app-card-indicador
   titulo="Produtos por classe"
   [subtitulo]="subtitulo()"
+  [esqueletoSubtitulo]="true"
   etiqueta="Estratégico / Operacional"
   ajuda="Produtos ordenados do maior para o menor faturamento no período (preço de venda real × quantidade). Classe A reúne os produtos até 80% do faturamento acumulado, B até 95% e C o restante, incluindo produtos com estoque disponível e sem vendas. Cada aba lista todos os produtos da classe, 5 por página: A e B do maior para o menor faturamento, C do menor para o maior. Vendas canceladas não entram no cálculo."
   [carregando]="curvaAbc.isLoading()"
   [erro]="!!curvaAbc.error()"
   [vazio]="semVendas()"
   mensagemVazio="Nenhuma venda no período.">
-  <div esqueleto class="flex flex-col gap-3">
-    <app-skeleton class="h-10 w-full" />
-    <app-skeleton class="h-16 w-full" />
+  <!-- Mesma estrutura e alturas do conteúdo (abas, resumo, rótulo, página cheia e paginador): o card não muda de tamanho
+       ao carregar, nem a curva ABC, que divide a linha do grid com ele -->
+  <div esqueleto aria-hidden="true">
+    <app-skeleton class="esqueleto-abas w-full" />
+    <app-skeleton class="mt-3 h-18 w-full" />
+    <app-skeleton class="mt-3 mb-1 h-5 w-1/2" />
     @for (_ of linhasEsqueleto; track $index) {
-      <app-skeleton class="h-12 w-full" />
+      <div class="linha-esqueleto"><app-skeleton class="h-11 w-full" /></div>
     }
+    <div class="esqueleto-paginador"></div>
   </div>
 
   @if (dados(); as dados) {
@@ -45,8 +50,10 @@
             <p class="texto-secundario mt-3 mb-1">
               {{ classe.classe === 'C' ? 'Do menor para o maior faturamento' : 'Do maior para o menor faturamento' }}
             </p>
-            @if (produtos(); as produtos) {
-              <div [class.paginada]="produtos.total > tamanhoPagina" [style.--linhas-pagina]="tamanhoPagina">
+            <!-- A quantidade da classe vem com a curva: o paginador e a altura da lista não esperam a página carregar -->
+            @let paginada = classe.quantidadeProdutos > tamanhoPagina;
+            <div [class.paginada]="paginada" [style.--linhas-pagina]="tamanhoPagina">
+              @if (produtos(); as produtos) {
                 <ol class="produtos" [class.atualizando]="atualizando()" [attr.aria-busy]="atualizando()"
                     [attr.aria-label]="'Produtos da classe ' + classe.classe">
                   @for (produto of produtos.items; track produto.posicao) {
@@ -71,25 +78,26 @@
                     </li>
                   }
                 </ol>
-              </div>
-
-              @if (produtos.total > tamanhoPagina) {
-                <mat-paginator
-                  [length]="produtos.total"
-                  [pageIndex]="pagina() - 1"
-                  [pageSize]="tamanhoPagina"
-                  [hidePageSize]="true"
-                  (page)="aoPaginar($event)"
-                  [attr.aria-label]="'Páginas dos produtos da classe ' + classe.classe" />
+              } @else if (lista.error()) {
+                <p class="texto-secundario py-3" role="alert">Não foi possível carregar os produtos da classe.</p>
+              } @else {
+                <!-- Uma linha de esqueleto por produto que a página vai ter, com a altura da linha real -->
+                <div aria-hidden="true">
+                  @for (_ of linhasEsqueleto.slice(0, classe.quantidadeProdutos); track $index) {
+                    <div class="linha-esqueleto"><app-skeleton class="h-11 w-full" /></div>
+                  }
+                </div>
               }
-            } @else if (lista.error()) {
-              <p class="texto-secundario py-3" role="alert">Não foi possível carregar os produtos da classe.</p>
-            } @else {
-              <div class="flex flex-col gap-2 py-2" aria-hidden="true">
-                @for (_ of linhasEsqueleto; track $index) {
-                  <app-skeleton class="h-13 w-full" />
-                }
-              </div>
+            </div>
+
+            @if (paginada) {
+              <mat-paginator
+                [length]="classe.quantidadeProdutos"
+                [pageIndex]="pagina() - 1"
+                [pageSize]="tamanhoPagina"
+                [hidePageSize]="true"
+                (page)="aoPaginar($event)"
+                [attr.aria-label]="'Páginas dos produtos da classe ' + classe.classe" />
             }
           }
         </mat-tab>

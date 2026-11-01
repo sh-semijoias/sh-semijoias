@@ -91,3 +91,20 @@
   opacity: 0.6;
   transition: opacity 150ms ease;
 }
+
+// Partes do esqueleto com a altura das partes reais: abas (container + divisória), linha de produto e paginador
+.esqueleto-abas {
+  display: block;
+  height: calc(var(--mat-tab-container-height, 48px) + var(--mat-tab-divider-height, 1px));
+}
+
+.linha-esqueleto {
+  display: flex;
+  align-items: center;
+  height: var(--altura-linha-produto);
+}
+
+// Altura do paginador do Material + padding-top e borda definidos em styles.scss
+.esqueleto-paginador {
+  height: calc(var(--mat-paginator-container-size, 56px) + 0.5rem + 1px);
+}
