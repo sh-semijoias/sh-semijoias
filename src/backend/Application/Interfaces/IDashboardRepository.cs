@@ -8,4 +8,5 @@ public interface IDashboardRepository
     Task<ResumoVendasPeriodo> ObterResumoVendasAsync(ObterIndicadoresConsulta consulta);
     Task<IList<VendasMes>> ObterVendasPorMesAsync(ObterIndicadoresConsulta consulta);
     Task<decimal> ObterValorEstoqueAtualAsync(ObterIndicadoresConsulta consulta);
+    Task<PecasSemGiroDto> ObterPecasSemGiroAsync();
 }

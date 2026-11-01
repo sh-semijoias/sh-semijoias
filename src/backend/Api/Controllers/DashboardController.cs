@@ -49,4 +49,15 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
             ? Ok(result.Valor)
             : result.ToActionResult(this);
     }
+
+    [HttpGet("pecas-sem-giro")]
+    public async Task<IActionResult> ObterPecasSemGiro()
+    {
+        var result =
+            await dashboardService.ObterPecasSemGiroAsync();
+
+        return result.Sucesso
+            ? Ok(result.Valor)
+            : result.ToActionResult(this);
+    }
 }

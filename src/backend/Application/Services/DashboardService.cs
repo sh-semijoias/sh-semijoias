@@ -138,6 +138,14 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             MidpointRounding.AwayFromZero);
     }
 
+    public async Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync()
+    {
+        var resultado =
+            await dashboardRepository.ObterPecasSemGiroAsync();
+
+        return Result<PecasSemGiroDto>.Ok(resultado);
+    }
+
     private static List<string> ValidarConsulta(ObterIndicadoresConsulta consulta)
     {
         var erros = new List<string>();

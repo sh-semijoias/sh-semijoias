@@ -41,6 +41,11 @@ export interface DiasEstoqueDto {
   diasBase: number;
 }
 
+export interface PecasSemGiroDto {
+  quantidadePecas: number;
+  valorParado: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
@@ -60,6 +65,10 @@ export class DashboardService {
 
   obterDiasEstoque(filtros: FiltrosIndicadores): Observable<DiasEstoqueDto> {
   return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`,{ params: this.params(filtros) });
+  }
+
+  obterPecasSemGiro(): Observable<PecasSemGiroDto> {
+  return this.http.get<PecasSemGiroDto>(`${this.baseUrl}/pecas-sem-giro`);
   }
 
   private params(filtros: FiltrosIndicadores | FiltrosSemPeriodo): HttpParams {

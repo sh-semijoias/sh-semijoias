@@ -67,4 +67,30 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
             where consulta.IdTipoProduto == null || item.Estoque.Produto.IdTipoProduto == consulta.IdTipoProduto
             select item;
     }
+
+    public async Task<PecasSemGiroDto> ObterPecasSemGiroAsync()
+    {
+        var limite = DateTime.UtcNow.AddDays(-90);
+
+        var produtosSemGiro =
+            from estoque in context.Estoques
+            let ultimaVenda =
+                context.ItensVenda
+                    .Where(i => i.Estoque.IdProduto == estoque.IdProduto)
+                    .Max(i => (DateTime?)i.Venda.DataVenda)
+            where ultimaVenda == null || ultimaVenda < limite
+            select new
+            {
+                estoque.Quantidade,
+                Valor = estoque.Quantidade * estoque.Produto.PrecoCompra
+            };
+
+        var quantidade = await produtosSemGiro.SumAsync(x => (int?)x.Quantidade) ?? 0;
+
+        var valor = await produtosSemGiro.SumAsync(x => (decimal?)x.Valor) ?? 0m;
+
+        return new PecasSemGiroDto(
+            quantidade,
+            valor);
+    }
 }
