@@ -10,4 +10,5 @@ public interface IDashboardRepository
     Task<decimal> ObterValorEstoqueAtualAsync(ObterIndicadoresConsulta consulta);
     Task<PecasSemGiroDto> ObterPecasSemGiroAsync();
     Task<IList<LinhaCurvaAbc>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta);
+    Task<(IList<FaturamentoCliente> Items, int Total)> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta);
 }

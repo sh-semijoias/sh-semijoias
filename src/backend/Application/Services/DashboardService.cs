@@ -1,4 +1,5 @@
 using ShSemijoias.Application.Common;
+using ShSemijoias.Application.DTOs;
 using ShSemijoias.Application.DTOs.Dashboard;
 using ShSemijoias.Application.Interfaces;
 using ShSemijoias.Domain.Entities;
@@ -9,6 +10,7 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
 {
     private const int MesesTicketMensal = 12;
     private static readonly string[] ClassesAbc = ["A", "B", "C"];
+    private const int TamanhoMaximoPagina = 50;
 
     public async Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta)
     {
@@ -116,6 +118,8 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             new DiasEstoqueDto(
                 dsi,
                 diasPeriodo));
+    }
+
     public async Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
     {
         var erros = ValidarConsulta(consulta);
@@ -154,6 +158,38 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             .ToList();
 
         return Result<CurvaAbcDto>.Ok(new CurvaAbcDto(totais.TotalProdutos, totais.FaturamentoTotal, pontos, classes));
+    }
+
+    public async Task<Result<ListaPaginada<FaturamentoClienteDto>>> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta)
+    {
+        var erros = ValidarConsulta(consulta.Indicadores());
+
+        if (consulta.Pagina < 1)
+            erros.Add("A página deve ser maior que zero.");
+
+        if (consulta.TamanhoPagina < 1 || consulta.TamanhoPagina > TamanhoMaximoPagina)
+            erros.Add($"O tamanho da página deve estar entre 1 e {TamanhoMaximoPagina}.");
+
+        if (erros.Count > 0)
+            return Result<ListaPaginada<FaturamentoClienteDto>>.Falha(erros);
+
+        var (items, total) = await dashboardRepository.ListarFaturamentoClientesAsync(consulta);
+        var dtos = items
+            .Select(c => new FaturamentoClienteDto(
+                c.Posicao,
+                c.IdCliente,
+                c.NomeCliente,
+                c.IdRevendedora,
+                c.NomeRevendedora,
+                c.QuantidadeVendas,
+                c.Faturamento,
+                c.PercentualTotal,
+                c.PercentualDoMaior,
+                c.DataUltimaCompra))
+            .ToList();
+
+        return Result<ListaPaginada<FaturamentoClienteDto>>.Ok(
+            new ListaPaginada<FaturamentoClienteDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
     }
 
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>

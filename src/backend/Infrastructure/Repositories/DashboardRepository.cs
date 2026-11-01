@@ -51,6 +51,8 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
             .SumAsync(e =>
                 (decimal?)(e.Quantidade * e.Produto.PrecoCompra))
             ?? 0m;
+    }
+
     // Curva do dashboard: do ranking completo, só os destaques de cada classe, o último produto de cada classe (cortes)
     // e uma amostra de pontos. O resultado tem tamanho fixo, qualquer que seja o catálogo.
     public async Task<IList<LinhaCurvaAbc>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
@@ -90,6 +92,90 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 produto.TotalProdutos,
                 produto.FaturamentoTotal)
         ).ToListAsync();
+    }
+
+    public async Task<(IList<FaturamentoCliente> Items, int Total)> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta)
+    {
+        var ranking = RankingClientes(consulta);
+        // Texto ordenado com a collation ICU, como no ranking: a padrão do banco põe as acentuadas depois de z
+        const string collation = "pt-BR-x-icu";
+
+        var ordenado = consulta.OrdenarPor switch
+        {
+            OrdenacaoFaturamentoCliente.NomeCliente => consulta.OrdemDecrescente
+                ? ranking.OrderByDescending(c => EF.Functions.Collate(c.NomeCliente, collation))
+                : ranking.OrderBy(c => EF.Functions.Collate(c.NomeCliente, collation)),
+            OrdenacaoFaturamentoCliente.NomeRevendedora => consulta.OrdemDecrescente
+                ? ranking.OrderByDescending(c => EF.Functions.Collate(c.NomeRevendedora, collation))
+                : ranking.OrderBy(c => EF.Functions.Collate(c.NomeRevendedora, collation)),
+            OrdenacaoFaturamentoCliente.QuantidadeVendas => consulta.OrdemDecrescente
+                ? ranking.OrderByDescending(c => c.QuantidadeVendas)
+                : ranking.OrderBy(c => c.QuantidadeVendas),
+            OrdenacaoFaturamentoCliente.DataUltimaCompra => consulta.OrdemDecrescente
+                ? ranking.OrderByDescending(c => c.DataUltimaCompra)
+                : ranking.OrderBy(c => c.DataUltimaCompra),
+            // Faturamento: a posição no ranking já desempata
+            _ => consulta.OrdemDecrescente
+                ? ranking.OrderBy(c => c.Posicao)
+                : ranking.OrderByDescending(c => c.Posicao),
+        };
+
+        // Empates nas outras colunas seguem a posição no ranking, para a página não mudar entre requisições
+        var items = await ordenado
+            .ThenBy(c => c.Posicao)
+            .Skip((consulta.Pagina - 1) * consulta.TamanhoPagina)
+            .Take(consulta.TamanhoPagina)
+            .ToListAsync();
+
+        // O total vem de uma função de janela no ranking: sem um COUNT à parte. Página além do fim não traz linhas nem total
+        return (items, items.FirstOrDefault()?.TotalLinhas ?? 0);
+    }
+
+    // Ranking de faturamento por cliente e pela revendedora que realizou a venda, uma linha por par, com a posição e os
+    // percentuais calculados no banco com funções de janela. Composável: quem usa ordena e pagina em LINQ por cima.
+    private IQueryable<FaturamentoCliente> RankingClientes(ListarFaturamentoClientesConsulta consulta)
+    {
+        var intervalo = IntervaloUtc.De(consulta.DataInicio, consulta.DataFim);
+
+        return context.Database.SqlQuery<FaturamentoCliente>($"""
+            WITH por_cliente AS (
+                -- Vendas não canceladas no período, com os filtros do dashboard. Agrupa pela revendedora da venda, não pela
+                -- do cadastro do cliente: o administrador pode registrar a venda em nome de outra revendedora
+                SELECT v.id_cliente,
+                       v.id_usuario,
+                       count(DISTINCT v.id) AS quantidade_vendas,
+                       sum(i.preco_venda_real * i.quantidade) AS faturamento,
+                       max(v.data_venda) AS ultima_venda
+                FROM item_venda i
+                JOIN venda v ON v.id = i.id_venda
+                JOIN estoque e ON e.id = i.id_estoque
+                JOIN produto p ON p.id = e.id_produto
+                LEFT JOIN cancelamento_venda c ON c.id_venda = v.id
+                WHERE c.id IS NULL
+                  AND v.data_venda >= {intervalo.Inicio}
+                  AND v.data_venda < {intervalo.FimExclusivo}
+                  AND ({consulta.IdRevendedora}::uuid IS NULL OR v.id_usuario = {consulta.IdRevendedora}::uuid)
+                  AND ({consulta.IdTipoProduto}::int IS NULL OR p.id_tipo_produto = {consulta.IdTipoProduto}::int)
+                GROUP BY v.id_cliente, v.id_usuario
+            )
+            -- Desempate por quantidade de vendas, nomes e ids, para o ranking não mudar entre requisições
+            SELECT row_number() OVER (ORDER BY pc.faturamento DESC, pc.quantidade_vendas DESC, cl.nome COLLATE "pt-BR-x-icu", cl.id,
+                                               u.nome COLLATE "pt-BR-x-icu", u.id)::int AS posicao,
+                   cl.id AS id_cliente,
+                   cl.nome AS nome_cliente,
+                   u.id AS id_revendedora,
+                   u.nome AS nome_revendedora,
+                   pc.quantidade_vendas::int AS quantidade_vendas,
+                   round(pc.faturamento, 2) AS faturamento,
+                   -- Sobre todas as linhas do ranking, não só as da página: as janelas são calculadas antes do LIMIT
+                   round(coalesce(pc.faturamento * 100 / nullif(sum(pc.faturamento) OVER (), 0), 0), 1) AS percentual_total,
+                   round(coalesce(pc.faturamento * 100 / nullif(max(pc.faturamento) OVER (), 0), 0), 1) AS percentual_do_maior,
+                   (pc.ultima_venda AT TIME ZONE {FusoBrasilia.Id})::date AS data_ultima_compra,
+                   count(*) OVER ()::int AS total_linhas
+            FROM por_cliente pc
+            JOIN cliente cl ON cl.id = pc.id_cliente
+            JOIN usuario u ON u.id = pc.id_usuario
+            """);
     }
 
     // Ranking completo da curva ABC, uma linha por produto, calculado no banco com funções de janela (o EF Core não as

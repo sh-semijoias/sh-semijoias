@@ -6,6 +6,7 @@ import { CardTicketMedioComponent } from './cards/ticket-medio/ticket-medio';
 import { CardTicketMedioMensalComponent } from './cards/ticket-medio-mensal/ticket-medio-mensal';
 import { CardCurvaAbcComponent } from './cards/curva-abc/curva-abc';
 import { CardProdutosPorClasseComponent } from './cards/produtos-por-classe/produtos-por-classe';
+import { CardFaturamentoClientesComponent } from './cards/faturamento-clientes/faturamento-clientes';
 import { FiltrosDashboardComponent } from './components/filtros-dashboard/filtros-dashboard';
 import { CardMargemBrutaComponent } from './cards/margem-bruta/margem-bruta';
 import { CardDiasEstoqueComponent } from './cards/dias-estoque/dias-estoque';
@@ -14,7 +15,17 @@ import { CardPecasSemGiroComponent } from './cards/pecas-sem-giro/pecas-sem-giro
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FiltrosDashboardComponent, CardTicketMedioComponent, CardCurvaAbcComponent, CardProdutosPorClasseComponent, CardTicketMedioMensalComponent,CardMargemBrutaComponent, CardDiasEstoqueComponent, CardPecasSemGiroComponent],
+  imports: [
+    FiltrosDashboardComponent,
+    CardTicketMedioComponent,
+    CardCurvaAbcComponent,
+    CardProdutosPorClasseComponent,
+    CardTicketMedioMensalComponent,
+    CardMargemBrutaComponent,
+    CardDiasEstoqueComponent,
+    CardPecasSemGiroComponent,
+    CardFaturamentoClientesComponent,
+  ],
   providers: [DashboardFiltrosService, CurvaAbcService, provideEchartsCore({ echarts: () => import('./graficos/echarts') })],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ListaPaginada } from './usuario.service';
 
 export interface FiltrosSemPeriodo {
   idRevendedora?: string;
@@ -44,6 +45,8 @@ export interface DiasEstoqueDto {
 export interface PecasSemGiroDto {
   quantidadePecas: number;
   valorParado: number;
+}
+
 export type ClasseAbc = 'A' | 'B' | 'C';
 
 export interface ProdutoAbcDto {
@@ -84,6 +87,38 @@ export interface CurvaAbcDto {
   classes: ClasseAbcDto[];
 }
 
+export enum OrdenacaoFaturamentoCliente {
+  Faturamento = 0,
+  NomeCliente = 1,
+  NomeRevendedora = 2,
+  QuantidadeVendas = 3,
+  DataUltimaCompra = 4,
+}
+
+export interface FaturamentoClienteDto {
+  // Posição no ranking por faturamento, qualquer que seja a ordenação da listagem
+  posicao: number;
+  idCliente: number;
+  nomeCliente: string;
+  idRevendedora: string;
+  nomeRevendedora: string;
+  quantidadeVendas: number;
+  faturamento: number;
+  // Sobre o faturamento de todos os clientes no período
+  percentualTotal: number;
+  // Em relação ao maior faturamento: tamanho da barra
+  percentualDoMaior: number;
+  // yyyy-MM-dd, dentro do período
+  dataUltimaCompra: string;
+}
+
+export interface ListarFaturamentoClientesFiltros extends FiltrosIndicadores {
+  pagina: number;
+  tamanhoPagina: number;
+  ordenarPor: OrdenacaoFaturamentoCliente;
+  ordemDecrescente: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
@@ -102,13 +137,24 @@ export class DashboardService {
   }
 
   obterDiasEstoque(filtros: FiltrosIndicadores): Observable<DiasEstoqueDto> {
-  return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`,{ params: this.params(filtros) });
+    return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`, { params: this.params(filtros) });
   }
 
   obterPecasSemGiro(): Observable<PecasSemGiroDto> {
-  return this.http.get<PecasSemGiroDto>(`${this.baseUrl}/pecas-sem-giro`);
+    return this.http.get<PecasSemGiroDto>(`${this.baseUrl}/pecas-sem-giro`);
+  }
+
   obterCurvaAbc(filtros: FiltrosIndicadores): Observable<CurvaAbcDto> {
     return this.http.get<CurvaAbcDto>(`${this.baseUrl}/curva-abc`, { params: this.params(filtros) });
+  }
+
+  listarFaturamentoClientes(filtros: ListarFaturamentoClientesFiltros): Observable<ListaPaginada<FaturamentoClienteDto>> {
+    const params = this.params(filtros)
+      .set('pagina', filtros.pagina)
+      .set('tamanhoPagina', filtros.tamanhoPagina)
+      .set('ordenarPor', filtros.ordenarPor)
+      .set('ordemDecrescente', filtros.ordemDecrescente);
+    return this.http.get<ListaPaginada<FaturamentoClienteDto>>(`${this.baseUrl}/faturamento-clientes`, { params });
   }
 
   private params(filtros: FiltrosIndicadores | FiltrosSemPeriodo): HttpParams {

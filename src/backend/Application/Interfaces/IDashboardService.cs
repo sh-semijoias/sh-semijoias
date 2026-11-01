@@ -1,4 +1,5 @@
 using ShSemijoias.Application.Common;
+using ShSemijoias.Application.DTOs;
 using ShSemijoias.Application.DTOs.Dashboard;
 
 namespace ShSemijoias.Application.Interfaces;
@@ -11,4 +12,5 @@ public interface IDashboardService
     Task<Result<DiasEstoqueDto>> ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta);
     Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync();
     Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta);
+    Task<Result<ListaPaginada<FaturamentoClienteDto>>> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta);
 }
