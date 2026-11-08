@@ -143,6 +143,20 @@ html {
   --cor-classe-b-texto: light-dark(#00201e, #ffffff);
   --cor-classe-c: light-dark(#c4cbca, #4b5352);
   --cor-classe-c-texto: light-dark(#1b1f1f, #e8eceb);
+
+  // Giro lento: faixas de idade sem giro e barra de DSI da classe C
+  --cor-alerta: light-dark(#e8954a, #ffb77c);
+
+  // Deduções do faturamento (repasse e CMV) na composição da margem
+  --cor-deducao: light-dark(#e07b6f, #ffb4ab);
+
+  // Faixas da idade do estoque: as três primeiras seguem as classes (giro saudável); as sem giro esquentam até o vermelho
+  --cor-idade-0-30: var(--cor-classe-a);
+  --cor-idade-31-60: var(--cor-classe-b);
+  --cor-idade-61-90: var(--cor-classe-c);
+  --cor-idade-91-180: var(--cor-alerta);
+  --cor-idade-mais-180: var(--cor-deducao);
+  --cor-idade-nunca: light-dark(#b3443a, #d9837c);
 }
 
 .snack-error .mdc-snackbar__surface {

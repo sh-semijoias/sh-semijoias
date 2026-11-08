@@ -34,17 +34,49 @@ export interface TicketMedioMensalDto {
 
 export interface MargemBrutaDto {
   percentual: number;
+  // Em pontos percentuais, em relação ao período anterior de mesma duração
   variacaoPercentual: number | null;
+  // Composição: faturamento − repasse − cmv = lucroBruto
+  faturamento: number;
+  repasse: number;
+  cmv: number;
+  lucroBruto: number;
 }
 
+// DSI = valorEstoque ÷ cmv × diasBase; nulo quando não houve vendas no período
 export interface DiasEstoqueDto {
-  diasEstoque: number;
+  diasEstoque: number | null;
   diasBase: number;
+  valorEstoque: number;
+  cmv: number;
+  // Sempre A, B e C
+  classes: DiasEstoqueClasseDto[];
 }
 
-export interface PecasSemGiroDto {
-  quantidadePecas: number;
-  valorParado: number;
+export interface DiasEstoqueClasseDto {
+  classe: ClasseAbc;
+  valorEstoque: number;
+  cmv: number;
+  // Nulo quando a classe não vendeu no período
+  diasEstoque: number | null;
+}
+
+export type CodigoFaixaIdade = '0-30' | '31-60' | '61-90' | '91-180' | 'mais-180' | 'nunca';
+
+// Peças em estoque com a última venda do produto há tantos dias; valor a custo
+export interface FaixaIdadeEstoqueDto {
+  codigo: CodigoFaixaIdade;
+  descricao: string;
+  quantidade: number;
+  valor: number;
+  semGiro: boolean;
+}
+
+// Sempre todas as faixas, na ordem. Sem giro: soma das faixas acima de 90 dias e nunca vendido
+export interface IdadeEstoqueDto {
+  faixas: FaixaIdadeEstoqueDto[];
+  quantidadeSemGiro: number;
+  valorSemGiro: number;
 }
 
 export type ClasseAbc = 'A' | 'B' | 'C';
@@ -146,8 +178,9 @@ export class DashboardService {
     return this.http.get<DiasEstoqueDto>(`${this.baseUrl}/dias-estoque`, { params: this.params(filtros) });
   }
 
-  obterPecasSemGiro(): Observable<PecasSemGiroDto> {
-    return this.http.get<PecasSemGiroDto>(`${this.baseUrl}/pecas-sem-giro`);
+  // Posição atual do estoque: não segue o período
+  obterIdadeEstoque(filtros: FiltrosSemPeriodo): Observable<IdadeEstoqueDto> {
+    return this.http.get<IdadeEstoqueDto>(`${this.baseUrl}/idade-estoque`, { params: this.params(filtros) });
   }
 
   obterCurvaAbc(filtros: FiltrosIndicadores): Observable<CurvaAbcDto> {

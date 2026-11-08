@@ -1,0 +1,31 @@
+@let dadosMargem = dados();
+<app-card-indicador
+  titulo="Composição da margem"
+  subtitulo="Do faturamento ao lucro bruto"
+  etiqueta="Financeiro"
+  ajuda="Faturamento (preço de venda real × quantidade), menos o repasse às revendedoras e o custo das mercadorias vendidas (preço de compra registrado em cada item na venda), resulta no lucro bruto. Vendas canceladas não entram no cálculo."
+  [carregando]="margemBruta.isLoading()"
+  [erro]="!!margemBruta.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda no período.">
+  @if (dadosMargem) {
+    <app-menu-grafico acoes [(exibirTabela)]="exibirTabela" />
+  }
+
+  <div esqueleto class="flex flex-col gap-2">
+    <app-skeleton class="h-56 w-full" />
+    <app-skeleton class="h-5 w-full" />
+  </div>
+
+  <!-- Só cria o gráfico com os dados em mãos: o conteúdo projetado é instanciado mesmo enquanto o card carrega -->
+  @if (dadosMargem) {
+    <app-grafico [opcoes]="opcoes()" [descricao]="descricao()" [tabela]="tabela()" [exibirTabela]="exibirTabela()" />
+  }
+
+  @if (dadosMargem && !margemBruta.isLoading() && !margemBruta.error()) {
+    <div rodape class="flex items-center justify-between border-t border-(--mat-sys-outline-variant) pt-3 text-sm">
+      <span class="text-(--mat-sys-on-surface-variant)">Margem bruta</span>
+      <span class="font-semibold">{{ dadosMargem.percentual | number:'1.2-2':'pt-BR' }}%</span>
+    </div>
+  }
+</app-card-indicador>

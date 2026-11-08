@@ -50,15 +50,11 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
             : result.ToActionResult(this);
     }
 
-    [HttpGet("pecas-sem-giro")]
-    public async Task<IActionResult> ObterPecasSemGiro()
+    [HttpGet("idade-estoque")]
+    public async Task<IActionResult> ObterIdadeEstoque([FromQuery] ObterIdadeEstoqueConsulta consulta)
     {
-        var result =
-            await dashboardService.ObterPecasSemGiroAsync();
-
-        return result.Sucesso
-            ? Ok(result.Valor)
-            : result.ToActionResult(this);
+        var result = await dashboardService.ObterIdadeEstoqueAsync(consulta);
+        return result.Sucesso ? Ok(result.Valor) : result.ToActionResult(this);
     }
 
     [HttpGet("curva-abc")]

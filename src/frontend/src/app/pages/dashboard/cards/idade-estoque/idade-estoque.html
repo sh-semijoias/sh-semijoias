@@ -1,0 +1,38 @@
+<app-card-indicador
+  titulo="Idade do estoque"
+  subtitulo="Posição atual · não segue o filtro de período"
+  etiqueta="Operacional"
+  ajuda="Peças em estoque (central e maletas, com quantidade maior que zero) pelos dias desde a última venda do produto, com o valor a custo pelo preço de compra atual. Com revendedora, só o estoque das maletas e as vendas dela. Vendas canceladas não contam como venda."
+  [naoSegueFiltroPeriodo]="true"
+  [carregando]="idadeEstoque.isLoading()"
+  [erro]="!!idadeEstoque.error()"
+  [vazio]="semEstoque()"
+  mensagemVazio="Nenhuma peça em estoque.">
+  <div esqueleto class="flex flex-col">
+    <app-skeleton class="mb-3 h-4 w-1/2" />
+    @for (linha of linhasEsqueleto; track linha) {
+      <div class="linha-esqueleto">
+        <app-skeleton class="h-4 w-full" />
+        <app-skeleton class="h-2 w-full" />
+      </div>
+    }
+  </div>
+
+  @if (faixas().length) {
+    <p id="idade-estoque-faixas" class="legenda">Dias desde a última saída, por faixa</p>
+    <ul class="faixas" aria-labelledby="idade-estoque-faixas">
+      @for (faixa of faixas(); track faixa.codigo) {
+        <li>
+          <div class="flex items-baseline justify-between gap-2 text-sm">
+            <span>{{ faixa.descricao }}</span>
+            <span class="text-right">
+              <strong>{{ faixa.quantidade | number:'1.0-0':'pt-BR' }} {{ faixa.quantidade === 1 ? 'peça' : 'peças' }}</strong>
+              <span class="text-(--mat-sys-on-surface-variant)"> · {{ faixa.valor | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+            </span>
+          </div>
+          <app-barra [percentual]="faixa.percentualBarra" [cor]="faixa.cor" />
+        </li>
+      }
+    </ul>
+  }
+</app-card-indicador>

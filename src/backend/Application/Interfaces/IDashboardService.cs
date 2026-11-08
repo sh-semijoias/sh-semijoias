@@ -10,7 +10,7 @@ public interface IDashboardService
     Task<Result<TicketMedioMensalDto>> ObterTicketMedioMensalAsync(ObterTicketMedioMensalConsulta consulta);
     Task<Result<MargemBrutaDto>> ObterMargemBrutaAsync(ObterIndicadoresConsulta consulta);
     Task<Result<DiasEstoqueDto>> ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta);
-    Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync();
+    Task<Result<IdadeEstoqueDto>> ObterIdadeEstoqueAsync(ObterIdadeEstoqueConsulta consulta);
     Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta);
     Task<Result<ListaPaginada<ProdutoAbcDto>>> ListarProdutosAbcAsync(ListarProdutosAbcConsulta consulta);
     Task<Result<ListaPaginada<FaturamentoClienteDto>>> ListarFaturamentoClientesAsync(ListarFaturamentoClientesConsulta consulta);
