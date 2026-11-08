@@ -13,3 +13,6 @@ prototipo.pdf
 
 #packege-lock
 package-lock.json
+# Resultados dos testes e2e
+src/frontend/test-results/
+src/frontend/playwright-report/
