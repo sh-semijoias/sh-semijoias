@@ -7,6 +7,7 @@ export interface PaletaGrafico {
   classeA: string;
   classeB: string;
   classeC: string;
+  deducao: string;
   texto: string;
   textoSecundario: string;
   contorno: string;
@@ -24,6 +25,7 @@ const TOKENS: Record<Exclude<keyof PaletaGrafico, 'fonte'>, string> = {
   classeA: '--cor-classe-a',
   classeB: '--cor-classe-b',
   classeC: '--cor-classe-c',
+  deducao: '--cor-deducao',
   texto: '--mat-sys-on-surface',
   textoSecundario: '--mat-sys-on-surface-variant',
   contorno: '--mat-sys-outline',

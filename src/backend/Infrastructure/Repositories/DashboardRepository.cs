@@ -41,16 +41,18 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
         ).ToListAsync();
     }
 
-    public async Task<decimal> ObterValorEstoqueAtualAsync(
-    ObterIndicadoresConsulta consulta)
+    // Estoque a custo e CMV do período por classe da curva ABC, em uma única query sobre o ranking.
+    // O total do DSI é a soma das classes: o ranking inclui todo produto vendido e todo produto com estoque no escopo dos filtros
+    public async Task<IList<EstoqueClasseAbc>> ObterEstoquePorClasseAbcAsync(ObterIndicadoresConsulta consulta)
     {
-        return await context.Estoques
-            .Where(e =>
-                consulta.IdTipoProduto == null ||
-                e.Produto.IdTipoProduto == consulta.IdTipoProduto)
-            .SumAsync(e =>
-                (decimal?)(e.Quantidade * e.Produto.PrecoCompra))
-            ?? 0m;
+        return await (
+            from produto in RankingAbc(consulta)
+            group produto by produto.Classe into classe
+            select new EstoqueClasseAbc(
+                classe.Key,
+                classe.Sum(p => p.ValorEstoque),
+                classe.Sum(p => p.Cmv))
+        ).ToListAsync();
     }
 
     // Curva do dashboard: do ranking completo, só o último produto de cada classe (cortes) e uma amostra de pontos.
@@ -211,7 +213,9 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 -- Faturamento por produto: vendas não canceladas no período, com os filtros do dashboard
                 SELECT e.id_produto,
                        sum(i.quantidade) AS quantidade_vendida,
-                       sum(i.preco_venda_real * i.quantidade) AS faturamento
+                       sum(i.preco_venda_real * i.quantidade) AS faturamento,
+                       -- Preço de compra registrado no item, no momento da venda
+                       sum(i.preco_compra * i.quantidade) AS cmv
                 FROM item_venda i
                 JOIN venda v ON v.id = i.id_venda
                 JOIN estoque e ON e.id = i.id_estoque
@@ -225,14 +229,17 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                 GROUP BY e.id_produto
             ),
             com_estoque AS (
-                -- Produtos com estoque disponível: com revendedora, só nas maletas dela; sem, no estoque geral e em todas as maletas
-                SELECT DISTINCT e.id_produto
+                -- Produtos com estoque disponível: com revendedora, só nas maletas dela; sem, no estoque geral e em todas as maletas.
+                -- Valor a custo pelo preço de compra atual do produto
+                SELECT e.id_produto,
+                       sum(e.quantidade * p.preco_compra) AS valor_estoque
                 FROM estoque e
                 JOIN produto p ON p.id = e.id_produto
                 LEFT JOIN maleta m ON m.id = e.id_maleta
                 WHERE e.quantidade > 0
                   AND ({consulta.IdRevendedora}::uuid IS NULL OR m.id_usuario = {consulta.IdRevendedora}::uuid)
                   AND ({consulta.IdTipoProduto}::int IS NULL OR p.id_tipo_produto = {consulta.IdTipoProduto}::int)
+                GROUP BY e.id_produto
             ),
             produtos AS (
                 -- Vendidos e, com faturamento zero, os que têm estoque mas não venderam
@@ -240,7 +247,9 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                        p.descricao,
                        t.descricao AS categoria,
                        coalesce(vd.quantidade_vendida, 0)::int AS quantidade_vendida,
-                       coalesce(vd.faturamento, 0) AS faturamento
+                       coalesce(vd.faturamento, 0) AS faturamento,
+                       coalesce(vd.cmv, 0) AS cmv,
+                       coalesce(ce.valor_estoque, 0) AS valor_estoque
                 FROM vendidos vd
                 FULL JOIN com_estoque ce ON ce.id_produto = vd.id_produto
                 JOIN produto p ON p.id = coalesce(vd.id_produto, ce.id_produto)
@@ -292,7 +301,9 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
                    round(quantidade_classe * 100.0 / total_produtos, 1) AS percentual_mix_classe,
                    round(coalesce(faturamento_classe * 100 / nullif(faturamento_total, 0), 0), 1) AS percentual_faturamento_classe,
                    total_produtos::int AS total_produtos,
-                   round(faturamento_total, 2) AS faturamento_total
+                   round(faturamento_total, 2) AS faturamento_total,
+                   cmv,
+                   valor_estoque
             FROM por_classe
             """);
     }
@@ -312,29 +323,45 @@ public class DashboardRepository(ApplicationDbContext context) : IDashboardRepos
             select item;
     }
 
-    public async Task<PecasSemGiroDto> ObterPecasSemGiroAsync()
+    // Peças em estoque por faixa de idade, em uma única query: a última venda de cada produto num CTE e um GROUP BY pela faixa.
+    // SQL escrito à mão porque o LINQ equivalente (LEFT JOIN com grupo e GROUP BY por um CASE) vira subqueries correlacionadas.
+    // limitesFaixas: início (UTC) do dia mais antigo de cada faixa com venda, da mais recente para a mais antiga; venda anterior
+    // ao último limite cai na faixa 4 (mais de 180 dias), e produto sem venda, na 5 (nunca vendido)
+    public async Task<IList<PecasFaixaIdade>> ObterPecasPorFaixaIdadeAsync(ObterIdadeEstoqueConsulta consulta, IList<DateTime> limitesFaixas)
     {
-        var limite = DateTime.UtcNow.AddDays(-90);
-
-        var produtosSemGiro =
-            from estoque in context.Estoques
-            let ultimaVenda =
-                context.ItensVenda
-                    .Where(i => i.Estoque.IdProduto == estoque.IdProduto)
-                    .Max(i => (DateTime?)i.Venda.DataVenda)
-            where ultimaVenda == null || ultimaVenda < limite
-            select new
-            {
-                estoque.Quantidade,
-                Valor = estoque.Quantidade * estoque.Produto.PrecoCompra
-            };
-
-        var quantidade = await produtosSemGiro.SumAsync(x => (int?)x.Quantidade) ?? 0;
-
-        var valor = await produtosSemGiro.SumAsync(x => (decimal?)x.Valor) ?? 0m;
-
-        return new PecasSemGiroDto(
-            quantidade,
-            valor);
+        return await context.Database.SqlQuery<PecasFaixaIdade>($"""
+            WITH ultimas_vendas AS (
+                -- Última venda não cancelada de cada produto. Com revendedora, só as vendas dela, como o estoque (maletas dela)
+                SELECT e.id_produto,
+                       max(v.data_venda) AS ultima_venda
+                FROM item_venda i
+                JOIN venda v ON v.id = i.id_venda
+                JOIN estoque e ON e.id = i.id_estoque
+                LEFT JOIN cancelamento_venda c ON c.id_venda = v.id
+                WHERE c.id IS NULL
+                  AND ({consulta.IdRevendedora}::uuid IS NULL OR v.id_usuario = {consulta.IdRevendedora}::uuid)
+                GROUP BY e.id_produto
+            )
+            -- Estoque disponível: com revendedora, só nas maletas dela; sem, no estoque geral e em todas as maletas.
+            -- Valor a custo pelo preço de compra atual do produto
+            SELECT CASE
+                       WHEN uv.ultima_venda IS NULL THEN 5
+                       WHEN uv.ultima_venda >= {limitesFaixas[0]} THEN 0
+                       WHEN uv.ultima_venda >= {limitesFaixas[1]} THEN 1
+                       WHEN uv.ultima_venda >= {limitesFaixas[2]} THEN 2
+                       WHEN uv.ultima_venda >= {limitesFaixas[3]} THEN 3
+                       ELSE 4
+                   END AS faixa,
+                   sum(e.quantidade)::int AS quantidade,
+                   sum(e.quantidade * p.preco_compra) AS valor
+            FROM estoque e
+            JOIN produto p ON p.id = e.id_produto
+            LEFT JOIN maleta m ON m.id = e.id_maleta
+            LEFT JOIN ultimas_vendas uv ON uv.id_produto = e.id_produto
+            WHERE e.quantidade > 0
+              AND ({consulta.IdRevendedora}::uuid IS NULL OR m.id_usuario = {consulta.IdRevendedora}::uuid)
+              AND ({consulta.IdTipoProduto}::int IS NULL OR p.id_tipo_produto = {consulta.IdTipoProduto}::int)
+            GROUP BY 1
+            """).ToListAsync();
     }
 }

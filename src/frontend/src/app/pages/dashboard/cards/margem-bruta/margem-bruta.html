@@ -1,4 +1,4 @@
-@let dados = margemBruta.value();
+@let dados = this.dados();
 
 <app-card-kpi
   icone="percent"
@@ -14,7 +14,7 @@
 
   <ng-container rodape>
     @if (dados?.variacaoPercentual != null) {
-      <app-variacao [valor]="dados!.variacaoPercentual" />
+      <app-variacao [valor]="dados!.variacaoPercentual" unidade="p.p." />
     }
     após repasse e CMV
   </ng-container>

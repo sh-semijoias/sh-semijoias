@@ -1,0 +1,54 @@
+@let dadosDsi = dados();
+<app-card-indicador
+  titulo="Dias de estoque (DSI)"
+  subtitulo="Quanto tempo o estoque atual dura no ritmo de venda"
+  etiqueta="Operacional"
+  ajuda="Estoque atual a custo (estoque central e maletas, pelo preço de compra atual dos produtos) dividido pelo custo das mercadorias vendidas no período, vezes os dias do período. Com revendedora, só o estoque das maletas e as vendas dela. Por classe, o mesmo cálculo com os produtos de cada classe da curva ABC. Vendas canceladas não entram no cálculo."
+  [carregando]="diasEstoque.isLoading()"
+  [erro]="!!diasEstoque.error()"
+  [vazio]="semVendas()"
+  mensagemVazio="Nenhuma venda no período: o DSI não é calculado.">
+  <div esqueleto class="flex flex-col gap-4">
+    <app-skeleton class="h-40 w-full" />
+    <app-skeleton class="h-4 w-1/3" />
+    <app-skeleton class="h-24 w-full" />
+  </div>
+
+  @if (dadosDsi) {
+    <dl class="calculo">
+      <div>
+        <dt>Estoque atual (custo)</dt>
+        <dd>{{ dadosDsi.valorEstoque | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</dd>
+      </div>
+      <div>
+        <dt>÷ CMV do período</dt>
+        <dd>{{ dadosDsi.cmv | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</dd>
+      </div>
+      <div>
+        <dt>× dias analisados</dt>
+        <dd>{{ dadosDsi.diasBase }}</dd>
+      </div>
+      <div class="resultado">
+        <dt>DSI</dt>
+        <dd>{{ dadosDsi.diasEstoque | number:'1.0-0':'pt-BR' }} dias</dd>
+      </div>
+    </dl>
+
+    <h4 id="dsi-por-classe" class="titulo-secao">DSI por classe ABC</h4>
+    <ul class="classes" aria-labelledby="dsi-por-classe">
+      @for (item of classes(); track item.classe) {
+        <li>
+          <span class="selo" [attr.data-classe]="item.classe" [attr.aria-label]="'Classe ' + item.classe">{{ item.classe }}</span>
+          <app-barra class="flex-1" [percentual]="item.percentualBarra" [cor]="item.cor" />
+          <span class="dias">
+            @if (item.diasEstoque === null) {
+              Sem vendas
+            } @else {
+              {{ item.diasEstoque | number:'1.0-0':'pt-BR' }} dias
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</app-card-indicador>

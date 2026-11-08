@@ -1,8 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { rxResource } from '@angular/core/rxjs-interop';
-
-import { DashboardService } from '../../../../core/services/dashboard.service';
+import { IdadeEstoqueService } from '../../idade-estoque.service';
 import { CardKpiComponent } from '../../components/card-kpi/card-kpi';
 
 @Component({
@@ -12,9 +10,8 @@ import { CardKpiComponent } from '../../components/card-kpi/card-kpi';
   templateUrl: './pecas-sem-giro.html',
 })
 export class CardPecasSemGiroComponent {
-  private readonly dashboardService = inject(DashboardService);
+  private readonly idadeEstoqueService = inject(IdadeEstoqueService);
 
-  protected readonly pecasSemGiro = rxResource({
-    stream: () => this.dashboardService.obterPecasSemGiro(),
-  });
+  protected readonly idadeEstoque = this.idadeEstoqueService.idadeEstoque;
+  protected readonly dados = this.idadeEstoqueService.dados;
 }

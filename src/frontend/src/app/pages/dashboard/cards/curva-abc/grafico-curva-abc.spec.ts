@@ -10,6 +10,7 @@ const paleta: PaletaGrafico = {
   classeA: 'cor-a',
   classeB: 'cor-b',
   classeC: 'cor-c',
+  deducao: 'deducao',
   texto: 'texto',
   textoSecundario: 'texto-secundario',
   contorno: 'contorno',

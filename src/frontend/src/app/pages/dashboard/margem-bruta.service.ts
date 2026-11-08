@@ -1,0 +1,22 @@
+import { Injectable, computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { DashboardService } from '../../core/services/dashboard.service';
+import { DashboardFiltrosService } from './dashboard-filtros.service';
+
+// Margem bruta compartilhada pelos cards "Margem bruta" (KPI) e "Composição da margem": uma única requisição por filtro.
+// Fornecido no DashboardComponent.
+@Injectable()
+export class MargemBrutaService {
+  private readonly dashboardService = inject(DashboardService);
+  private readonly filtros = inject(DashboardFiltrosService);
+
+  readonly margemBruta = rxResource({
+    params: () => this.filtros.filtrosApi(),
+    stream: ({ params }) => this.dashboardService.obterMargemBruta(params),
+  });
+
+  // value() lança exceção com o recurso em erro: os cards leem os dados por aqui
+  readonly dados = computed(() => (this.margemBruta.hasValue() ? this.margemBruta.value() : undefined));
+
+  readonly semVendas = computed(() => (this.dados()?.faturamento ?? 0) === 0);
+}

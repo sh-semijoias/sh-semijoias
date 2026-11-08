@@ -12,6 +12,18 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
     private static readonly string[] ClassesAbc = ["A", "B", "C"];
     private const int TamanhoMaximoPagina = 50;
 
+    // Faixas de idade do estoque, na ordem do repositório (o índice é a faixa). DiasMaximos: idade máxima da faixa com venda;
+    // a de "mais de 180 dias" é o que passa do último limite, e a de nunca vendido, os produtos sem venda
+    private static readonly (string Codigo, string Descricao, int? DiasMaximos, bool SemGiro)[] FaixasIdade =
+    [
+        ("0-30", "0–30 dias", 30, false),
+        ("31-60", "31–60 dias", 60, false),
+        ("61-90", "61–90 dias", 90, false),
+        ("91-180", "91–180 dias", 180, true),
+        ("mais-180", "Mais de 180 dias", null, true),
+        ("nunca", "Nunca vendido", null, true),
+    ];
+
     public async Task<Result<TicketMedioDto>> ObterTicketMedioAsync(ObterIndicadoresConsulta consulta)
     {
         var erros = ValidarConsulta(consulta);
@@ -81,43 +93,54 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
                 2,
                 MidpointRounding.AwayFromZero);
 
+        // Lucro a partir dos valores arredondados: a cascata fecha no centavo
+        var faturamento = Math.Round(atual.Faturamento, 2, MidpointRounding.AwayFromZero);
+        var repasse = Math.Round(atual.Repasse, 2, MidpointRounding.AwayFromZero);
+        var cmv = Math.Round(atual.Cmv, 2, MidpointRounding.AwayFromZero);
+
         return Result<MargemBrutaDto>.Ok(
             new MargemBrutaDto(
                 margemAtual,
-                variacaoPercentual));
+                variacaoPercentual,
+                faturamento,
+                repasse,
+                cmv,
+                faturamento - repasse - cmv));
     }
 
-    public async Task<Result<DiasEstoqueDto>>ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta)
+    public async Task<Result<DiasEstoqueDto>> ObterDiasEstoqueAsync(ObterIndicadoresConsulta consulta)
     {
         var erros = ValidarConsulta(consulta);
-
         if (erros.Count > 0)
             return Result<DiasEstoqueDto>.Falha(erros);
 
-        var resumo =
-            await dashboardRepository
-                .ObterResumoVendasAsync(consulta);
+        var porClasse = await dashboardRepository.ObterEstoquePorClasseAbcAsync(consulta);
+        var diasPeriodo = consulta.DataFim.DayNumber - consulta.DataInicio.DayNumber + 1;
 
-        var valorEstoque =
-            await dashboardRepository
-                .ObterValorEstoqueAtualAsync(consulta);
+        var classes = ClassesAbc
+            .Select(classe =>
+            {
+                var linha = porClasse.FirstOrDefault(c => c.Classe == classe);
+                var valorEstoque = linha?.ValorEstoque ?? 0m;
+                var cmv = linha?.Cmv ?? 0m;
+                return new DiasEstoqueClasseDto(
+                    classe,
+                    Math.Round(valorEstoque, 2, MidpointRounding.AwayFromZero),
+                    Math.Round(cmv, 2, MidpointRounding.AwayFromZero),
+                    CalcularDiasEstoque(valorEstoque, cmv, diasPeriodo));
+            })
+            .ToList();
 
-        var diasPeriodo =
-            consulta.DataFim.DayNumber
-            - consulta.DataInicio.DayNumber
-            + 1;
-
-        var dsi = resumo.Cmv == 0
-            ? 0m
-            : Math.Round(
-                (valorEstoque / resumo.Cmv) * diasPeriodo,
-                0,
-                MidpointRounding.AwayFromZero);
+        var valorTotal = porClasse.Sum(c => c.ValorEstoque);
+        var cmvTotal = porClasse.Sum(c => c.Cmv);
 
         return Result<DiasEstoqueDto>.Ok(
             new DiasEstoqueDto(
-                dsi,
-                diasPeriodo));
+                CalcularDiasEstoque(valorTotal, cmvTotal, diasPeriodo),
+                diasPeriodo,
+                Math.Round(valorTotal, 2, MidpointRounding.AwayFromZero),
+                Math.Round(cmvTotal, 2, MidpointRounding.AwayFromZero),
+                classes));
     }
 
     public async Task<Result<CurvaAbcDto>> ObterCurvaAbcAsync(ObterIndicadoresConsulta consulta)
@@ -211,6 +234,10 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             new ListaPaginada<FaturamentoClienteDto>(dtos, total, consulta.Pagina, consulta.TamanhoPagina));
     }
 
+    // Sem vendas (CMV zero), o DSI não é calculado
+    private static decimal? CalcularDiasEstoque(decimal valorEstoque, decimal cmv, int diasPeriodo) =>
+        cmv == 0m ? null : Math.Round(valorEstoque / cmv * diasPeriodo, 0, MidpointRounding.AwayFromZero);
+
     private static decimal CalcularTicket(ResumoVendasPeriodo resumo) =>
         resumo.QuantidadeVendas == 0 ? 0m : resumo.Faturamento / resumo.QuantidadeVendas;
 
@@ -232,12 +259,34 @@ public class DashboardService(IDashboardRepository dashboardRepository) : IDashb
             MidpointRounding.AwayFromZero);
     }
 
-    public async Task<Result<PecasSemGiroDto>> ObterPecasSemGiroAsync()
+    public async Task<Result<IdadeEstoqueDto>> ObterIdadeEstoqueAsync(ObterIdadeEstoqueConsulta consulta)
     {
-        var resultado =
-            await dashboardRepository.ObterPecasSemGiroAsync();
+        // Idade em dias de calendário no horário de Brasília: venda de hoje tem 0 dias; a faixa "0–30" vai até a de 30 dias atrás
+        var hoje = FusoBrasilia.Hoje();
+        var limites = FaixasIdade
+            .Where(f => f.DiasMaximos is not null)
+            .Select(f => IntervaloUtc.De(hoje.AddDays(-f.DiasMaximos!.Value), hoje).Inicio)
+            .ToList();
 
-        return Result<PecasSemGiroDto>.Ok(resultado);
+        var pecas = await dashboardRepository.ObterPecasPorFaixaIdadeAsync(consulta, limites);
+
+        var faixas = FaixasIdade
+            .Select((faixa, indice) =>
+            {
+                var pecasFaixa = pecas.FirstOrDefault(p => p.Faixa == indice);
+                return new FaixaIdadeEstoqueDto(
+                    faixa.Codigo,
+                    faixa.Descricao,
+                    pecasFaixa?.Quantidade ?? 0,
+                    Math.Round(pecasFaixa?.Valor ?? 0m, 2, MidpointRounding.AwayFromZero),
+                    faixa.SemGiro);
+            })
+            .ToList();
+
+        var semGiro = faixas.Where(f => f.SemGiro).ToList();
+
+        return Result<IdadeEstoqueDto>.Ok(
+            new IdadeEstoqueDto(faixas, semGiro.Sum(f => f.Quantidade), semGiro.Sum(f => f.Valor)));
     }
 
     private static List<string> ValidarConsulta(ObterIndicadoresConsulta consulta)
